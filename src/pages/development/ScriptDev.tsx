@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Breadcrumb from '../../components/common/Breadcrumb';
 import { 
   Folder, 
+  FolderOpen,
+  ChevronRight,
+  ChevronDown,
   FileCode, 
   Play, 
   Square, 
@@ -45,6 +49,18 @@ export default function ScriptDev() {
   // Console logs
   const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
 
+  // Directory tree state
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+
+  const toggleFolder = (folderId: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
+      return next;
+    });
+  };
+
   // ── 方案B：延迟关闭 timer refs ──────────────────────────────
   const newMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settingsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,14 +71,6 @@ export default function ScriptDev() {
   };
   const closeNewMenu = () => {
     newMenuTimer.current = setTimeout(() => setShowNewMenu(false), 120);
-  };
-
-  const openSettings = () => {
-    if (settingsTimer.current) clearTimeout(settingsTimer.current);
-    setShowSettings(true);
-  };
-  const closeSettings = () => {
-    settingsTimer.current = setTimeout(() => setShowSettings(false), 120);
   };
   // ────────────────────────────────────────────────────────────
 
@@ -212,61 +220,109 @@ export default function ScriptDev() {
   const editorLanguage = activeScript?.type === 'python' ? 'python' : activeScript?.type === 'shell' ? 'shell' : 'sql';
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] bg-gray-900 text-gray-300 overflow-hidden rounded-lg shadow-xl border border-gray-800">
-      {/* 左侧边栏 */}
-      <div className="w-64 border-r border-gray-700 flex flex-col shrink-0 bg-[#1e1e1e]">
-        <div className="p-3 border-b border-gray-700 font-medium text-gray-100 flex justify-between items-center bg-gray-800">
-          <span>脚本列表</span>
+    <div className="space-y-6">
+      <Breadcrumb items={[{ label: '数据开发' }, { label: '脚本开发' }]} />
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-white">脚本开发</h1>
+        <div className="flex gap-3">
+          <button className="px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">运行历史</button>
+          <button className="px-4 py-2 rounded-lg text-sm bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:opacity-90">环境变量</button>
         </div>
-        <div className="flex-1 overflow-y-auto py-2">
-          {scripts.filter(s => s.type === 'folder').map(folder => (
-            <div key={folder.id} className="mb-2">
-              {/* Folder Header */}
-              <div className="flex items-center gap-2 px-3 py-1.5 text-gray-300 hover:bg-gray-800 cursor-pointer group">
-                <Folder className="w-4 h-4 text-gray-400 group-hover:text-blue-400 transition-colors" />
-                <span className="text-sm font-medium">{folder.name}</span>
-              </div>
-              
-              {/* Folder Contents */}
-              <div className="ml-6 border-l border-gray-700/50 pl-2 mt-1">
-                {scripts.filter(s => s.parentId === folder.id).map(script => (
+      </div>
+
+      <div className="flex h-[calc(100vh-12rem)] gap-4 text-slate-300">
+        {/* 左侧边栏 */}
+        <div className="w-64 border border-slate-800 rounded-xl shadow-xl flex flex-col shrink-0 bg-slate-900/50 overflow-hidden">
+          <div className="p-3 border-b border-slate-800 font-medium text-slate-200 flex justify-between items-center bg-slate-900/80">
+            <span className="flex items-center gap-2">
+              <FolderOpen className="w-4 h-4 text-cyan-500" />
+              脚本目录
+            </span>
+            <div className="flex items-center gap-1">
+              <button className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition-colors" title="新建文件夹">
+                <Folder className="w-3.5 h-3.5" />
+              </button>
+              <button className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition-colors" title="新建脚本" onClick={openNewMenu}>
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto py-2 px-2 custom-scrollbar">
+            {scripts.filter(s => s.type === 'folder').map(folder => {
+              const isExpanded = expandedFolders.has(folder.id);
+              const children = scripts.filter(s => s.parentId === folder.id);
+              return (
+                <div key={folder.id} className="mb-1">
+                  {/* Folder Header */}
+                  <div 
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-slate-300 hover:bg-slate-800/80 cursor-pointer group transition-colors"
+                    onClick={() => toggleFolder(folder.id)}
+                  >
+                    <span className="text-slate-500 group-hover:text-slate-400 transition-colors">
+                      {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                    </span>
+                    <span className="text-cyan-500/80 group-hover:text-cyan-400 transition-colors">
+                      {isExpanded ? <FolderOpen className="w-4 h-4" /> : <Folder className="w-4 h-4" />}
+                    </span>
+                    <span className="text-sm font-medium select-none truncate flex-1">{folder.name}</span>
+                    <span className="text-[10px] text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">{children.length}</span>
+                  </div>
+                  
+                  {/* Folder Contents */}
+                  {isExpanded && (
+                    <div className="ml-4 pl-3 mt-1 space-y-0.5 border-l border-slate-700/50">
+                      {children.map(script => (
+                        <div 
+                          key={script.id}
+                          className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all duration-200 group
+                            ${activeScript?.id === script.id 
+                              ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.05)]' 
+                              : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-transparent'}`}
+                          onClick={() => handleScriptClick(script)}
+                        >
+                          <span className={`transition-transform duration-200 ${activeScript?.id === script.id ? 'scale-110' : 'group-hover:scale-110'}`}>
+                            {getIcon(script.type)}
+                          </span>
+                          <span className="text-sm truncate select-none" title={script.name}>{script.name}</span>
+                          {script.status === 'approving' && (
+                            <span className="ml-auto text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">审批中</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            
+            {/* Root Level Scripts */}
+            {scripts.filter(s => s.type !== 'folder' && !s.parentId).length > 0 && (
+              <div className="mt-3 pt-2 border-t border-slate-800/80 space-y-0.5">
+                {scripts.filter(s => s.type !== 'folder' && !s.parentId).map(script => (
                   <div 
                     key={script.id}
-                    className={`flex items-center gap-2 p-1.5 mb-0.5 rounded cursor-pointer transition-colors ${activeScript?.id === script.id ? 'bg-blue-900/30 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'}`}
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all duration-200 group
+                      ${activeScript?.id === script.id 
+                        ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.05)]' 
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-transparent'}`}
                     onClick={() => handleScriptClick(script)}
                   >
-                    {getIcon(script.type)}
-                    <span className="text-sm truncate" title={script.name}>{script.name}</span>
+                    <span className={`transition-transform duration-200 ${activeScript?.id === script.id ? 'scale-110' : 'group-hover:scale-110'}`}>
+                      {getIcon(script.type)}
+                    </span>
+                    <span className="text-sm truncate select-none" title={script.name}>{script.name}</span>
                     {script.status === 'approving' && (
-                      <span className="ml-auto text-[10px] bg-blue-900/50 text-blue-300 px-1.5 py-0.5 rounded">审批中</span>
+                      <span className="ml-auto text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">审批中</span>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
-          ))}
-          
-          {/* Root Level Scripts */}
-          <div className="mt-4 border-t border-gray-700/50 pt-2">
-            {scripts.filter(s => s.type !== 'folder' && !s.parentId).map(script => (
-              <div 
-                key={script.id}
-                className={`flex items-center gap-2 p-1.5 mx-2 mb-0.5 rounded cursor-pointer transition-colors ${activeScript?.id === script.id ? 'bg-blue-900/30 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'}`}
-                onClick={() => handleScriptClick(script)}
-              >
-                {getIcon(script.type)}
-                <span className="text-sm truncate" title={script.name}>{script.name}</span>
-                {script.status === 'approving' && (
-                  <span className="ml-auto text-[10px] bg-blue-900/50 text-blue-300 px-1.5 py-0.5 rounded">审批中</span>
-                )}
-              </div>
-            ))}
+            )}
           </div>
         </div>
-      </div>
-      
-      {/* 主编辑区 */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
+        
+        {/* 主编辑区 */}
+        <div className="flex-1 border border-slate-800 rounded-xl shadow-xl flex flex-col min-w-0 relative bg-slate-950 overflow-hidden">
         {/* 标签页栏 (Tab Bar) */}
         <div className="flex items-end bg-[#1e1e1e] pt-2 px-2 border-b border-gray-700 overflow-visible shrink-0 relative z-40">
           {openTabs.map(tab => (
@@ -334,32 +390,32 @@ export default function ScriptDev() {
         </div>
 
         {!activeScript ? (
-          <div className="flex-1 flex items-center justify-center text-gray-500 bg-[#1e1e1e]">
+          <div className="flex-1 flex items-center justify-center text-slate-500 bg-slate-950">
             <div className="text-center">
-              <Terminal className="w-12 h-12 mx-auto mb-4 opacity-20" />
-              <p>请在左侧选择一个脚本开始编辑，或点击上方 "+" 新建脚本</p>
+              <Terminal className="w-12 h-12 mx-auto mb-4 opacity-20 text-slate-400" />
+              <p className="text-slate-400">请在左侧选择一个脚本开始编辑，或点击上方 "+" 新建脚本</p>
             </div>
           </div>
         ) : (
           <>
             {/* 顶部工具栏 */}
-            <div className="h-10 border-b border-gray-700 bg-gray-800 flex items-center px-4 justify-between shrink-0">
+            <div className="h-10 border-b border-slate-800 bg-slate-900/80 flex items-center px-4 justify-between shrink-0 backdrop-blur-sm">
               <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-gray-200">
+                <span className="text-sm font-medium text-slate-200">
                   <input 
                     type="text" 
                     value={activeScript.name} 
                     onChange={(e) => setActiveScript({...activeScript, name: e.target.value})}
-                    className="bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                    className="bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-cyan-500 rounded px-1 min-w-[200px]"
                   />
                 </span>
 
                 {/* 动态数据源选择 */}
-                <div className="flex items-center gap-3 ml-6 border-l border-gray-700 pl-4">
+                <div className="flex items-center gap-3 ml-6 border-l border-slate-700 pl-4">
                   <select 
                     value={activeScript.dataSourceId || ''} 
                     onChange={handleDataSourceChange}
-                    className="bg-gray-900 border border-gray-700 rounded text-xs px-2 py-1 text-gray-300 outline-none"
+                    className="bg-slate-950 border border-slate-700 rounded text-xs px-2 py-1 text-slate-300 outline-none focus:border-cyan-500"
                   >
                     <option value="">选择数据源...</option>
                     {dataSources.map(ds => (
@@ -371,7 +427,7 @@ export default function ScriptDev() {
                     <select 
                       value={activeScript.dataSourceConfig?.queue || ''}
                       onChange={(e) => handleConfigChange('queue', e.target.value)}
-                      className="bg-gray-900 border border-gray-700 rounded text-xs px-2 py-1 text-gray-300 outline-none"
+                      className="bg-slate-950 border border-slate-700 rounded text-xs px-2 py-1 text-slate-300 outline-none focus:border-cyan-500"
                     >
                       <option value="">选择队列...</option>
                       <option value="default">default</option>
@@ -382,18 +438,17 @@ export default function ScriptDev() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={handleSave} className="p-1 hover:bg-gray-700 rounded text-gray-400 transition-colors" title="保存"><Save className="w-4 h-4" /></button>
-                <button onClick={handleRun} className="p-1 hover:bg-gray-700 rounded text-green-400 transition-colors" title="运行"><Play className="w-4 h-4" /></button>
-                <button className="p-1 hover:bg-gray-700 rounded text-red-400 transition-colors" title="停止"><Square className="w-4 h-4" /></button>
-                <button onClick={handlePublish} className="p-1 hover:bg-gray-700 rounded text-blue-400 transition-colors" title="发布"><Send className="w-4 h-4" /></button>
-                <button onClick={loadVersions} className="p-1 hover:bg-gray-700 rounded text-gray-400 transition-colors" title="历史版本"><History className="w-4 h-4" /></button>
+                <button onClick={handleSave} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition-colors" title="保存"><Save className="w-4 h-4" /></button>
+                <button onClick={handleRun} className="p-1 hover:bg-slate-800 rounded text-emerald-400 hover:text-emerald-300 transition-colors" title="运行"><Play className="w-4 h-4" /></button>
+                <button className="p-1 hover:bg-slate-800 rounded text-rose-400 hover:text-rose-300 transition-colors" title="停止"><Square className="w-4 h-4" /></button>
+                <button onClick={handlePublish} className="p-1 hover:bg-slate-800 rounded text-blue-400 hover:text-blue-300 transition-colors" title="发布"><Send className="w-4 h-4" /></button>
+                <button onClick={loadVersions} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200 transition-colors" title="历史版本"><History className="w-4 h-4" /></button>
                 
                 {/* 主题设置 —— 方案B：延迟关闭 */}
-                <div className="relative ml-2 border-l border-gray-700 pl-2">
+                <div className="relative ml-2 border-l border-slate-700 pl-2">
                   <button 
-                    onMouseEnter={openSettings}
-                    onMouseLeave={closeSettings}
-                    className="p-1 hover:bg-gray-700 rounded text-gray-400 transition-colors" 
+                    onClick={() => setShowSettings(!showSettings)}
+                    className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200 transition-colors" 
                     title="编辑器设置"
                   >
                     <Settings className="w-4 h-4" />
@@ -401,29 +456,27 @@ export default function ScriptDev() {
                   
                   {showSettings && (
                     <div 
-                      className="absolute right-0 top-full mt-1 w-40 bg-gray-800 border border-gray-700 rounded shadow-lg z-50 py-1"
-                      onMouseEnter={openSettings}
-                      onMouseLeave={closeSettings}
+                      className="absolute right-0 top-full mt-1 w-40 bg-slate-800 border border-slate-700 rounded shadow-xl z-50 py-1"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="px-3 py-1.5 text-xs text-gray-500 font-medium border-b border-gray-700">主题风格</div>
+                      <div className="px-3 py-1.5 text-xs text-slate-400 font-medium border-b border-slate-700/50 mb-1">主题风格</div>
                       <div 
-                        className={`px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm flex items-center justify-between ${editorTheme === 'vs-dark' ? 'text-blue-400' : 'text-gray-300'}`}
-                        onClick={() => { setEditorTheme('vs-dark'); setShowSettings(false); }}
+                        className={`px-4 py-2 hover:bg-slate-700 cursor-pointer text-sm flex items-center justify-between transition-colors ${editorTheme === 'vs-dark' ? 'text-cyan-400 bg-slate-700/30' : 'text-slate-300'}`}
+                        onClick={(e) => { e.stopPropagation(); setEditorTheme('vs-dark'); setShowSettings(false); }}
                       >
                         深色 (Dark) {editorTheme === 'vs-dark' && '✓'}
                       </div>
                       <div 
-                        className={`px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm flex items-center justify-between ${editorTheme === 'light' ? 'text-blue-400' : 'text-gray-300'}`}
-                        onClick={() => { setEditorTheme('light'); setShowSettings(false); }}
+                        className={`px-4 py-2 hover:bg-slate-700 cursor-pointer text-sm flex items-center justify-between transition-colors ${editorTheme === 'light' ? 'text-cyan-400 bg-slate-700/30' : 'text-slate-300'}`}
+                        onClick={(e) => { e.stopPropagation(); setEditorTheme('light'); setShowSettings(false); }}
                       >
                         浅色 (Light) {editorTheme === 'light' && '✓'}
                       </div>
                       <div 
-                        className={`px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm flex items-center justify-between ${editorTheme === 'hc-black' ? 'text-blue-400' : 'text-gray-300'}`}
-                        onClick={() => { setEditorTheme('hc-black'); setShowSettings(false); }}
+                        className={`px-4 py-2 hover:bg-slate-700 cursor-pointer text-sm flex items-center justify-between transition-colors ${editorTheme === 'hc-black' ? 'text-cyan-400 bg-slate-700/30' : 'text-slate-300'}`}
+                        onClick={(e) => { e.stopPropagation(); setEditorTheme('hc-black'); setShowSettings(false); }}
                       >
-                        高对比度 (High Contrast) {editorTheme === 'hc-black' && '✓'}
+                        高对比度 {editorTheme === 'hc-black' && '✓'}
                       </div>
                     </div>
                   )}
@@ -432,7 +485,38 @@ export default function ScriptDev() {
             </div>
             
             {/* 编辑器 */}
-            <div className="flex-1 min-h-0 relative">
+            <div className="flex-1 min-h-0 relative bg-slate-950">
+              {activeScript.content === '' && activeScript.name.startsWith('新建') && (
+                <div className="absolute inset-0 pointer-events-none z-10 flex flex-col items-center justify-center text-slate-500 opacity-60 bg-slate-950">
+                  <div className="mb-4 text-center">
+                    <p className="text-xl font-bold mb-4 text-slate-300">开始编写代码</p>
+                    <div className="text-sm space-y-2 bg-slate-900/60 p-6 rounded-xl border border-slate-800 backdrop-blur-md shadow-lg">
+                      <p className="flex justify-between gap-8">
+                        <span className="text-slate-400">当前脚本:</span> 
+                        <span className="text-cyan-400 font-mono">{activeScript.name}</span>
+                      </p>
+                      <p className="flex justify-between gap-8">
+                        <span className="text-slate-400">脚本类型:</span> 
+                        <span className="text-emerald-400 font-mono uppercase">{activeScript.type}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-12 mt-8 text-xs font-mono">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="px-3 py-1.5 bg-slate-800/80 rounded-md border border-slate-700 shadow-sm text-slate-300">Ctrl + S</div>
+                      <span className="text-slate-400">保存脚本</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="px-3 py-1.5 bg-slate-800/80 rounded-md border border-slate-700 shadow-sm text-slate-300">Ctrl + Enter</div>
+                      <span className="text-slate-400">运行脚本</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="px-3 py-1.5 bg-slate-800/80 rounded-md border border-slate-700 shadow-sm text-slate-300">Alt + Shift + F</div>
+                      <span className="text-slate-400">格式化代码</span>
+                    </div>
+                  </div>
+                </div>
+              )}
               <Editor
                 height="100%"
                 theme={editorTheme}
@@ -449,13 +533,13 @@ export default function ScriptDev() {
             </div>
             
             {/* 底部控制台 */}
-            <div className="h-48 border-t border-gray-700 bg-[#1e1e1e] flex flex-col shrink-0">
-              <div className="px-3 py-1 border-b border-gray-700 text-xs font-medium text-gray-400 flex items-center">
+            <div className="h-48 border-t border-slate-800 bg-slate-950 flex flex-col shrink-0">
+              <div className="px-3 py-1 border-b border-slate-800/60 bg-slate-900/50 text-xs font-medium text-slate-400 flex items-center">
                 控制台输出
               </div>
-              <div className="flex-1 p-2 overflow-y-auto font-mono text-xs text-gray-300">
+              <div className="flex-1 p-2 overflow-y-auto font-mono text-xs text-slate-300">
                 {consoleLogs.length === 0 ? (
-                  <span className="text-gray-600">No output yet...</span>
+                  <span className="text-slate-600">No output yet...</span>
                 ) : (
                   consoleLogs.map((log, i) => (
                     <div key={i} className="mb-1">{log}</div>
@@ -469,32 +553,42 @@ export default function ScriptDev() {
 
       {/* 版本管理弹窗 */}
       {showVersions && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 w-[600px] shadow-2xl border border-gray-700">
-            <h3 className="text-lg font-medium text-white mb-4">历史版本 - {activeScript?.name}</h3>
-            <div className="max-h-[400px] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-slate-950 rounded-xl p-6 w-[600px] shadow-2xl border border-slate-800">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">历史版本 - {activeScript?.name}</h3>
+              <button onClick={() => setShowVersions(false)} className="text-slate-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[400px] overflow-y-auto rounded-lg border border-slate-800 bg-slate-900/30">
               {versions.length === 0 ? (
-                <div className="text-center text-gray-500 py-8">暂无历史版本</div>
+                <div className="text-center text-slate-500 py-12">暂无历史版本</div>
               ) : (
-                versions.map(v => (
-                  <div key={v.id} className="flex justify-between border-b border-gray-700 p-3 hover:bg-gray-750">
-                    <div>
-                      <div className="text-sm text-blue-400 font-medium">版本 V{v.version}</div>
-                      <div className="text-sm text-gray-300 mt-1">{v.comment || '无备注'}</div>
-                      <div className="text-xs text-gray-500 mt-1">提交人: {v.creator}</div>
+                <div className="divide-y divide-slate-800/50">
+                  {versions.map(v => (
+                    <div key={v.id} className="flex justify-between p-4 hover:bg-slate-800/50 transition-colors">
+                      <div>
+                        <div className="text-sm text-cyan-400 font-medium">版本 V{v.version}</div>
+                        <div className="text-sm text-slate-300 mt-1">{v.comment || '无备注'}</div>
+                        <div className="text-xs text-slate-500 mt-2 flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-white">{v.creator.charAt(0)}</span>
+                          {v.creator}
+                        </div>
+                      </div>
+                      <div className="text-xs text-slate-400 flex flex-col items-end justify-between">
+                        <span>{v.createTime}</span>
+                        <button className="text-cyan-400 hover:text-cyan-300 transition-colors bg-cyan-500/10 px-2 py-1 rounded border border-cyan-500/20">查看代码</button>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-400 flex flex-col items-end justify-between">
-                      <span>{v.createTime}</span>
-                      <button className="text-blue-400 hover:text-blue-300 transition-colors">查看代码</button>
-                    </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
             <div className="mt-6 flex justify-end">
               <button 
                 onClick={() => setShowVersions(false)} 
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 transition-colors text-white rounded text-sm"
+                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors text-white rounded-lg text-sm shadow-lg"
               >
                 关闭
               </button>
@@ -502,6 +596,7 @@ export default function ScriptDev() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

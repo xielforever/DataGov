@@ -1,49 +1,71 @@
 import { useEffect, useState } from "react";
+import { Database, FileCheck, Layers, Code, ShieldCheck, Share2 } from "lucide-react";
 
 export default function DataGovernancePanel() {
-  const [activeFeature, setActiveFeature] = useState(0);
+  const [activeStep, setActiveStep] = useState(0);
 
-  const features = [
+  const workflowSteps = [
     {
-      title: "全链路数据血",
-      desc: "自动化解析SQL，构建从源端到报表端的端到端资产拓扑血缘",
-      icon: (
-        <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-        </svg>
-      ),
+      id: "integration",
+      title: "数据集成",
+      desc: "接入多源异构数据，实时/离线同步至数据湖或数仓",
+      icon: <Database className="w-5 h-5 text-cyan-400" />,
+      color: "from-cyan-500/20 to-transparent border-cyan-500/30",
+      activeColor: "bg-cyan-500/10 border-cyan-500 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.3)]",
     },
     {
-      title: "元数据与质量管理",
-      desc: "自动化资产盘点，智能探测质量隐患，保障企业级数据权威、合规与标准",
-      icon: (
-        <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-        </svg>
-      ),
+      id: "standard",
+      title: "数据标准",
+      desc: "定义国标/行标/企标字典，统一数据口径与码值规范",
+      icon: <FileCheck className="w-5 h-5 text-emerald-400" />,
+      color: "from-emerald-500/20 to-transparent border-emerald-500/30",
+      activeColor: "bg-emerald-500/10 border-emerald-500 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.3)]",
     },
     {
-      title: "一站式敏捷开发",
-      desc: "低代码/高代码融合调度平台，提供秒级监控告警，高效加速资产沉淀",
-      icon: (
-        <svg className="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-        </svg>
-      ),
+      id: "modeling",
+      title: "数据建模",
+      desc: "ODS/DWD/DIM/DWS/ADS 规范化分层，沉淀公共数据模型",
+      icon: <Layers className="w-5 h-5 text-blue-400" />,
+      color: "from-blue-500/20 to-transparent border-blue-500/30",
+      activeColor: "bg-blue-500/10 border-blue-500 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.3)]",
     },
+    {
+      id: "development",
+      title: "数据开发",
+      desc: "SQL/Python/Shell 在线脚本编写与工作流任务调度",
+      icon: <Code className="w-5 h-5 text-violet-400" />,
+      color: "from-violet-500/20 to-transparent border-violet-500/30",
+      activeColor: "bg-violet-500/10 border-violet-500 text-violet-300 shadow-[0_0_15px_rgba(139,92,246,0.3)]",
+    },
+    {
+      id: "quality",
+      title: "数据质量",
+      desc: "配置校验规则，实时监控异常数据并触发告警拦截",
+      icon: <ShieldCheck className="w-5 h-5 text-amber-400" />,
+      color: "from-amber-500/20 to-transparent border-amber-500/30",
+      activeColor: "bg-amber-500/10 border-amber-500 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.3)]",
+    },
+    {
+      id: "service",
+      title: "数据服务",
+      desc: "构建资产目录，生成 API 接口，实现数据共享与应用",
+      icon: <Share2 className="w-5 h-5 text-rose-400" />,
+      color: "from-rose-500/20 to-transparent border-rose-500/30",
+      activeColor: "bg-rose-500/10 border-rose-500 text-rose-300 shadow-[0_0_15px_rgba(244,63,114,0.3)]",
+    }
   ];
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % features.length);
-    }, 5000);
+      setActiveStep((prev) => (prev + 1) % workflowSteps.length);
+    }, 2000);
     return () => clearInterval(timer);
-  }, [features.length]);
+  }, [workflowSteps.length]);
 
   return (
-    <div className="hidden lg:flex flex-col justify-between p-12 relative h-full w-full max-w-2xl text-white">
+    <div className="hidden lg:flex flex-col justify-between p-12 relative h-full w-full max-w-2xl text-white mx-auto">
       {/* 顶部企业标志和标识的描述 */}
-      <div className="z-10 flex items-center gap-3">
+      <div className="z-10 flex items-center justify-start gap-3 pl-8">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 via-indigo-600 to-violet-600 shadow-xl shadow-cyan-500/30">
           <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <rect x="2" y="2" width="20" height="8" rx="2" />
@@ -52,7 +74,7 @@ export default function DataGovernancePanel() {
             <line x1="6" y1="18" x2="6.01" y2="18" />
           </svg>
         </div>
-        <div>
+        <div className="flex items-center">
           <span className="text-xl font-bold tracking-wider bg-gradient-to-r from-white via-slate-200 to-cyan-300 bg-clip-text text-transparent">
             DGP-Studio
           </span>
@@ -62,124 +84,72 @@ export default function DataGovernancePanel() {
         </div>
       </div>
 
-      {/* 中间酷炫的血缘动态网SVG */}
-      <div className="z-10 relative flex-1 flex items-center justify-center my-8">
-        <div className="absolute inset-0 flex items-center justify-center opacity-60">
-          {/* 血缘网络流动图 */}
-          <svg width="420" height="280" viewBox="0 0 420 280" className="text-slate-500 select-none">
-            {/* 连线与动画效果 */}
-            <defs>
-              <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.1" />
-                <stop offset="50%" stopColor="#06b6d4" stopOpacity="0.6" />
-                <stop offset="100%" stopColor="#a78bfa" stopOpacity="0.1" />
-              </linearGradient>
-
-              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="5" result="blur" />
-                <feComposite in="SourceGraphic" in2="blur" operator="over" />
-              </filter>
-            </defs>
-
-            {/* Paths */}
-            <path d="M 40,80 Q 140,40 210,140" fill="none" stroke="url(#lineGrad)" strokeWidth="2" />
-            <path d="M 40,200 Q 140,240 210,140" fill="none" stroke="url(#lineGrad)" strokeWidth="2" />
-            <path d="M 210,140 L 340,60" fill="none" stroke="url(#lineGrad)" strokeWidth="2" />
-            <path d="M 210,140 L 340,220" fill="none" stroke="url(#lineGrad)" strokeWidth="2" />
-
-            {/* 流动的数据包粒子 */}
-            <circle r="4" fill="#22d3ee" filter="url(#glow)">
-              <animateMotion
-                dur="4s"
-                repeatCount="indefinite"
-                path="M 40,80 Q 140,40 210,140"
-              />
-            </circle>
-            <circle r="4" fill="#34d399" filter="url(#glow)">
-              <animateMotion
-                dur="3s"
-                repeatCount="indefinite"
-                path="M 40,200 Q 140,240 210,140"
-              />
-            </circle>
-            <circle r="4" fill="#a78bfa" filter="url(#glow)">
-              <animateMotion
-                dur="5s"
-                repeatCount="indefinite"
-                path="M 210,140 L 340,60"
-              />
-            </circle>
-
-            {/* 节点 A: 业务源库 */}
-            <g transform="translate(40, 80)">
-              <rect x="-30" y="-15" width="60" height="30" rx="6" fill="#1e293b" stroke="#06b6d4" strokeWidth="2" className="animate-pulse" />
-              <text y="5" textAnchor="middle" fill="#e2e8f0" fontSize="10">源数据库</text>
-            </g>
-
-            {/* 节点 B: 埋点源端 */}
-            <g transform="translate(40, 200)">
-              <rect x="-30" y="-15" width="60" height="30" rx="6" fill="#1e293b" stroke="#10b981" strokeWidth="1.5" />
-              <text y="5" textAnchor="middle" fill="#e2e8f0" fontSize="10">埋点日志</text>
-            </g>
-
-            {/* 节点 C: 数据治理中心 (ODS -> DWD -> DWS) */}
-            <g transform="translate(210, 140)">
-              <circle r="32" fill="#0f172a" stroke="#8b5cf6" strokeWidth="3" filter="url(#glow)" className="animate-spin-slow" style={{ animationDuration: '10s' }} />
-              <text y="4" textAnchor="middle" fill="#a78bfa" fontSize="12" fontWeight="bold">DW汇聚</text>
-            </g>
-
-            {/* 节点 D: 财务报表看板 */}
-            <g transform="translate(340, 60)">
-              <rect x="-30" y="-15" width="60" height="30" rx="6" fill="#1e293b" stroke="#0284c7" strokeWidth="1.5" />
-              <text y="5" textAnchor="middle" fill="#cbd5e1" fontSize="10">BI报表</text>
-            </g>
-
-            {/* 节点 E: 开放服务API */}
-            <g transform="translate(340, 220)">
-              <rect x="-30" y="-15" width="60" height="30" rx="6" fill="#1e293b" stroke="#0284c7" strokeWidth="1.5" />
-              <text y="5" textAnchor="middle" fill="#cbd5e1" fontSize="10">API资产</text>
-            </g>
-          </svg>
+      {/* 中间核心业务流程图展示 */}
+      <div className="z-10 relative flex-1 flex flex-col justify-center my-8">
+        <div className="mb-8 text-left pl-8">
+          <h2 className="text-2xl font-bold text-white mb-2 tracking-wide">端到端数据开发与治理流程</h2>
+          <p className="text-sm text-slate-400">将零散数据转化为高质量企业资产的全生命周期管理</p>
         </div>
+        
+        <div className="relative w-full max-w-xl mx-auto">
+          {/* 连接底层路径的动态线条 */}
+          <div className="absolute left-[38px] top-8 bottom-8 w-[2px] bg-slate-800 rounded-full z-0 overflow-hidden">
+            <div 
+              className="absolute top-0 left-0 w-full bg-gradient-to-b from-transparent via-cyan-400 to-transparent h-24 animate-pulse"
+              style={{
+                top: `${(activeStep / (workflowSteps.length - 1)) * 100}%`,
+                transform: 'translateY(-50%)',
+                transition: 'top 0.5s ease-in-out'
+              }}
+            />
+          </div>
 
-        {/* 动态数字统计浮'*/}
-        <div className="absolute top-10 right-20 bg-slate-900/40 border border-slate-700/50 backdrop-blur-md px-4 py-2 rounded-xl animate-float1">
-          <div className="text-xs text-slate-400">元数据资'</div>
-          <div className="text-xl font-bold text-cyan-400 tracking-wider">12,482 <span className="text-xs text-slate-500 font-normal">个</span></div>
-        </div>
-        <div className="absolute bottom-10 left-20 bg-slate-900/40 border border-slate-700/50 backdrop-blur-md px-4 py-2 rounded-xl animate-float3">
-          <div className="text-xs text-slate-400">运行健康'</div>
-          <div className="text-xl font-bold text-emerald-400 tracking-wider">99.85%</div>
+          <div className="flex flex-col gap-4 relative z-10">
+            {workflowSteps.map((step, idx) => {
+              const isActive = activeStep === idx;
+              const isPast = activeStep > idx;
+              
+              return (
+                <div 
+                  key={step.id} 
+                  className={`flex items-center gap-6 cursor-pointer group transition-all duration-300 ${isActive ? 'scale-105 transform origin-left' : 'opacity-60 hover:opacity-100'}`}
+                  onClick={() => setActiveStep(idx)}
+                >
+                  {/* 左侧节点图标 */}
+                  <div className={`w-20 flex justify-end shrink-0 transition-all duration-300 ${isActive ? 'pr-0' : 'pr-2'}`}>
+                    <div className={`flex items-center justify-center w-12 h-12 rounded-xl border-2 transition-all duration-500 relative bg-slate-900 ${isActive ? step.activeColor : isPast ? 'border-slate-600 text-slate-400' : 'border-slate-800 text-slate-600'}`}>
+                      {step.icon}
+                      {isActive && (
+                        <div className="absolute inset-0 rounded-xl bg-current opacity-20 animate-ping" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 右侧内容卡片 */}
+                  <div className={`flex-1 p-4 rounded-xl border bg-gradient-to-r transition-all duration-500 ${isActive ? `${step.color} bg-slate-900/80 backdrop-blur-md` : 'border-slate-800/50 bg-slate-900/30'}`}>
+                    <h3 className={`text-base font-bold mb-1 transition-colors ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                      0{idx + 1}. {step.title}
+                    </h3>
+                    <p className={`text-xs leading-relaxed transition-colors ${isActive ? 'text-slate-300' : 'text-slate-500'}`}>
+                      {step.desc}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* 底部产品亮点轮播 */}
-      <div className="z-10 bg-slate-900/30 border border-white/5 backdrop-blur-md p-6 rounded-2xl">
-        <div className="flex gap-4">
-          {features.map((feat, idx) => (
-            <button
-              key={idx}
-              onClick={() => setActiveFeature(idx)}
-              className={`flex-1 text-left p-3 rounded-xl transition-all duration-300 border ${
-                activeFeature === idx
-                  ? "bg-white/5 border-white/10 shadow-lg"
-                  : "border-transparent opacity-40 hover:opacity-70"
-              }`}
-            >
-              <div className="mb-2">{feat.icon}</div>
-              <h3 className="text-sm font-semibold mb-1">{feat.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
-                {feat.desc}
-              </p>
-            </button>
-          ))}
-        </div>
-        <div className="mt-4 flex justify-center gap-1.5">
-          {features.map((_, idx) => (
+      {/* 底部信息 (保持原样风格，或者替换为一句话) */}
+      <div className="z-10 bg-slate-900/30 border border-white/5 backdrop-blur-md px-6 py-4 rounded-2xl flex items-center justify-between text-sm text-slate-400">
+        <span>构建可信、可视、可用、可管的数据资产体系</span>
+        <div className="flex gap-2">
+          {workflowSteps.map((_, idx) => (
             <div
               key={idx}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                activeFeature === idx ? "w-6 bg-cyan-400" : "w-1.5 bg-white/20"
+                activeStep === idx ? "w-6 bg-cyan-400" : "w-1.5 bg-white/20"
               }`}
             />
           ))}

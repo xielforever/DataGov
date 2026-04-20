@@ -17,7 +17,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarCollapsed, onLogout }) => {
 
   return (
     <header
-      className={`fixed top-0 right-0 h-16 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700 z-30 transition-all duration-300 ${
+      className={`fixed top-0 right-0 h-16 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700 z-50 transition-all duration-300 ${
         sidebarCollapsed ? 'left-16' : 'left-64'
       }`}
     >

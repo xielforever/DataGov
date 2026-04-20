@@ -264,7 +264,7 @@ export default function DataModeling() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <Breadcrumb items={[{ label: "数据开发" }, { label: "数据建模" }]} />
@@ -279,47 +279,50 @@ export default function DataModeling() {
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
         </div>
       ) : (
-        <div className="flex h-[calc(100vh-200px)] gap-6">
+        <div className="flex h-[calc(100vh-12rem)] bg-slate-900 text-slate-300 overflow-hidden rounded-lg shadow-xl border border-slate-800">
           {/* Left Sidebar - Domains */}
-          <div className="w-64 shrink-0 rounded-xl border border-slate-800 bg-slate-900/40 flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-slate-800 bg-slate-900/60 flex items-center gap-2">
-              <FolderTree className="h-5 w-5 text-blue-400" />
-              <h3 className="font-semibold text-white">业务域</h3>
+          <div className="w-64 border-r border-slate-800 flex flex-col shrink-0 bg-slate-900/50">
+            <div className="p-3 border-b border-slate-800 font-medium text-slate-200 flex items-center gap-2 bg-slate-900/80">
+              <FolderTree className="h-4 w-4 text-cyan-500" />
+              <span className="text-sm">业务域</span>
             </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-1">
+            <div className="flex-1 overflow-y-auto py-2 px-2 custom-scrollbar">
               <button
                 onClick={() => setSelectedDomain("all")}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                  selectedDomain === "all" ? "bg-blue-500/20 text-blue-400 font-medium" : "text-slate-300 hover:bg-slate-800/50"
+                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition-colors mb-1 ${
+                  selectedDomain === "all" ? "bg-cyan-500/10 text-cyan-400 font-medium border border-cyan-500/20" : "text-slate-400 hover:bg-slate-800/80 hover:text-slate-200 border border-transparent"
                 }`}
               >
-                <span>全部业务域</span>
-                <span className="text-xs bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">
+                <span className="truncate">全部业务域</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${selectedDomain === "all" ? "bg-cyan-500/20 text-cyan-400" : "bg-slate-800 text-slate-500"}`}>
                   {(models || []).length}
                 </span>
               </button>
-              {domains.map(domain => {
-                const count = (models || []).filter(m => (m.domain || "未分类") === domain).length;
-                return (
-                  <button
-                    key={domain}
-                    onClick={() => setSelectedDomain(domain)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                      selectedDomain === domain ? "bg-blue-500/20 text-blue-400 font-medium" : "text-slate-300 hover:bg-slate-800/50"
-                    }`}
-                  >
-                    <span>{domain}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded ${selectedDomain === domain ? "bg-blue-500/20 text-blue-400" : "bg-slate-800 text-slate-400"}`}>
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
+              
+              <div className="mt-2 pt-2 border-t border-slate-800/80 space-y-0.5">
+                {domains.map(domain => {
+                  const count = (models || []).filter(m => (m.domain || "未分类") === domain).length;
+                  return (
+                    <button
+                      key={domain}
+                      onClick={() => setSelectedDomain(domain)}
+                      className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition-colors group ${
+                        selectedDomain === domain ? "bg-cyan-500/10 text-cyan-400 font-medium border border-cyan-500/20" : "text-slate-400 hover:bg-slate-800/80 hover:text-slate-200 border border-transparent"
+                      }`}
+                    >
+                      <span className="truncate">{domain}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${selectedDomain === domain ? "bg-cyan-500/20 text-cyan-400" : "bg-slate-800 text-slate-500 group-hover:text-slate-400"}`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* Right Main Content */}
-          <div className="flex-1 flex flex-col min-w-0 rounded-xl border border-slate-800 bg-slate-900/20 overflow-hidden shadow-lg">
+          <div className="flex-1 flex flex-col min-w-0 relative bg-slate-950">
             {/* Tabs */}
             <div className="flex items-center px-4 pt-2 border-b border-slate-800 bg-slate-900/60 gap-6">
               {["ODS", "DWD", "DIM", "DWS", "ADS"].map(layer => {

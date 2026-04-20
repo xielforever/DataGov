@@ -58,7 +58,7 @@ export default function TaskOrchestration() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: '数据开' }, { label: '任务编排' }]} />
+      <Breadcrumb items={[{ label: '数据开发' }, { label: '任务编排' }]} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">任务编排</h1>
         <div className="flex gap-3">
