@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 interface HeaderProps {
   sidebarCollapsed: boolean;
   onLogout: () => void;
+  onOpenSidebar: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ sidebarCollapsed, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ sidebarCollapsed, onLogout, onOpenSidebar }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -17,15 +18,25 @@ const Header: React.FC<HeaderProps> = ({ sidebarCollapsed, onLogout }) => {
 
   return (
     <header
-      className={`fixed top-0 right-0 h-16 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700 z-50 transition-all duration-300 ${
-        sidebarCollapsed ? 'left-16' : 'left-64'
+      className={`fixed top-0 right-0 left-0 h-16 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700 z-50 transition-all duration-300 ${
+        sidebarCollapsed ? 'lg:left-16' : 'lg:left-64'
       }`}
     >
-      <div className="h-full px-6 flex items-center justify-between">
+      <div className="h-full px-3 sm:px-4 lg:px-6 flex items-center justify-between gap-3">
         {/* Left: Search & Breadcrumb */}
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3 lg:gap-4">
+          <button
+            type="button"
+            onClick={onOpenSidebar}
+            aria-label="打开侧边栏"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-800/70 text-slate-300 transition-colors hover:border-cyan-500/50 hover:text-white lg:hidden"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
           {/* Search */}
-          <div className="relative">
+          <div className="relative min-w-0 flex-1 sm:max-w-sm lg:max-w-none lg:flex-none">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"
               fill="none"
@@ -42,18 +53,18 @@ const Header: React.FC<HeaderProps> = ({ sidebarCollapsed, onLogout }) => {
             <input
               type="text"
               placeholder="搜索数据表、字段、任务..."
-              className="w-80 pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+              className="w-full lg:w-80 pl-10 pr-4 sm:pr-14 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-0.5 text-xs bg-slate-700 text-slate-400 rounded">
+            <kbd className="absolute right-3 top-1/2 hidden -translate-y-1/2 px-2 py-0.5 text-xs bg-slate-700 text-slate-400 rounded sm:block">
               ⌘K
             </kbd>
           </div>
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3 lg:gap-4">
           {/* Quick Actions */}
-          <button className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+          <button type="button" aria-label="新建快捷操作" className="hidden p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors sm:block">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
@@ -62,7 +73,9 @@ const Header: React.FC<HeaderProps> = ({ sidebarCollapsed, onLogout }) => {
           {/* Notifications */}
           <div className="relative">
             <button
+              type="button"
               onClick={() => setShowNotifications(!showNotifications)}
+              aria-label="通知中心"
               className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors relative"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,10 +91,10 @@ const Header: React.FC<HeaderProps> = ({ sidebarCollapsed, onLogout }) => {
 
             {/* Notifications Dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-96 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+              <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-96 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
                 <div className="p-4 border-b border-slate-700 flex items-center justify-between">
                   <h3 className="text-white font-semibold">通知中心</h3>
-                  <button className="text-xs text-cyan-400 hover:text-cyan-300">全部已读</button>
+                  <button type="button" className="text-xs text-cyan-400 hover:text-cyan-300">全部已读</button>
                 </div>
                 <div className="max-h-80 overflow-y-auto">
                   {notifications.map(notif => (
@@ -109,14 +122,14 @@ const Header: React.FC<HeaderProps> = ({ sidebarCollapsed, onLogout }) => {
                   ))}
                 </div>
                 <div className="p-3 border-t border-slate-700 text-center">
-                  <button className="text-sm text-cyan-400 hover:text-cyan-300">查看全部通知</button>
+                  <button type="button" className="text-sm text-cyan-400 hover:text-cyan-300">查看全部通知</button>
                 </div>
               </div>
             )}
           </div>
 
           {/* Help */}
-          <button className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+          <button type="button" aria-label="帮助" className="hidden p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors sm:block">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -133,7 +146,9 @@ const Header: React.FC<HeaderProps> = ({ sidebarCollapsed, onLogout }) => {
           {/* User Menu */}
           <div className="relative">
             <button
+              type="button"
               onClick={() => setShowUserMenu(!showUserMenu)}
+              aria-label="用户菜单"
               className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-semibold">
@@ -146,7 +161,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarCollapsed, onLogout }) => {
 
             {/* User Dropdown */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-56 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+              <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-56 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
                 <div className="p-4 border-b border-slate-700">
                   <p className="text-white font-medium">张三丰</p>
                   <p className="text-slate-400 text-sm">zhangsanfeng@company.com</p>

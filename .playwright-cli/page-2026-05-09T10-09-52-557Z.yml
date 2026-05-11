@@ -1,0 +1,186 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e158]:
+      - generic [ref=e159]:
+        - generic [ref=e160]:
+          - img [ref=e162]
+          - generic [ref=e164]: DataGov
+        - button [ref=e165]:
+          - img [ref=e166]
+      - navigation [ref=e168]:
+        - list [ref=e169]:
+          - listitem [ref=e170]:
+            - button "工作台" [ref=e171]:
+              - img [ref=e173]
+              - generic [ref=e175]: 工作台
+          - listitem [ref=e176]:
+            - button "数据资产" [ref=e177]:
+              - img [ref=e179]
+              - generic [ref=e181]: 数据资产
+              - img [ref=e182]
+            - list [ref=e184]:
+              - listitem [ref=e185]:
+                - button "资产总览" [ref=e186]
+              - listitem [ref=e187]:
+                - button "资产注册" [ref=e188]
+              - listitem [ref=e189]:
+                - button "数据目录" [ref=e190]
+              - listitem [ref=e191]:
+                - button "数据地图" [ref=e192]
+              - listitem [ref=e193]:
+                - button "数据血缘" [ref=e194]
+              - listitem [ref=e195]:
+                - button "数据源管理" [ref=e196]
+          - listitem [ref=e197]:
+            - button "元数据管理" [ref=e198]:
+              - img [ref=e200]
+              - generic [ref=e202]: 元数据管理
+              - img [ref=e203]
+          - listitem [ref=e205]:
+            - button "数据标准" [ref=e206]:
+              - img [ref=e208]
+              - generic [ref=e210]: 数据标准
+              - img [ref=e211]
+          - listitem [ref=e213]:
+            - button "数据质量 3" [ref=e214]:
+              - img [ref=e216]
+              - generic [ref=e218]: 数据质量
+              - generic [ref=e219]: "3"
+              - img [ref=e220]
+          - listitem [ref=e222]:
+            - button "数据安全" [ref=e223]:
+              - img [ref=e225]
+              - generic [ref=e227]: 数据安全
+              - img [ref=e228]
+          - listitem [ref=e230]:
+            - button "数据开发" [ref=e231]:
+              - img [ref=e233]
+              - generic [ref=e235]: 数据开发
+              - img [ref=e236]
+            - list [ref=e1057]:
+              - listitem [ref=e1058]:
+                - button "数据建模" [ref=e1059]
+              - listitem [ref=e1060]:
+                - button "任务开发" [ref=e1061]
+              - listitem [ref=e1062]:
+                - button "脚本开发" [ref=e1063]
+              - listitem [ref=e1064]:
+                - button "任务编排" [ref=e1065]
+              - listitem [ref=e1066]:
+                - button "任务调度" [ref=e1067]
+              - listitem [ref=e1068]:
+                - button "实时计算" [ref=e1069]
+              - listitem [ref=e1070]:
+                - button "数据同步" [ref=e1071]
+              - listitem [ref=e1072]:
+                - button "任务运维" [ref=e1073]
+              - listitem [ref=e1074]:
+                - button "资源管理" [ref=e1075]
+          - listitem [ref=e238]:
+            - button "数据服务" [ref=e239]:
+              - img [ref=e241]
+              - generic [ref=e243]: 数据服务
+              - img [ref=e244]
+          - listitem [ref=e246]:
+            - button "审批中心" [ref=e247]:
+              - img [ref=e249]
+              - generic [ref=e251]: 审批中心
+              - img [ref=e252]
+          - listitem [ref=e254]:
+            - button "系统管理" [ref=e255]:
+              - img [ref=e257]
+              - generic [ref=e260]: 系统管理
+              - img [ref=e261]
+    - banner [ref=e263]:
+      - generic [ref=e264]:
+        - generic [ref=e266]:
+          - img [ref=e267]
+          - textbox "搜索数据表、字段、任务..." [ref=e269]
+          - generic [ref=e270]: ⌘K
+        - generic [ref=e271]:
+          - button [ref=e272]:
+            - img [ref=e273]
+          - button [ref=e276]:
+            - img [ref=e277]
+          - button [ref=e280]:
+            - img [ref=e281]
+          - button "张" [ref=e285]:
+            - generic [ref=e286]: 张
+            - img [ref=e287]
+    - main [ref=e289]:
+      - generic [ref=e1076]:
+        - generic [ref=e1077]:
+          - generic [ref=e1079]: 数据开发
+          - generic [ref=e1080]:
+            - img [ref=e1081]
+            - generic [ref=e1083]: 脚本开发
+        - generic [ref=e1084]:
+          - heading "脚本开发" [level=1] [ref=e1085]
+          - generic [ref=e1086]:
+            - button "运行历史" [ref=e1087]
+            - button "环境变量" [ref=e1088]
+        - generic [ref=e1089]:
+          - generic [ref=e1090]:
+            - generic [ref=e1091]:
+              - generic [ref=e1092]:
+                - img [ref=e1093]
+                - text: 脚本目录
+              - generic [ref=e1095]:
+                - button "新建文件夹" [ref=e1096]:
+                  - img [ref=e1097]
+                - button "新建脚本" [ref=e1099]:
+                  - img [ref=e1100]
+            - generic [ref=e1102]:
+              - generic [ref=e1103] [cursor=pointer]:
+                - img [ref=e1122]
+                - img [ref=e1124]
+                - generic [ref=e1110]: 数据清洗
+                - generic [ref=e1111]: "1"
+              - generic [ref=e1127] [cursor=pointer]:
+                - img [ref=e1129]
+                - generic "user_data_clean" [ref=e1133]
+          - generic [ref=e1112]:
+            - generic [ref=e1113]:
+              - generic [ref=e1134] [cursor=pointer]:
+                - img [ref=e1135]
+                - generic [ref=e1139]: user_data_clean
+                - img [ref=e1140]
+              - img [ref=e1116] [cursor=pointer]
+            - generic [ref=e1143]:
+              - generic [ref=e1144]:
+                - textbox [ref=e1146]: user_data_clean
+                - combobox [ref=e1148]:
+                  - option "选择数据源..." [selected]
+                  - option "prod_order_db (MySQL)"
+                  - option "prod_user_db (PostgreSQL)"
+                  - option "dw_hive_cluster (Hive)"
+                  - option "realtime_clickhouse (ClickHouse)"
+                  - option "log_kafka_cluster (Kafka)"
+                  - option "risk_redis_cluster (Redis)"
+                  - option "dev_order_db (MySQL)"
+                  - option "search_es_cluster (Elasticsearch)"
+              - generic [ref=e1149]:
+                - button "保存" [ref=e1150]:
+                  - img [ref=e1151]
+                - button "运行" [ref=e1155]:
+                  - img [ref=e1156]
+                - button "停止" [ref=e1158]:
+                  - img [ref=e1159]
+                - button "发布" [ref=e1161]:
+                  - img [ref=e1162]
+                - button "历史版本" [ref=e1165]:
+                  - img [ref=e1166]
+                - button "编辑器设置" [ref=e1171]:
+                  - img [ref=e1172]
+            - code [ref=e1178]:
+              - generic [ref=e1179]:
+                - textbox "Editor content" [ref=e1180]
+                - textbox [ref=e1181]
+                - generic [ref=e1186]: "1"
+                - generic [ref=e1192]: SELECT * FROM users;
+            - generic [ref=e1194]:
+              - generic [ref=e1195]: 控制台输出
+              - generic [ref=e1196]: No output yet...
+  - generic [ref=e1197]:
+    - alert
+    - alert

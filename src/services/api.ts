@@ -19,6 +19,125 @@ export const fetchDashboardRecentTables = () => fetchJson('/dashboard/recent-tab
 export const fetchDashboardQualityTrends = () => fetchJson('/dashboard/quality-trends').catch(() => []);
 export const fetchDashboardTasks = () => fetchJson('/dashboard/tasks').catch(() => []);
 
+// Data Quality
+export const fetchQualityRules = () => fetchJson('/quality/rules');
+export const createQualityRule = (data: any) => fetchJson('/quality/rules', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const updateQualityRuleStatus = (id: string, status: string) => fetchJson(`/quality/rules/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchQualityRuleTemplates = () => fetchJson('/quality/rule-templates');
+export const fetchQualityCheckBatches = () => fetchJson('/quality/check-batches');
+export const fetchQualityCheckIssues = (batchId?: string) => fetchJson(batchId ? `/quality/check-issues?batchId=${batchId}` : '/quality/check-issues');
+export const createQualityCheckBatch = (data: any) => fetchJson('/quality/check-batches', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const updateQualityIssueStatus = (id: string, status: string) => fetchJson(`/quality/check-issues/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchQualityMonitorOverview = () => fetchJson('/quality/monitor-overview');
+export const fetchQualityMonitorTrends = () => fetchJson('/quality/monitor-trends');
+export const fetchQualityMonitorAlerts = () => fetchJson('/quality/monitor-alerts');
+export const fetchQualityMonitorRuleHealth = () => fetchJson('/quality/monitor-rule-health');
+export const updateQualityMonitorAlertStatus = (id: string, status: string) => fetchJson(`/quality/monitor-alerts/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchQualityReportOverview = () => fetchJson('/quality/report-overview');
+export const fetchQualityReportTrends = () => fetchJson('/quality/report-trends');
+export const fetchQualityReportDomains = () => fetchJson('/quality/report-domains');
+export const fetchQualityReportIssues = () => fetchJson('/quality/report-issues');
+export const fetchQualityReportRemediation = () => fetchJson('/quality/report-remediation');
+export const fetchQualityReportReports = () => fetchJson('/quality/reports');
+export const createQualityReport = (data: any) => fetchJson('/quality/reports', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const exportQualityReport = (id: string) => fetchJson(`/quality/reports/${id}/export`, {
+  method: 'POST'
+});
+
+// Data Security
+export const fetchSecurityLevelOverview = () => fetchJson('/security/level-overview');
+export const fetchSecurityLevelDistribution = () => fetchJson('/security/level-distribution');
+export const fetchSecurityLevelRules = () => fetchJson('/security/level-rules');
+export const fetchSecurityLevelAssets = () => fetchJson('/security/level-assets');
+export const fetchSecurityLevelReviews = () => fetchJson('/security/level-reviews');
+export const updateSecurityLevelReviewStatus = (id: string, status: string) => fetchJson(`/security/level-reviews/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchSensitiveScanOverview = () => fetchJson('/security/sensitive-scan-overview');
+export const fetchSensitiveScanTasks = () => fetchJson('/security/sensitive-scan-tasks');
+export const fetchSensitiveScanRules = () => fetchJson('/security/sensitive-scan-rules');
+export const fetchSensitiveScanFindings = () => fetchJson('/security/sensitive-scan-findings');
+export const createSensitiveScanTask = (data: any) => fetchJson('/security/sensitive-scan-tasks', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const updateSensitiveFindingStatus = (id: string, status: string) => fetchJson(`/security/sensitive-scan-findings/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchDataMaskOverview = () => fetchJson('/security/data-mask-overview');
+export const fetchDataMaskPolicies = () => fetchJson('/security/data-mask-policies');
+export const fetchDataMaskRules = () => fetchJson('/security/data-mask-rules');
+export const fetchDataMaskValidations = () => fetchJson('/security/data-mask-validations');
+export const updateDataMaskPolicyStatus = (id: string, status: string) => fetchJson(`/security/data-mask-policies/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchAccessControlOverview = () => fetchJson('/security/access-overview');
+export const fetchAccessControlPolicies = () => fetchJson('/security/access-policies');
+export const fetchAccessControlApplications = () => fetchJson('/security/access-applications');
+export const fetchAccessControlGrants = () => fetchJson('/security/access-grants');
+export const fetchAccessControlRisks = () => fetchJson('/security/access-risks');
+export const processAccessApplication = (id: string, action: 'approve' | 'reject') => fetchJson(`/security/access-applications/${id}/process`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ action })
+});
+export const revokeAccessGrant = (id: string) => fetchJson(`/security/access-grants/${id}/revoke`, {
+  method: 'POST'
+});
+export const fetchAuditLogOverview = () => fetchJson('/security/audit-overview');
+export const fetchAuditLogEvents = (params?: { keyword?: string; result?: string; risk?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.result) search.set('result', params.result);
+  if (params?.risk) search.set('risk', params.risk);
+  const query = search.toString();
+  return fetchJson(query ? `/security/audit-events?${query}` : '/security/audit-events');
+};
+export const fetchAuditLogRisks = () => fetchJson('/security/audit-risks');
+export const updateAuditLogRiskStatus = (id: string, status: string) => fetchJson(`/security/audit-risks/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchAuditLogExports = () => fetchJson('/security/audit-exports');
+export const createAuditLogExport = (data: any) => fetchJson('/security/audit-exports', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const fetchAuditLogRetentionPolicies = () => fetchJson('/security/audit-retention-policies');
+
 // Asset Overview
 export const fetchAssetCoreMetrics = () => fetchJson('/assets/core-metrics');
 export const fetchAssetLayerDistribution = () => fetchJson('/assets/layer-distribution');
@@ -28,6 +147,8 @@ export const fetchAssetGrowthTrend = () => fetchJson('/assets/growth-trend');
 export const fetchAssetHealthMetrics = () => fetchJson('/assets/health-metrics');
 export const fetchAssetHotAssets = () => fetchJson('/assets/hot-assets');
 export const fetchAssetPendingItems = () => fetchJson('/assets/pending-items');
+export const fetchAssetCatalog = () => fetchJson('/assets/catalog');
+export const fetchAssetRegisterOptions = () => fetchJson('/assets/register-options');
 export const fetchLineageData = (center?: string) => fetchJson(center ? `/assets/lineage?center=${center}` : '/assets/lineage');
 export const fetchMapData = () => fetchJson('/assets/map');
 
@@ -172,6 +293,195 @@ export const applyModelSync = (id: string, reason: string) => fetchJson(`/develo
   body: JSON.stringify({ reason })
 });
 export const fetchModelSyncLogs = (id: string) => fetchJson(`/development/models/${id}/sync-logs`);
+export const fetchTaskScheduleOverview = () => fetchJson('/development/task-schedule-overview');
+export const fetchTaskSchedules = (params?: { keyword?: string; status?: string; cycle?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.status) search.set('status', params.status);
+  if (params?.cycle) search.set('cycle', params.cycle);
+  const query = search.toString();
+  return fetchJson(query ? `/development/task-schedules?${query}` : '/development/task-schedules');
+};
+export const updateTaskScheduleStatus = (id: string, status: string) => fetchJson(`/development/task-schedules/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const runTaskSchedule = (id: string) => fetchJson(`/development/task-schedules/${id}/run`, {
+  method: 'POST'
+});
+export const fetchTaskScheduleDependencies = () => fetchJson('/development/task-schedule-dependencies');
+export const fetchTaskScheduleCalendars = () => fetchJson('/development/task-schedule-calendars');
+export const fetchTaskScheduleBackfills = () => fetchJson('/development/task-schedule-backfills');
+export const createTaskScheduleBackfill = (data: any) => fetchJson('/development/task-schedule-backfills', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const fetchTaskOpsOverview = () => fetchJson('/development/task-ops-overview');
+export const fetchTaskOpsInstances = (params?: { keyword?: string; status?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.status) search.set('status', params.status);
+  const query = search.toString();
+  return fetchJson(query ? `/development/task-ops-instances?${query}` : '/development/task-ops-instances');
+};
+export const rerunTaskInstance = (id: string) => fetchJson(`/development/task-ops-instances/${id}/rerun`, {
+  method: 'POST'
+});
+export const stopTaskInstance = (id: string) => fetchJson(`/development/task-ops-instances/${id}/stop`, {
+  method: 'POST'
+});
+export const fetchTaskOpsLogs = (instanceId?: string) => fetchJson(instanceId ? `/development/task-ops-logs?instanceId=${instanceId}` : '/development/task-ops-logs');
+export const fetchTaskOpsRecoveryPlans = () => fetchJson('/development/task-ops-recovery-plans');
+export const updateTaskOpsRecoveryPlanStatus = (id: string, status: string) => fetchJson(`/development/task-ops-recovery-plans/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchTaskOpsAlerts = () => fetchJson('/development/task-ops-alerts');
+export const updateTaskOpsAlertStatus = (id: string, status: string) => fetchJson(`/development/task-ops-alerts/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchTaskOpsQueues = () => fetchJson('/development/task-ops-queues');
+
+// System Management
+export const fetchUserManageOverview = () => fetchJson('/system/user-overview');
+export const fetchSystemUsers = (params?: { keyword?: string; status?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.status) search.set('status', params.status);
+  const query = search.toString();
+  return fetchJson(query ? `/system/users?${query}` : '/system/users');
+};
+export const updateSystemUserStatus = (id: string, status: string) => fetchJson(`/system/users/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchUserLoginPolicies = () => fetchJson('/system/user-login-policies');
+export const fetchUserOrgBindings = () => fetchJson('/system/user-org-bindings');
+export const fetchUserRiskAccounts = () => fetchJson('/system/user-risk-accounts');
+export const updateUserRiskAccountStatus = (id: string, status: string) => fetchJson(`/system/user-risk-accounts/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchRoleManageOverview = () => fetchJson('/system/role-overview');
+export const fetchSystemRoles = (params?: { keyword?: string; status?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.status) search.set('status', params.status);
+  const query = search.toString();
+  return fetchJson(query ? `/system/roles?${query}` : '/system/roles');
+};
+export const updateSystemRoleStatus = (id: string, status: string) => fetchJson(`/system/roles/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchRolePermissionGroups = (roleId?: string) => fetchJson(roleId ? `/system/role-permission-groups?roleId=${roleId}` : '/system/role-permission-groups');
+export const fetchRoleDataScopes = (roleId?: string) => fetchJson(roleId ? `/system/role-data-scopes?roleId=${roleId}` : '/system/role-data-scopes');
+export const fetchRoleMembers = (roleId?: string) => fetchJson(roleId ? `/system/role-members?roleId=${roleId}` : '/system/role-members');
+export const fetchRoleRisks = (roleId?: string) => fetchJson(roleId ? `/system/role-risks?roleId=${roleId}` : '/system/role-risks');
+export const updateRoleRiskStatus = (id: string, status: string) => fetchJson(`/system/role-risks/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchOrgManageOverview = () => fetchJson('/system/org-overview');
+export const fetchSystemOrgs = (params?: { keyword?: string; status?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.status) search.set('status', params.status);
+  const query = search.toString();
+  return fetchJson(query ? `/system/orgs?${query}` : '/system/orgs');
+};
+export const updateSystemOrgStatus = (id: string, status: string) => fetchJson(`/system/orgs/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchOrgResponsibilities = (orgId?: string) => fetchJson(orgId ? `/system/org-responsibilities?orgId=${orgId}` : '/system/org-responsibilities');
+export const fetchOrgStewards = (orgId?: string) => fetchJson(orgId ? `/system/org-stewards?orgId=${orgId}` : '/system/org-stewards');
+export const fetchOrgChanges = (orgId?: string) => fetchJson(orgId ? `/system/org-changes?orgId=${orgId}` : '/system/org-changes');
+export const updateOrgChangeStatus = (id: string, status: string) => fetchJson(`/system/org-changes/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchNotificationOverview = () => fetchJson('/system/notification-overview');
+export const fetchNotificationTemplates = (params?: { keyword?: string; status?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.status) search.set('status', params.status);
+  const query = search.toString();
+  return fetchJson(query ? `/system/notification-templates?${query}` : '/system/notification-templates');
+};
+export const updateNotificationTemplateStatus = (id: string, status: string) => fetchJson(`/system/notification-templates/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchNotificationSubscriptions = (templateId?: string) => fetchJson(templateId ? `/system/notification-subscriptions?templateId=${templateId}` : '/system/notification-subscriptions');
+export const fetchNotificationChannels = () => fetchJson('/system/notification-channels');
+export const fetchNotificationMessages = (templateId?: string) => fetchJson(templateId ? `/system/notification-messages?templateId=${templateId}` : '/system/notification-messages');
+export const updateNotificationMessageStatus = (id: string, status: string) => fetchJson(`/system/notification-messages/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchOperationLogOverview = () => fetchJson('/system/operation-log-overview');
+export const fetchOperationLogEvents = (params?: { keyword?: string; risk?: string; result?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.risk) search.set('risk', params.risk);
+  if (params?.result) search.set('result', params.result);
+  const query = search.toString();
+  return fetchJson(query ? `/system/operation-log-events?${query}` : '/system/operation-log-events');
+};
+export const updateOperationLogEventStatus = (id: string, status: string) => fetchJson(`/system/operation-log-events/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchOperationLogObjects = () => fetchJson('/system/operation-log-objects');
+export const fetchOperationLogDiffs = (eventId?: string) => fetchJson(eventId ? `/system/operation-log-diffs?eventId=${eventId}` : '/system/operation-log-diffs');
+export const fetchOperationLogExports = () => fetchJson('/system/operation-log-exports');
+export const createOperationLogExport = (data: any) => fetchJson('/system/operation-log-exports', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const fetchSystemConfigOverview = () => fetchJson('/system/config-overview');
+export const fetchSystemConfigParams = (params?: { keyword?: string; status?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.status) search.set('status', params.status);
+  const query = search.toString();
+  return fetchJson(query ? `/system/config-params?${query}` : '/system/config-params');
+};
+export const updateSystemConfigParamStatus = (id: string, status: string) => fetchJson(`/system/config-params/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchSystemConfigIntegrations = () => fetchJson('/system/config-integrations');
+export const fetchSystemRuntimeSwitches = () => fetchJson('/system/runtime-switches');
+export const updateSystemRuntimeSwitchStatus = (id: string, status: string) => fetchJson(`/system/runtime-switches/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchSystemEnvironmentPolicies = () => fetchJson('/system/environment-policies');
+export const fetchSystemConfigChanges = () => fetchJson('/system/config-changes');
+export const updateSystemConfigChangeStatus = (id: string, status: string) => fetchJson(`/system/config-changes/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
 
 // Approvals
 export const fetchApprovals = () => fetchJson('/approvals');
@@ -200,4 +510,3 @@ export const publishScript = (id: string) => fetchJson(`/development/scripts/${i
   method: 'POST'
 });
 export const fetchScriptVersions = (id: string) => fetchJson(`/development/scripts/${id}/versions`);
-

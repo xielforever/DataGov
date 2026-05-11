@@ -1,0 +1,87 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e8]
+        - generic [ref=e11]:
+          - generic [ref=e12]: DGP-Studio
+          - generic [ref=e13]: 企业版v3.2
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - heading "端到端数据开发与治理流程" [level=2] [ref=e16]
+          - paragraph [ref=e17]: 将零散数据转化为高质量企业资产的全生命周期管理
+        - generic [ref=e21]:
+          - generic [ref=e22] [cursor=pointer]:
+            - img [ref=e25]
+            - generic [ref=e30]:
+              - heading "01. 数据集成" [level=3] [ref=e31]
+              - paragraph [ref=e32]: 接入多源异构数据，实时/离线同步至数据湖或数仓
+          - generic [ref=e33] [cursor=pointer]:
+            - img [ref=e36]
+            - generic [ref=e40]:
+              - heading "02. 数据标准" [level=3] [ref=e41]
+              - paragraph [ref=e42]: 定义国标/行标/企标字典，统一数据口径与码值规范
+          - generic [ref=e43] [cursor=pointer]:
+            - img [ref=e46]
+            - generic [ref=e50]:
+              - heading "03. 数据建模" [level=3] [ref=e51]
+              - paragraph [ref=e52]: ODS/DWD/DIM/DWS/ADS 规范化分层，沉淀公共数据模型
+          - generic [ref=e53] [cursor=pointer]:
+            - img [ref=e56]
+            - generic [ref=e59]:
+              - heading "04. 数据开发" [level=3] [ref=e60]
+              - paragraph [ref=e61]: SQL/Python/Shell 在线脚本编写与工作流任务调度
+          - generic [ref=e62] [cursor=pointer]:
+            - img [ref=e65]
+            - generic [ref=e68]:
+              - heading "05. 数据质量" [level=3] [ref=e69]
+              - paragraph [ref=e70]: 配置校验规则，实时监控异常数据并触发告警拦截
+          - generic [ref=e71] [cursor=pointer]:
+            - img [ref=e74]
+            - generic [ref=e80]:
+              - heading "06. 数据服务" [level=3] [ref=e81]
+              - paragraph [ref=e82]: 构建资产目录，生成 API 接口，实现数据共享与应用
+      - generic [ref=e84]: 构建可信、可视、可用、可管的数据资产体系
+    - generic [ref=e95]:
+      - generic [ref=e98]:
+        - heading "数据治理平台登录" [level=1] [ref=e99]
+        - paragraph [ref=e100]: 数据集成、数据资产、标准规范、血缘监控
+      - generic [ref=e101]:
+        - button "SSO登录" [ref=e102]:
+          - img [ref=e103]
+          - generic [ref=e105]: SSO登录
+        - button "钉钉登录" [ref=e106]:
+          - img [ref=e107]
+          - generic [ref=e109]: 钉钉登录
+      - generic [ref=e112]: 或企业账户登录
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - generic [ref=e116]: 工号 / 域账号 / 邮箱
+          - generic [ref=e117]:
+            - textbox "工号、域账号或邮箱" [ref=e118]:
+              - /placeholder: account
+            - img [ref=e119]
+        - generic [ref=e122]:
+          - generic [ref=e123]: 安全密码
+          - generic [ref=e124]:
+            - textbox "安全密码" [ref=e125]:
+              - /placeholder: password
+            - button "显示密码" [ref=e126]:
+              - img [ref=e127]
+        - generic [ref=e130]:
+          - generic [ref=e131] [cursor=pointer]:
+            - checkbox "记住账户" [ref=e132]
+            - text: 记住账户
+          - button "忘记安全密码？" [ref=e133]
+        - button "进入治理空间" [ref=e134]:
+          - generic [ref=e137]:
+            - text: 进入治理空间
+            - img [ref=e138]
+      - generic [ref=e142]: 还没有账户？
+      - button "注册企业账户" [ref=e144]:
+        - img [ref=e145]
+        - text: 注册企业账户
+      - generic [ref=e148]:
+        - img [ref=e149]
+        - text: 本系统已经过平台安全级信息等级保护测评
+  - generic [ref=e151]: 数据安全监管 © 2026 DGP DataForge Inc. 保留所有权利。

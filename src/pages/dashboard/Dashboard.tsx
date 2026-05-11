@@ -93,9 +93,10 @@ const Dashboard: React.FC = () => {
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-white">工作</h1>
             <span className="px-2.5 py-1 text-xs bg-gradient-to-r from-cyan-500/10 to-blue-500/10 text-cyan-400 rounded-full border border-cyan-500/20 font-medium">
-              数据治理开发平'            </span>
+              数据治理开发平台
+            </span>
           </div>
-          <p className="text-slate-400 text-sm mt-1.5">欢迎回来，张三丰 · 数据治理负责人'· 上次登录 2025-01-15 09:30</p>
+          <p className="text-slate-400 text-sm mt-1.5">欢迎回来，张三丰 · 数据治理负责人 · 上次登录 2025-01-15 09:30</p>
         </div>
         <div className="flex items-center gap-3">
           <button className="px-4 py-2.5 bg-slate-800/80 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-700 hover:text-white transition-all text-sm flex items-center gap-2">
@@ -116,10 +117,10 @@ const Dashboard: React.FC = () => {
       {/* ========== 快捷操作（移到最上面'========== */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
         {[
-          { label: '数据表注', icon: 'M12 4v16m8-8H4', color: 'from-cyan-500 to-blue-500', bg: 'bg-cyan-500/8' },
+          { label: '数据表注册', icon: 'M12 4v16m8-8H4', color: 'from-cyan-500 to-blue-500', bg: 'bg-cyan-500/8' },
           { label: '质量规则配置', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'from-green-500 to-emerald-500', bg: 'bg-green-500/8' },
-          { label: '血缘关系分', icon: 'M13 10V3L4 14h7v7l9-11h-7z', color: 'from-purple-500 to-pink-500', bg: 'bg-purple-500/8' },
-          { label: '元数据采', icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7', color: 'from-orange-500 to-amber-500', bg: 'bg-orange-500/8' },
+          { label: '血缘关系分析', icon: 'M13 10V3L4 14h7v7l9-11h-7z', color: 'from-purple-500 to-pink-500', bg: 'bg-purple-500/8' },
+          { label: '元数据采集', icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7', color: 'from-orange-500 to-amber-500', bg: 'bg-orange-500/8' },
           { label: '数据标准管理', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', color: 'from-blue-500 to-indigo-500', bg: 'bg-blue-500/8' },
           { label: '敏感数据扫描', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', color: 'from-rose-500 to-red-500', bg: 'bg-rose-500/8' },
           { label: '调度任务管理', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', color: 'from-teal-500 to-cyan-500', bg: 'bg-teal-500/8' },
@@ -127,7 +128,7 @@ const Dashboard: React.FC = () => {
         ].map((action, index) => (
           <button
             key={index}
-            className={`group relative flex flex-col items-center gap-2.5 p-4 ${action.bg} rounded-xl hover:bg-slate-700/40 transition-all text-center border border-slate-700/40 hover:border-slate-600/60 overflow-hidden`}
+            className={`group relative flex flex-col items-center gap-2.5 p-3 sm:p-4 ${action.bg} rounded-xl hover:bg-slate-700/40 transition-all text-center border border-slate-700/40 hover:border-slate-600/60 overflow-hidden`}
           >
             {/* hover 微光 */}
             <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-0 group-hover:opacity-[0.06] transition-opacity`} />
@@ -136,7 +137,7 @@ const Dashboard: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={action.icon} />
               </svg>
             </div>
-            <span className="relative text-slate-300 text-xs font-medium group-hover:text-white transition-colors">{action.label}</span>
+            <span className="relative min-h-8 text-slate-300 text-xs font-medium leading-4 group-hover:text-white transition-colors">{action.label}</span>
           </button>
         ))}
       </div>
@@ -205,7 +206,7 @@ const Dashboard: React.FC = () => {
               <div className="w-px h-8 bg-slate-700" />
               <div className="text-center">
                 <p className="text-lg font-bold text-cyan-400">12</p>
-                <p className="text-[11px] text-slate-500">待处理告'</p>
+                <p className="text-[11px] text-slate-500">待处理告警</p>
               </div>
             </div>
             <div className="flex items-center gap-1 bg-slate-700/50 rounded-lg p-1">
@@ -255,9 +256,9 @@ const Dashboard: React.FC = () => {
                     <div key={index} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer relative">
                       {/* 悬浮数据卡片 */}
                       <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-slate-700/95 backdrop-blur px-3 py-2 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-20 whitespace-nowrap border border-slate-600/50">
-                        <div className="text-white text-xs font-bold">{item.score} '</div>
+                        <div className="text-white text-xs font-bold">{item.score} 分</div>
                         <div className="text-slate-400 text-[10px] mt-0.5">表总量: {item.tables.toLocaleString()}</div>
-                        <div className="text-slate-400 text-[10px]">告警: {item.alerts} '</div>
+                        <div className="text-slate-400 text-[10px]">告警: {item.alerts} 个</div>
                         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-slate-700/95 rotate-45 border-r border-b border-slate-600/50" />
                       </div>
 
@@ -333,7 +334,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-6 h-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded" />
-                <span className="text-xs text-slate-400">趋势'</span>
+                <span className="text-xs text-slate-400">趋势</span>
               </div>
             </div>
           </div>
@@ -389,7 +390,7 @@ const Dashboard: React.FC = () => {
                 {tasks?.length || 0} 个调度中
               </span>
             </h3>
-            <p className="text-slate-500 text-xs mt-1">实时跟踪平台所有定时调度任务的执行状态'</p>
+            <p className="text-slate-500 text-xs mt-1">实时跟踪平台所有定时调度任务的执行状态</p>
           </div>
           <div className="flex items-center gap-2">
             {/* 状态筛选'*/}
@@ -424,9 +425,9 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
           {[
             { label: '运行', value: tasks.filter(t => t.status === 'running').length, color: 'text-blue-400', bg: 'bg-blue-500/8', border: 'border-blue-500/20', dot: 'bg-blue-400' },
-            { label: '已完', value: tasks.filter(t => t.status === 'success').length, color: 'text-green-400', bg: 'bg-green-500/8', border: 'border-green-500/20', dot: 'bg-green-400' },
+            { label: '完成', value: tasks.filter(t => t.status === 'success').length, color: 'text-green-400', bg: 'bg-green-500/8', border: 'border-green-500/20', dot: 'bg-green-400' },
             { label: '警告', value: tasks.filter(t => t.status === 'warning').length, color: 'text-amber-400', bg: 'bg-amber-500/8', border: 'border-amber-500/20', dot: 'bg-amber-400' },
-            { label: '待执', value: tasks.filter(t => t.status === 'pending').length, color: 'text-slate-400', bg: 'bg-slate-500/8', border: 'border-slate-500/20', dot: 'bg-slate-400' },
+            { label: '待执行', value: tasks.filter(t => t.status === 'pending').length, color: 'text-slate-400', bg: 'bg-slate-500/8', border: 'border-slate-500/20', dot: 'bg-slate-400' },
           ].map((stat, i) => (
             <div key={i} className={`flex items-center gap-3 p-3 ${stat.bg} border ${stat.border} rounded-lg`}>
               <div className="relative">
@@ -557,14 +558,16 @@ const Dashboard: React.FC = () => {
           <div>
             <h3 className="text-white font-semibold text-base flex items-center gap-2">
               <span className="w-1.5 h-5 bg-gradient-to-b from-cyan-400 to-purple-500 rounded-full" />
-              数据血缘分'            </h3>
+              数据血缘分析
+            </h3>
             <p className="text-slate-500 text-xs mt-1">全链路数据流向追踪与影响分析</p>
           </div>
           <button className="px-4 py-2 text-xs bg-gradient-to-r from-cyan-500/10 to-purple-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg hover:border-cyan-500/40 hover:bg-cyan-500/15 transition-all font-medium flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
-            进入血缘分'          </button>
+            进入血缘分析
+          </button>
         </div>
 
         <div className="relative rounded-lg bg-slate-900/40 border border-slate-700/40 p-4">
@@ -614,10 +617,10 @@ const Dashboard: React.FC = () => {
             <rect x="530" y="8" width="140" height="244" rx="8" fill="url(#adsGrad)" stroke="#10b981" strokeOpacity="0.15" strokeWidth="1" />
 
             {/* 层标'*/}
-            <text x="80" y="30" textAnchor="middle" fill="#06b6d4" fontSize="11" fontWeight="600" opacity="0.8">ODS 原始'</text>
-            <text x="255" y="30" textAnchor="middle" fill="#a855f7" fontSize="11" fontWeight="600" opacity="0.8">DWD 明细'</text>
+            <text x="80" y="30" textAnchor="middle" fill="#06b6d4" fontSize="11" fontWeight="600" opacity="0.8">ODS 原始层</text>
+            <text x="255" y="30" textAnchor="middle" fill="#a855f7" fontSize="11" fontWeight="600" opacity="0.8">DWD 明细层</text>
             <text x="430" y="30" textAnchor="middle" fill="#f59e0b" fontSize="11" fontWeight="600" opacity="0.8">DWS 汇总层</text>
-            <text x="600" y="30" textAnchor="middle" fill="#10b981" fontSize="11" fontWeight="600" opacity="0.8">ADS 应用'</text>
+            <text x="600" y="30" textAnchor="middle" fill="#10b981" fontSize="11" fontWeight="600" opacity="0.8">ADS 应用层</text>
 
             {/* 连接'*/}
             <path d="M 140 75 C 160 75, 170 65, 190 65" fill="none" stroke="url(#lineGrad1)" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.7">
@@ -704,7 +707,7 @@ const Dashboard: React.FC = () => {
                 <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite" />
               </circle>
               <text x="52" y="71" fill="#94a3b8" fontSize="8" fontFamily="monospace">ods_order</text>
-              <text x="52" y="83" fill="#475569" fontSize="7">日增'2.3M</text>
+              <text x="52" y="83" fill="#475569" fontSize="7">日增 2.3M</text>
             </g>
             <g className="cursor-pointer">
               <rect x="28" y="110" width="112" height="38" rx="6" fill="#0e1726" stroke="#06b6d4" strokeOpacity="0.4" strokeWidth="1" />
@@ -730,7 +733,7 @@ const Dashboard: React.FC = () => {
                 <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.8s" repeatCount="indefinite" />
               </circle>
               <text x="219" y="61" fill="#94a3b8" fontSize="8" fontFamily="monospace">dwd_order_detail</text>
-              <text x="219" y="73" fill="#475569" fontSize="7">分区'365</text>
+              <text x="219" y="73" fill="#475569" fontSize="7">分区 365</text>
             </g>
             <g className="cursor-pointer">
               <rect x="195" y="90" width="125" height="38" rx="6" fill="#0e1726" stroke="#a855f7" strokeOpacity="0.4" strokeWidth="1" />
@@ -738,7 +741,7 @@ const Dashboard: React.FC = () => {
                 <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.1s" repeatCount="indefinite" />
               </circle>
               <text x="219" y="106" fill="#94a3b8" fontSize="8" fontFamily="monospace">dwd_user_order</text>
-              <text x="219" y="118" fill="#475569" fontSize="7">日增'1.2M</text>
+              <text x="219" y="118" fill="#475569" fontSize="7">日增 1.2M</text>
             </g>
             <g className="cursor-pointer">
               <rect x="195" y="135" width="125" height="38" rx="6" fill="#0e1726" stroke="#a855f7" strokeOpacity="0.4" strokeWidth="1" />
@@ -746,7 +749,7 @@ const Dashboard: React.FC = () => {
                 <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.4s" repeatCount="indefinite" />
               </circle>
               <text x="219" y="151" fill="#94a3b8" fontSize="8" fontFamily="monospace">dwd_traffic_log</text>
-              <text x="219" y="163" fill="#475569" fontSize="7">日增'8.5M</text>
+              <text x="219" y="163" fill="#475569" fontSize="7">日增 8.5M</text>
             </g>
             <g className="cursor-pointer">
               <rect x="195" y="180" width="125" height="38" rx="6" fill="#0e1726" stroke="#a855f7" strokeOpacity="0.4" strokeWidth="1" />
@@ -754,7 +757,7 @@ const Dashboard: React.FC = () => {
                 <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.9s" repeatCount="indefinite" />
               </circle>
               <text x="219" y="196" fill="#94a3b8" fontSize="8" fontFamily="monospace">dwd_payment</text>
-              <text x="219" y="208" fill="#475569" fontSize="7">日增'800K</text>
+              <text x="219" y="208" fill="#475569" fontSize="7">日增 800K</text>
             </g>
 
             {/* DWS 节点 */}
@@ -790,7 +793,7 @@ const Dashboard: React.FC = () => {
                 <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.1s" repeatCount="indefinite" />
               </circle>
               <text x="569" y="71" fill="#94a3b8" fontSize="8" fontFamily="monospace">ads_sales_report</text>
-              <text x="569" y="83" fill="#475569" fontSize="7">报表 12 '</text>
+              <text x="569" y="83" fill="#475569" fontSize="7">报表 12 个</text>
             </g>
             <g className="cursor-pointer">
               <rect x="545" y="120" width="115" height="38" rx="6" fill="#0e1726" stroke="#10b981" strokeOpacity="0.4" strokeWidth="1" />
@@ -798,7 +801,7 @@ const Dashboard: React.FC = () => {
                 <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.4s" repeatCount="indefinite" />
               </circle>
               <text x="569" y="136" fill="#94a3b8" fontSize="8" fontFamily="monospace">ads_user_portrait</text>
-              <text x="569" y="148" fill="#475569" fontSize="7">标签 156 '</text>
+              <text x="569" y="148" fill="#475569" fontSize="7">标签 156 个</text>
             </g>
             <g className="cursor-pointer">
               <rect x="545" y="185" width="115" height="38" rx="6" fill="#0e1726" stroke="#10b981" strokeOpacity="0.4" strokeWidth="1" />
@@ -806,7 +809,7 @@ const Dashboard: React.FC = () => {
                 <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.7s" repeatCount="indefinite" />
               </circle>
               <text x="569" y="201" fill="#94a3b8" fontSize="8" fontFamily="monospace">ads_ops_kpi</text>
-              <text x="569" y="213" fill="#475569" fontSize="7">看板 8 '</text>
+              <text x="569" y="213" fill="#475569" fontSize="7">看板 8 个</text>
             </g>
           </svg>
 
@@ -828,7 +831,7 @@ const Dashboard: React.FC = () => {
             <div className="flex items-center gap-4 text-[11px] text-slate-500">
               <span>13 个数据表</span>
               <span>·</span>
-              <span>14 条血缘链'</span>
+              <span>14 条血缘链路</span>
               <span>·</span>
               <span className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
@@ -845,8 +848,9 @@ const Dashboard: React.FC = () => {
           <div>
             <h3 className="text-white font-semibold text-base flex items-center gap-2">
               <span className="w-1.5 h-5 bg-gradient-to-b from-blue-400 to-violet-500 rounded-full" />
-              最近访问的数据源'            </h3>
-            <p className="text-slate-500 text-xs mt-1">今日共访'23 张数据表</p>
+              最近访问的数据源
+            </h3>
+            <p className="text-slate-500 text-xs mt-1">今日共访问 23 张数据表</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
@@ -873,8 +877,8 @@ const Dashboard: React.FC = () => {
               <tr className="text-left text-slate-500 text-xs border-b border-slate-700/60">
                 <th className="pb-3 font-medium">表名</th>
                 <th className="pb-3 font-medium">分层</th>
-                <th className="pb-3 font-medium">数据源'</th>
-                <th className="pb-3 font-medium">负责人'</th>
+                <th className="pb-3 font-medium">数据源</th>
+                <th className="pb-3 font-medium">负责人</th>
                 <th className="pb-3 font-medium">更新时间</th>
                 <th className="pb-3 font-medium">质量得分</th>
                 <th className="pb-3 font-medium text-right">操作</th>

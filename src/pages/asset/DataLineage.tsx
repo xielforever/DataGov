@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import { AlertTriangle, BarChart3, MessageSquare, Search, Trophy, User } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { fetchLineageData } from '../../services/api';
 import Breadcrumb from '../../components/common/Breadcrumb';
 
@@ -195,7 +197,10 @@ export default function DataLineage() {
             <p className="text-sm text-slate-400 mt-1">追溯数据来源与去向，助力影响分析、问题定位与合规审计</p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="px-4 py-2 text-sm bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors flex items-center gap-2">
+            <button
+              onClick={() => toast.success('血缘图导出任务已提交')}
+              className="px-4 py-2 text-sm bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors flex items-center gap-2"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               导出血缘图
             </button>
@@ -657,7 +662,7 @@ export default function DataLineage() {
                 <option>dws_order_user_1d</option>
                 <option>ads_sales_report</option>
               </select>
-              <button className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
+              <button onClick={() => toast.success('字段血缘视图已切换')} className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
                 导出 SQL
               </button>
             </div>
@@ -890,16 +895,16 @@ GROUP BY o.order_id, o.user_id, o.amount, o.create_time, u.user_name, u.user_lev
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { name: '销售实时大屏', type: 'BI 报表', user: '运营部', priority: 'P0', icon: '📊' },
-                { name: 'GMV 日报推送', type: '定时任务', user: '财务部', priority: 'P0', icon: '📨' },
-                { name: '订单异常监控', type: '告警规则', user: '风控部', priority: 'P0', icon: '🚨' },
-                { name: '用户行为分析', type: '数据应用', user: '产品部', priority: 'P1', icon: '🔍' },
-                { name: '商品销售排行', type: 'BI 报表', user: '商品部', priority: 'P1', icon: '🏆' },
-                { name: '客户画像系统', type: '数据应用', user: '营销部', priority: 'P1', icon: '👤' },
+                { name: '销售实时大屏', type: 'BI 报表', user: '运营部', priority: 'P0', Icon: BarChart3 },
+                { name: 'GMV 日报推送', type: '定时任务', user: '财务部', priority: 'P0', Icon: MessageSquare },
+                { name: '订单异常监控', type: '告警规则', user: '风控部', priority: 'P0', Icon: AlertTriangle },
+                { name: '用户行为分析', type: '数据应用', user: '产品部', priority: 'P1', Icon: Search },
+                { name: '商品销售排行', type: 'BI 报表', user: '商品部', priority: 'P1', Icon: Trophy },
+                { name: '客户画像系统', type: '数据应用', user: '营销部', priority: 'P1', Icon: User },
               ].map(app => (
                 <div key={app.name} className="p-3 bg-slate-950/50 border border-white/5 rounded-lg hover:border-rose-500/30 hover:bg-rose-500/5 transition-all">
                   <div className="flex items-start justify-between mb-2">
-                    <div className="text-2xl">{app.icon}</div>
+                    <app.Icon className="h-5 w-5 text-rose-300" />
                     <span className={`px-1.5 py-0.5 text-[10px] rounded font-bold ${app.priority === 'P0' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
                       {app.priority}
                     </span>
@@ -962,10 +967,10 @@ GROUP BY o.order_id, o.user_id, o.amount, o.create_time, u.user_name, u.user_lev
             >
               设为中心节点
             </button>
-            <button className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
+              <button onClick={() => toast.success('影响分析视图已切换')} className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
               查看字段血缘
             </button>
-            <button className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
+              <button onClick={() => toast('资产详情将在目录详情中打开')} className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
               影响分析
             </button>
             <button className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">

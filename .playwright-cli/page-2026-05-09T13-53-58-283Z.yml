@@ -1,0 +1,257 @@
+- generic [ref=e3]:
+  - button "关闭侧边栏" [ref=e1666]
+  - complementary [ref=e75]:
+    - generic [ref=e77]:
+      - img [ref=e79]
+      - generic [ref=e81]: DataGov
+    - navigation [ref=e82]:
+      - list [ref=e83]:
+        - listitem [ref=e84]:
+          - button "工作台" [ref=e85]:
+            - img [ref=e87]
+            - generic [ref=e89]: 工作台
+        - listitem [ref=e90]:
+          - button "数据资产" [ref=e91]:
+            - img [ref=e93]
+            - generic [ref=e95]: 数据资产
+            - img [ref=e96]
+          - list [ref=e98]:
+            - listitem [ref=e99]:
+              - button "资产总览" [ref=e100]
+            - listitem [ref=e101]:
+              - button "资产注册" [ref=e102]
+            - listitem [ref=e103]:
+              - button "数据目录" [ref=e104]
+            - listitem [ref=e105]:
+              - button "数据地图" [ref=e106]
+            - listitem [ref=e107]:
+              - button "数据血缘" [ref=e108]
+            - listitem [ref=e109]:
+              - button "数据源管理" [ref=e110]
+        - listitem [ref=e111]:
+          - button "元数据管理" [ref=e112]:
+            - img [ref=e114]
+            - generic [ref=e116]: 元数据管理
+            - img [ref=e117]
+        - listitem [ref=e119]:
+          - button "数据标准" [ref=e120]:
+            - img [ref=e122]
+            - generic [ref=e124]: 数据标准
+            - img [ref=e125]
+        - listitem [ref=e127]:
+          - button "数据质量 3" [ref=e128]:
+            - img [ref=e130]
+            - generic [ref=e132]: 数据质量
+            - generic [ref=e133]: "3"
+            - img [ref=e134]
+        - listitem [ref=e136]:
+          - button "数据安全" [ref=e137]:
+            - img [ref=e139]
+            - generic [ref=e141]: 数据安全
+            - img [ref=e142]
+        - listitem [ref=e144]:
+          - button "数据开发" [ref=e145]:
+            - img [ref=e147]
+            - generic [ref=e149]: 数据开发
+            - img [ref=e150]
+        - listitem [ref=e152]:
+          - button "数据服务" [ref=e153]:
+            - img [ref=e155]
+            - generic [ref=e157]: 数据服务
+            - img [ref=e158]
+        - listitem [ref=e160]:
+          - button "审批中心" [ref=e161]:
+            - img [ref=e163]
+            - generic [ref=e165]: 审批中心
+            - img [ref=e166]
+        - listitem [ref=e168]:
+          - button "系统管理" [ref=e169]:
+            - img [ref=e171]
+            - generic [ref=e174]: 系统管理
+            - img [ref=e175]
+  - banner [ref=e177]:
+    - generic [ref=e178]:
+      - generic [ref=e179]:
+        - button "打开侧边栏" [active] [ref=e180]:
+          - img [ref=e181]
+        - generic [ref=e183]:
+          - img [ref=e184]
+          - textbox "搜索数据表、字段、任务..." [ref=e186]
+      - generic [ref=e187]:
+        - button "通知中心" [ref=e189]:
+          - img [ref=e190]
+        - button "用户菜单" [ref=e195]:
+          - generic [ref=e196]: 张
+          - img [ref=e197]
+  - main [ref=e199]:
+    - generic [ref=e1452]:
+      - generic [ref=e1453]:
+        - generic [ref=e1454]:
+          - generic [ref=e1456]: 数据资产
+          - generic [ref=e1457]:
+            - img [ref=e1458]
+            - generic [ref=e1460]: 数据地图
+        - generic [ref=e1461]:
+          - generic [ref=e1462]:
+            - heading "数据地图 可视化探索" [level=1] [ref=e1463]:
+              - text: 数据地图
+              - generic [ref=e1464]: 可视化探索
+            - paragraph [ref=e1465]: 通过可视化方式探索全域数据资产的分布、聚合与流向
+          - generic [ref=e1466]:
+            - button "📥 导出地图" [ref=e1467]:
+              - generic [ref=e1468]: 📥
+              - text: 导出地图
+            - button "🔄 刷新" [ref=e1469]:
+              - generic [ref=e1470]: 🔄
+              - text: 刷新
+      - generic [ref=e1471]:
+        - generic [ref=e1472]:
+          - generic [ref=e1473]:
+            - generic [ref=e1474]: 资产总数
+            - generic [ref=e1475]: 📊
+          - generic [ref=e1476]: "7"
+          - generic [ref=e1477]: 已纳入地图
+        - generic [ref=e1478]:
+          - generic [ref=e1479]:
+            - generic [ref=e1480]: 业务域
+            - generic [ref=e1481]: 🏢
+          - generic [ref=e1482]: "5"
+          - generic [ref=e1483]: 覆盖核心业务
+        - generic [ref=e1484]:
+          - generic [ref=e1485]:
+            - generic [ref=e1486]: 数据分层
+            - generic [ref=e1487]: 📚
+          - generic [ref=e1488]: "5"
+          - generic [ref=e1489]: ODS→ADS全链
+        - generic [ref=e1490]:
+          - generic [ref=e1491]:
+            - generic [ref=e1492]: 数据中心
+            - generic [ref=e1493]: 🌐
+          - generic [ref=e1494]: "5"
+          - generic [ref=e1495]: 多区域部署
+        - generic [ref=e1496]:
+          - generic [ref=e1497]:
+            - generic [ref=e1498]: 热门资产
+            - generic [ref=e1499]: 🔥
+          - generic [ref=e1500]: "5"
+          - generic [ref=e1501]: 高频访问
+      - generic [ref=e1502]:
+        - button "🌐 资产集群" [ref=e1503]:
+          - generic [ref=e1504]: 🌐
+          - text: 资产集群
+        - button "🔥 域层热力" [ref=e1505]:
+          - generic [ref=e1506]: 🔥
+          - text: 域层热力
+        - button "🗺 地理分布" [ref=e1507]:
+          - generic [ref=e1508]: 🗺
+          - text: 地理分布
+      - generic [ref=e1509]:
+        - generic [ref=e1510]:
+          - generic [ref=e1511]:
+            - heading "业务" [level=3] [ref=e1515]
+            - generic [ref=e1516]:
+              - button "交易域 🔥15 3028" [ref=e1517]:
+                - generic [ref=e1520]: 交易域
+                - generic [ref=e1521]:
+                  - generic [ref=e1522]: 🔥15
+                  - generic [ref=e1523]: "3028"
+              - button "用户域 🔥12 2684" [ref=e1524]:
+                - generic [ref=e1527]: 用户域
+                - generic [ref=e1528]:
+                  - generic [ref=e1529]: 🔥12
+                  - generic [ref=e1530]: "2684"
+              - button "商品域 🔥8 2068" [ref=e1531]:
+                - generic [ref=e1534]: 商品域
+                - generic [ref=e1535]:
+                  - generic [ref=e1536]: 🔥8
+                  - generic [ref=e1537]: "2068"
+              - button "营销域 🔥6 1586" [ref=e1538]:
+                - generic [ref=e1541]: 营销域
+                - generic [ref=e1542]:
+                  - generic [ref=e1543]: 🔥6
+                  - generic [ref=e1544]: "1586"
+              - button "财务域 🔥4 1240" [ref=e1545]:
+                - generic [ref=e1548]: 财务域
+                - generic [ref=e1549]:
+                  - generic [ref=e1550]: 🔥4
+                  - generic [ref=e1551]: "1240"
+          - generic [ref=e1552]:
+            - heading "数据分层" [level=3] [ref=e1556]
+            - generic [ref=e1557]:
+              - button "ODS 原始数据层 4028" [ref=e1558]:
+                - generic [ref=e1559]:
+                  - generic [ref=e1560]: ODS
+                  - generic [ref=e1561]: 原始数据层
+                - generic [ref=e1562]: "4028"
+              - button "DWD 明细数据层 3812" [ref=e1563]:
+                - generic [ref=e1564]:
+                  - generic [ref=e1565]: DWD
+                  - generic [ref=e1566]: 明细数据层
+                - generic [ref=e1567]: "3812"
+              - button "DWS 汇总数据层 2536" [ref=e1568]:
+                - generic [ref=e1569]:
+                  - generic [ref=e1570]: DWS
+                  - generic [ref=e1571]: 汇总数据层
+                - generic [ref=e1572]: "2536"
+              - button "ADS 应用数据层 1764" [ref=e1573]:
+                - generic [ref=e1574]:
+                  - generic [ref=e1575]: ADS
+                  - generic [ref=e1576]: 应用数据层
+                - generic [ref=e1577]: "1764"
+              - button "DIM 维度数据层 544" [ref=e1578]:
+                - generic [ref=e1579]:
+                  - generic [ref=e1580]: DIM
+                  - generic [ref=e1581]: 维度数据层
+                - generic [ref=e1582]: "544"
+          - generic [ref=e1583]:
+            - heading "图例说明" [level=3] [ref=e1586]
+            - generic [ref=e1587]:
+              - generic [ref=e1593]: 圆点大小代表数据量级
+              - generic [ref=e1594]:
+                - generic [ref=e1595]: 🔥
+                - generic [ref=e1596]: 热门资产标识
+              - generic [ref=e1599]: 悬停高亮
+        - generic [ref=e1601]:
+          - generic [ref=e1602]:
+            - generic [ref=e1603]:
+              - heading "资产集群分布" [level=3] [ref=e1604]
+              - paragraph [ref=e1605]: 显示 7 个资产节点，按业务域聚合
+            - generic [ref=e1609]: 实时
+          - generic [ref=e1610]:
+            - img [ref=e1611]:
+              - generic [ref=e1613]:
+                - generic [ref=e1615]: 💰 交易域
+                - generic [ref=e1616]: 2 个资产
+              - generic [ref=e1617]:
+                - generic [ref=e1619]: 👤 用户域
+                - generic [ref=e1620]: 2 个资产
+              - generic [ref=e1621]:
+                - generic [ref=e1623]: 📦 商品域
+                - generic [ref=e1624]: 1 个资产
+              - generic [ref=e1625]:
+                - generic [ref=e1627]: 📢 营销域
+                - generic [ref=e1628]: 1 个资产
+              - generic [ref=e1629]:
+                - generic [ref=e1631]: 💳 财务域
+                - generic [ref=e1632]: 1 个资产
+              - generic [ref=e1635]: 数据
+              - generic [ref=e1636]: 中枢
+              - generic [ref=e1641] [cursor=pointer]:
+                - generic: ODS
+              - generic [ref=e1644] [cursor=pointer]:
+                - generic: DWD
+              - generic [ref=e1647] [cursor=pointer]:
+                - generic: ODS
+              - generic [ref=e1650] [cursor=pointer]:
+                - generic: DWS
+              - generic [ref=e1653] [cursor=pointer]:
+                - generic: DIM
+              - generic [ref=e1655] [cursor=pointer]:
+                - generic: DWD
+              - generic [ref=e1657] [cursor=pointer]:
+                - generic: ADS
+            - generic [ref=e1661]:
+              - generic [ref=e1662]:
+                - text: 显示7
+                - generic [ref=e1663]: / 7
+              - generic [ref=e1665]: 高亮全部

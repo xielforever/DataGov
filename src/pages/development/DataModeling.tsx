@@ -388,8 +388,18 @@ export default function DataModeling() {
                   在该业务域和分层下暂无数据模型
                 </div>
               ) : (
-                <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/40">
-                  <table className="w-full text-left text-sm">
+                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40">
+                  <table className="min-w-[1120px] w-full table-fixed text-left text-sm">
+                    <colgroup>
+                      <col className="w-[20%]" />
+                      <col className="w-[18%]" />
+                      <col className="w-[16%]" />
+                      <col className="w-[13%]" />
+                      <col className="w-[10%]" />
+                      <col className="w-[12%]" />
+                      <col className="w-[11%]" />
+                      <col className="w-[10%]" />
+                    </colgroup>
                     <thead className="bg-slate-900/60 text-xs text-slate-400">
                       <tr>
                         <th className="px-5 py-3 font-medium">模型名称</th>
@@ -417,26 +427,28 @@ export default function DataModeling() {
                               {model.name}
                             </div>
                           </td>
-                          <td className="px-5 py-3 text-slate-300">{model.cnName}</td>
-                          <td className="px-5 py-3 text-slate-400 flex items-center gap-1.5">
+                          <td className="px-5 py-3 text-slate-300 whitespace-nowrap truncate">{model.cnName}</td>
+                          <td className="px-5 py-3 text-slate-400">
+                            <div className="flex items-center gap-1.5 truncate whitespace-nowrap">
                             <Database className="h-3 w-3" />
-                            {getDataSourceName(model.dataSourceId)}
+                            <span className="truncate">{getDataSourceName(model.dataSourceId)}</span>
+                            </div>
                           </td>
-                          <td className="px-5 py-3 text-slate-300">
-                            <div className="flex items-center gap-1.5">
+                          <td className="px-5 py-3 text-slate-300 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5 truncate">
                               <div className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-700 text-[9px] text-white">
                                 {model.owner.charAt(0)}
                               </div>
-                              {model.owner}
+                              <span className="truncate">{model.owner}</span>
                             </div>
                           </td>
-                          <td className="px-5 py-3">
+                          <td className="px-5 py-3 whitespace-nowrap">
                             <div className="flex items-center gap-1.5">
                               <span className={`h-1.5 w-1.5 rounded-full ${STATUS_MAP[model.status].dot}`}></span>
                               <span className={`text-xs ${STATUS_MAP[model.status].color}`}>{STATUS_MAP[model.status].label}</span>
                             </div>
                           </td>
-                          <td className="px-5 py-3">
+                          <td className="px-5 py-3 whitespace-nowrap">
                             {model.syncStatus === 'synced' ? (
                               <span className="inline-flex items-center gap-1 text-xs text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded border border-blue-400/20">已同步</span>
                             ) : model.syncStatus === 'failed' ? (
@@ -447,8 +459,8 @@ export default function DataModeling() {
                               <span className="inline-flex items-center gap-1 text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">未同步</span>
                             )}
                           </td>
-                          <td className="px-5 py-3 text-slate-400 text-xs">{model.updateTime}</td>
-                          <td className="px-5 py-3 text-right">
+                          <td className="px-5 py-3 text-slate-400 text-xs whitespace-nowrap">{model.updateTime}</td>
+                          <td className="px-5 py-3 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition">
                               {model.status === 'draft' && (
                                 <>
@@ -585,8 +597,16 @@ export default function DataModeling() {
                 )}
               </div>
               
-              <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/40">
-                <table className="w-full text-left text-sm">
+                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40">
+                <table className="min-w-[860px] w-full table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[22%]" />
+                    <col className="w-[16%]" />
+                    <col className="w-[32%]" />
+                    <col className="w-[10%]" />
+                    <col className="w-[10%]" />
+                    <col className="w-[10%]" />
+                  </colgroup>
                   <thead className="bg-slate-900/60 text-xs text-slate-400 border-b border-slate-800">
                     <tr>
                       <th className="px-4 py-3 font-medium">字段名称</th>
@@ -600,18 +620,18 @@ export default function DataModeling() {
                   <tbody className="divide-y divide-slate-800/50">
                     {currentModel.fields?.map((field, idx) => (
                       <tr key={idx} className="hover:bg-slate-800/30 group">
-                        <td className="px-4 py-3 font-mono text-cyan-400">{field.name}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 font-mono text-cyan-400 whitespace-nowrap truncate">{field.name}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <span className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-300 font-mono">{field.type}</span>
                         </td>
-                        <td className="px-4 py-3 text-slate-300">{field.description}</td>
+                        <td className="px-4 py-3 text-slate-300 truncate">{field.description}</td>
                         <td className="px-4 py-3 text-center">
                           {field.isPrimary ? <span className="text-amber-400">🔑</span> : "-"}
                         </td>
                         <td className="px-4 py-3 text-center text-slate-400">
                           {field.isNullable ? "Y" : "N"}
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-4 py-3 text-right whitespace-nowrap">
                           {currentModel.status === 'draft' && (
                             <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition">
                               <button 

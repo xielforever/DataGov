@@ -1,4 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import { BarChart3, Building2, CreditCard, Download, Flame, Folder, Globe2, Layers, Map, Megaphone, Package, RefreshCw, Shield, Truck, User } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { fetchMapData } from '../../services/api';
 import Breadcrumb from '../../components/common/Breadcrumb';
 
@@ -13,14 +16,20 @@ type AssetNode = {
   hot: boolean;
 };
 
-type DomainItem = { id: string; name: string; color: string; icon: string };
+type DomainItem = { id: string; name: string; color: string; Icon: LucideIcon };
 type LayerItem = { id: string; name: string; desc: string; color: string };
 type DatacenterItem = { id: string; name: string; label: string; assets: number; count: number; status: string; x: number; y: number; primary: boolean };
 
 // 图标映射（不需要从后端返回）
-const DOMAIN_ICONS: Record<string, string> = {
-  trade: '💰', user: '👤', product: '📦', marketing: '📢',
-  finance: '💳', risk: '🛡', logistics: '🚚', other: '📁',
+const DOMAIN_ICONS: Record<string, LucideIcon> = {
+  trade: BarChart3,
+  user: User,
+  product: Package,
+  marketing: Megaphone,
+  finance: CreditCard,
+  risk: Shield,
+  logistics: Truck,
+  other: Folder,
 };
 
 // 分层描述（不需要从后端返回）
@@ -57,7 +66,7 @@ export default function DataMap() {
         id: d.id as string,
         name: d.name as string,
         color: d.color as string,
-        icon: DOMAIN_ICONS[d.id as string] ?? '📁',
+        Icon: DOMAIN_ICONS[d.id as string] ?? Folder,
         assetCount: d.assetCount as number,
         hotCount: d.hotCount as number,
       })));
@@ -197,18 +206,25 @@ export default function DataMap() {
             <h1 className="text-2xl font-bold text-white flex items-center gap-3">
               数据地图
               <span className="px-2 py-0.5 text-xs rounded-md bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
-                可视化探'              </span>
+                可视化探索
+              </span>
             </h1>
             <p className="text-sm text-slate-400 mt-1">
               通过可视化方式探索全域数据资产的分布、聚合与流向
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="px-3 py-2 bg-slate-800/60 hover:bg-slate-700/60 border border-white/5 text-slate-300 rounded-lg text-sm transition-colors flex items-center gap-2">
-              <span>📥</span> 导出地图
+            <button
+              onClick={() => toast.success('地图导出任务已提交')}
+              className="px-3 py-2 bg-slate-800/60 hover:bg-slate-700/60 border border-white/5 text-slate-300 rounded-lg text-sm transition-colors flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" /> 导出地图
             </button>
-            <button className="px-3 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg text-sm font-medium shadow-lg shadow-cyan-500/20 flex items-center gap-2">
-              <span>🔄</span> 刷新
+            <button
+              onClick={() => toast.success('数据地图已刷新')}
+              className="px-3 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg text-sm font-medium shadow-lg shadow-cyan-500/20 flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" /> 刷新
             </button>
           </div>
         </div>
@@ -217,11 +233,11 @@ export default function DataMap() {
       {/* 顶部统计'*/}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: '资产总数', value: assets.length, sub: '已纳入地', color: 'from-cyan-500/20 to-blue-500/10', icon: '📊' },
-          { label: '业务', value: domains.length, sub: '覆盖核心业务', color: 'from-purple-500/20 to-pink-500/10', icon: '🏢' },
-          { label: '数据分层', value: layers.length, sub: 'ODS→ADS全链', color: 'from-emerald-500/20 to-teal-500/10', icon: '📚' },
-          { label: '数据中心', value: datacenters.length, sub: '多区域部', color: 'from-amber-500/20 to-orange-500/10', icon: '🌐' },
-          { label: '热门资产', value: assets.filter(a => a.hot).length, sub: '高频访问', color: 'from-rose-500/20 to-red-500/10', icon: '🔥' },
+          { label: '资产总数', value: assets.length, sub: '已纳入地图', color: 'from-cyan-500/20 to-blue-500/10', Icon: BarChart3 },
+          { label: '业务域', value: domains.length, sub: '覆盖核心业务', color: 'from-purple-500/20 to-pink-500/10', Icon: Building2 },
+          { label: '数据分层', value: layers.length, sub: 'ODS→ADS全链', color: 'from-emerald-500/20 to-teal-500/10', Icon: Layers },
+          { label: '数据中心', value: datacenters.length, sub: '多区域部署', color: 'from-amber-500/20 to-orange-500/10', Icon: Globe2 },
+          { label: '热门资产', value: assets.filter(a => a.hot).length, sub: '高频访问', color: 'from-rose-500/20 to-red-500/10', Icon: Flame },
         ].map(stat => (
           <div
             key={stat.label}
@@ -229,7 +245,7 @@ export default function DataMap() {
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-slate-400">{stat.label}</span>
-              <span className="text-lg">{stat.icon}</span>
+              <stat.Icon className="h-5 w-5 text-slate-300" />
             </div>
             <div className="text-2xl font-bold text-white">{stat.value.toLocaleString()}</div>
             <div className="text-xs text-slate-500 mt-1">{stat.sub}</div>
@@ -240,9 +256,9 @@ export default function DataMap() {
       {/* 视图切换 */}
       <div className="flex items-center gap-2 bg-slate-900/40 border border-white/5 rounded-xl p-1.5 w-fit">
         {[
-          { id: 'cluster', label: '资产集群', icon: '🌐' },
-          { id: 'heatmap', label: '域层热力', icon: '🔥' },
-          { id: 'geo', label: '地理分布', icon: '🗺' },
+          { id: 'cluster', label: '资产集群', Icon: Globe2 },
+          { id: 'heatmap', label: '域层热力', Icon: Flame },
+          { id: 'geo', label: '地理分布', Icon: Map },
         ].map(mode => (
           <button
             key={mode.id}
@@ -253,7 +269,7 @@ export default function DataMap() {
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <span>{mode.icon}</span>
+              <mode.Icon className="h-4 w-4" />
             {mode.label}
           </button>
         ))}
@@ -299,7 +315,9 @@ export default function DataMap() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     {d.hotCount > 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-rose-500/15 text-rose-300 rounded">🔥{d.hotCount}</span>
+                      <span className="inline-flex items-center gap-1 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] text-rose-300">
+                        <Flame className="h-3 w-3" />{d.hotCount}
+                      </span>
                     )}
                     <span className="text-xs text-slate-400">{d.count}</span>
                   </div>
@@ -366,7 +384,7 @@ export default function DataMap() {
                 <span>圆点大小代表数据量级</span>
               </div>
               <div className="flex items-center gap-2 text-slate-400">
-                <span className="text-rose-400">🔥</span>
+                <Flame className="h-3.5 w-3.5 text-rose-400" />
                 <span>热门资产标识</span>
               </div>
               <div className="flex items-center gap-2 text-slate-400">
@@ -427,6 +445,7 @@ export default function DataMap() {
                     const domCenterY = 250 + Math.sin(angle) * 160;
                     const domAssets = filteredAssets.filter(a => a.domain === dom.id);
                     if (!domAssets.length) return null;
+                    const labelY = Math.max(30, domCenterY - 80 - domAssets.length * 4 - 8);
                     return (
                       <g key={dom.id}>
                         <circle
@@ -437,23 +456,24 @@ export default function DataMap() {
                         />
                         <text
                           x={domCenterX}
-                          y={domCenterY - 80 - domAssets.length * 4 - 8}
+                          y={labelY}
                           textAnchor="middle"
                           fill={dom.color}
                           fontSize="13"
                           fontWeight="bold"
                           opacity="0.9"
                         >
-                          {dom.icon} {dom.name}
+                          {dom.name}
                         </text>
                         <text
                           x={domCenterX}
-                          y={domCenterY - 80 - domAssets.length * 4 + 8}
+                          y={labelY + 16}
                           textAnchor="middle"
                           fill="rgba(255,255,255,0.4)"
                           fontSize="10"
                         >
-                          {domAssets.length} 个资'                        </text>
+                          {domAssets.length} 个资产
+                        </text>
                       </g>
                     );
                   })}
@@ -587,7 +607,7 @@ export default function DataMap() {
                     </div>
                     <div className="w-px h-3 bg-white/10" />
                     <div>
-                      <span className="text-slate-400">高亮'</span>
+                      <span className="text-slate-400">高亮</span>
                       <span className="text-cyan-300 font-semibold ml-1">
                         {selectedDomain ? domainStats.find(d => d.id === selectedDomain)?.name : '全部'}
                       </span>
@@ -602,16 +622,17 @@ export default function DataMap() {
           {viewMode === 'heatmap' && (
             <div>
               <div className="px-5 py-3 border-b border-white/5">
-                <h3 className="text-sm font-semibold text-white">业务'× 数据分层 热力</h3>
+                <h3 className="text-sm font-semibold text-white">业务域 × 数据分层热力</h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  颜色深浅表示资产数量，悬停查看详'                </p>
+                  颜色深浅表示资产数量，悬停查看详情
+                </p>
               </div>
               <div className="p-6">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr>
-                        <th className="text-left text-xs text-slate-400 font-normal pb-3 pr-4">业务'\ 分层</th>
+                        <th className="text-left text-xs text-slate-400 font-normal pb-3 pr-4">业务域 / 分层</th>
                         {layers.map(l => (
                           <th key={l.id} className="text-center pb-3 px-1">
                             <div
@@ -637,7 +658,7 @@ export default function DataMap() {
                                   className="w-1.5 h-6 rounded-full"
                                   style={{ backgroundColor: row.domain.color }}
                                 />
-                                <span className="text-sm text-white">{row.domain.icon} {row.domain.name}</span>
+                                <span className="text-sm text-white">{row.domain.name}</span>
                               </div>
                             </td>
                             {row.cells.map(cell => {
@@ -700,8 +721,8 @@ export default function DataMap() {
 
                 {/* 强度图例 */}
                 <div className="mt-6 flex items-center justify-end gap-2 text-xs text-slate-400">
-                  <span>资产密度'</span>
-                  <span>'</span>
+                  <span>资产密度</span>
+                  <span>低</span>
                   <div className="flex gap-0.5">
                     {[0.2, 0.4, 0.6, 0.8, 1].map(o => (
                       <div
@@ -711,7 +732,7 @@ export default function DataMap() {
                       />
                     ))}
                   </div>
-                  <span>'</span>
+                  <span>高</span>
                 </div>
               </div>
             </div>
@@ -723,7 +744,8 @@ export default function DataMap() {
               <div className="px-5 py-3 border-b border-white/5">
                 <h3 className="text-sm font-semibold text-white">数据中心地理分布</h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  全球 {datacenters.length} 个数据中心节点，覆盖 {datacenters.reduce((s, d) => s + d.count, 0).toLocaleString()} 个数据资'                </p>
+                  全球 {datacenters.length} 个数据中心节点，覆盖 {datacenters.reduce((s, d) => s + d.count, 0).toLocaleString()} 个数据资产
+                </p>
               </div>
               <div className="relative" style={{ height: 540 }}>
                 <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="none">
@@ -853,12 +875,13 @@ export default function DataMap() {
                             <span className="text-xs font-medium text-white">{dc.name}</span>
                             {dc.primary && (
                               <span className="text-[9px] px-1 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                                '                              </span>
+                                主中心
+                              </span>
                             )}
                           </div>
                         </div>
                         <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-slate-400">资产'</span>
+                          <span className="text-slate-400">资产</span>
                           <span className="text-cyan-300 font-semibold">{dc.count.toLocaleString()}</span>
                         </div>
                       </div>
@@ -879,7 +902,7 @@ export default function DataMap() {
                       }}
                     >
                       <div className="font-semibold text-white mb-0.5">{dc.name}</div>
-                      <div className="text-cyan-300">{dc.count.toLocaleString()} 个资'</div>
+                      <div className="text-cyan-300">{dc.count.toLocaleString()} 个资产</div>
                     </div>
                   );
                 })()}
@@ -908,7 +931,7 @@ export default function DataMap() {
                   <h3 className="text-lg font-bold text-white">{selectedAsset.cnName}</h3>
                   {selectedAsset.hot && (
                     <span className="text-xs px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-300 border border-rose-500/30">
-                      🔥 热门
+                      <span className="inline-flex items-center gap-1"><Flame className="h-3 w-3" />热门</span>
                     </span>
                   )}
                 </div>
@@ -916,14 +939,17 @@ export default function DataMap() {
                 <div className="flex items-center gap-3 mt-3 flex-wrap">
                   <div className="flex items-center gap-1.5 text-xs">
                     <span className="text-slate-400">业务域：</span>
-                    <span className="text-white">
-                      {domains.find(d => d.id === selectedAsset.domain)?.icon}{' '}
+                    <span className="inline-flex items-center gap-1.5 text-white">
+                      {(() => {
+                        const DomainIcon = domains.find(d => d.id === selectedAsset.domain)?.Icon ?? Folder;
+                        return <DomainIcon className="h-3.5 w-3.5" />;
+                      })()}
                       {domains.find(d => d.id === selectedAsset.domain)?.name}
                     </span>
                   </div>
                   <div className="w-px h-3 bg-white/10" />
                   <div className="flex items-center gap-1.5 text-xs">
-                    <span className="text-slate-400">分层'</span>
+                    <span className="text-slate-400">分层</span>
                     <span
                       className="px-1.5 py-0.5 rounded font-semibold"
                       style={{
@@ -947,7 +973,7 @@ export default function DataMap() {
                   </div>
                   <div className="w-px h-3 bg-white/10" />
                   <div className="flex items-center gap-1.5 text-xs">
-                    <span className="text-slate-400">数据量级'</span>
+                    <span className="text-slate-400">数据量级</span>
                     <span className="text-white">
                       {''.repeat(selectedAsset.size)}
                       <span className="text-slate-600">{''.repeat(5 - selectedAsset.size)}</span>
@@ -958,7 +984,8 @@ export default function DataMap() {
             </div>
             <div className="flex items-center gap-2">
               <button className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg text-xs">
-                查看血'              </button>
+                查看血缘
+              </button>
               <button className="px-3 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg text-xs font-medium">
                 查看详情
               </button>

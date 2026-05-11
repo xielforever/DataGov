@@ -1,96 +1,259 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Breadcrumb from '../../components/common/Breadcrumb';
-import { 
-  Folder, 
-  FolderOpen,
-  ChevronRight,
+import {
   ChevronDown,
-  FileCode, 
-  Play, 
-  Square, 
-  Save, 
-  Send, 
-  History, 
-  Database, 
-  Terminal,
+  ChevronRight,
+  Database,
+  FileCode,
+  Folder,
+  FolderOpen,
+  History,
+  Maximize2,
+  Minimize2,
+  PanelBottomClose,
+  PanelBottomOpen,
+  Pencil,
+  Play,
   Plus,
+  Save,
+  Send,
+  FolderInput,
+  Settings,
+  Square,
+  Terminal,
   X,
-  Settings
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Editor from '@monaco-editor/react';
-import { 
-  fetchScripts, 
-  createScript, 
-  updateScript, 
-  runScript, 
-  publishScript, 
+import {
+  createScript,
+  fetchMetadataDataSources,
+  fetchScripts,
   fetchScriptVersions,
-  fetchMetadataDataSources
+  publishScript,
+  runScript,
+  updateScript,
 } from '../../services/api';
 
+type ScriptItem = {
+  id: string;
+  name: string;
+  type: 'folder' | 'sql' | 'python' | 'shell' | string;
+  scriptType?: string;
+  editorLanguage?: string;
+  dialect?: string;
+  parentId?: string | null;
+  content?: string;
+  status?: string;
+  version?: number;
+  dataSourceId?: string;
+  dataSourceConfig?: Record<string, string>;
+  updateTime?: string;
+};
+
+type DataSource = {
+  id: string;
+  name: string;
+  type: string;
+};
+
+type ScriptVersion = {
+  id: string;
+  version: number;
+  content: string;
+  createTime: string;
+  creator: string;
+  comment?: string;
+};
+
+type ScriptTemplate = {
+  scriptType: string;
+  label: string;
+  shortLabel: string;
+  dataSourceTypes: string[];
+  editorLanguage: 'sql' | 'python' | 'shell' | 'json' | 'plaintext';
+  dialect?: string;
+  defaultContent: string;
+  icon: typeof Database;
+  color: string;
+};
+
+const scriptTemplates: ScriptTemplate[] = [
+  { scriptType: 'mysql-sql', label: '新建 MySQL SQL', shortLabel: 'MySQL SQL', dataSourceTypes: ['MySQL'], editorLanguage: 'sql', dialect: 'mysql', defaultContent: 'SELECT * FROM your_table LIMIT 100;', icon: Database, color: 'text-blue-400' },
+  { scriptType: 'postgresql-sql', label: '新建 PostgreSQL SQL', shortLabel: 'PostgreSQL SQL', dataSourceTypes: ['PostgreSQL'], editorLanguage: 'sql', dialect: 'postgresql', defaultContent: 'SELECT * FROM public.your_table LIMIT 100;', icon: Database, color: 'text-indigo-400' },
+  { scriptType: 'hive-sql', label: '新建 Hive SQL', shortLabel: 'Hive SQL', dataSourceTypes: ['Hive'], editorLanguage: 'sql', dialect: 'hive', defaultContent: 'SELECT * FROM your_table LIMIT 100;', icon: Database, color: 'text-amber-400' },
+  { scriptType: 'clickhouse-sql', label: '新建 ClickHouse SQL', shortLabel: 'ClickHouse SQL', dataSourceTypes: ['ClickHouse'], editorLanguage: 'sql', dialect: 'clickhouse', defaultContent: 'SELECT * FROM your_table LIMIT 100;', icon: Database, color: 'text-yellow-400' },
+  {
+    scriptType: 'kafka-consumer',
+    label: '新建 Kafka Consumer',
+    shortLabel: 'Kafka Consumer',
+    dataSourceTypes: ['Kafka'],
+    editorLanguage: 'python',
+    dialect: 'kafka',
+    defaultContent: ['from kafka import KafkaConsumer', '', 'consumer = KafkaConsumer("topic_name", bootstrap_servers=["localhost:9092"])', 'for message in consumer:', '    print(message.value)'].join('\n'),
+    icon: FileCode,
+    color: 'text-slate-300',
+  },
+  { scriptType: 'redis-command', label: '新建 Redis Command', shortLabel: 'Redis Command', dataSourceTypes: ['Redis'], editorLanguage: 'plaintext', dialect: 'redis', defaultContent: 'GET key_name', icon: Terminal, color: 'text-rose-400' },
+  { scriptType: 'elasticsearch-dsl', label: '新建 Elasticsearch DSL', shortLabel: 'Elasticsearch DSL', dataSourceTypes: ['Elasticsearch'], editorLanguage: 'json', dialect: 'elasticsearch', defaultContent: '{\n  "query": {\n    "match_all": {}\n  }\n}', icon: FileCode, color: 'text-teal-400' },
+  { scriptType: 'python-task', label: '新建 Python Task', shortLabel: 'Python Task', dataSourceTypes: ['MySQL', 'PostgreSQL', 'Hive', 'ClickHouse', 'Kafka', 'Redis', 'Elasticsearch'], editorLanguage: 'python', defaultContent: '# Python task\n', icon: FileCode, color: 'text-yellow-400' },
+  { scriptType: 'shell-task', label: '新建 Shell Task', shortLabel: 'Shell Task', dataSourceTypes: [], editorLanguage: 'shell', defaultContent: '#!/usr/bin/env bash\n', icon: Terminal, color: 'text-emerald-400' },
+];
+
+const getTemplateByType = (scriptType?: string) => scriptTemplates.find(template => template.scriptType === scriptType);
+
+const getLegacyTemplate = (script: ScriptItem | null | undefined, dataSources: DataSource[]) => {
+  if (!script || script.type === 'folder') return undefined;
+  const dataSourceType = dataSources.find(ds => ds.id === script.dataSourceId)?.type;
+  if (script.type === 'sql') {
+    if (dataSourceType === 'MySQL') return getTemplateByType('mysql-sql');
+    if (dataSourceType === 'PostgreSQL') return getTemplateByType('postgresql-sql');
+    if (dataSourceType === 'Hive') return getTemplateByType('hive-sql');
+    if (dataSourceType === 'ClickHouse') return getTemplateByType('clickhouse-sql');
+    return getTemplateByType('mysql-sql');
+  }
+  if (script.type === 'python') return getTemplateByType('python-task');
+  if (script.type === 'shell') return getTemplateByType('shell-task');
+  return undefined;
+};
+
 export default function ScriptDev() {
-  const [scripts, setScripts] = useState<any[]>([]);
-  const [activeScript, setActiveScript] = useState<any>(null);
-  const [openTabs, setOpenTabs] = useState<any[]>([]);
-  
-  // Dynamic data source selection
-  const [dataSources, setDataSources] = useState<any[]>([]);
-  
-  // Versions modal
+  const [scripts, setScripts] = useState<ScriptItem[]>([]);
+  const [activeScript, setActiveScript] = useState<ScriptItem | null>(null);
+  const [openTabs, setOpenTabs] = useState<ScriptItem[]>([]);
+  const [dataSources, setDataSources] = useState<DataSource[]>([]);
   const [showVersions, setShowVersions] = useState(false);
-  const [versions, setVersions] = useState<any[]>([]);
-  
-  // New Menu & Editor settings
-  const [showNewMenu, setShowNewMenu] = useState(false);
+  const [versions, setVersions] = useState<ScriptVersion[]>([]);
+  const [newMenuAnchor, setNewMenuAnchor] = useState<'tree' | 'tab' | null>(null);
+  const [newMenuPosition, setNewMenuPosition] = useState<{ left: number; top: number } | null>(null);
+  const [newScriptParentId, setNewScriptParentId] = useState<string | null | undefined>(undefined);
   const [editorTheme, setEditorTheme] = useState<'vs-dark' | 'light' | 'hc-black'>('vs-dark');
   const [showSettings, setShowSettings] = useState(false);
-  
-  // Console logs
   const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
-
-  // Directory tree state
+  const [isRunning, setIsRunning] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [mobilePanel, setMobilePanel] = useState<'files' | 'editor' | 'console'>('files');
+  const [sidebarWidth, setSidebarWidth] = useState(280);
+  const [consoleHeight, setConsoleHeight] = useState(190);
+  const [consoleCollapsed, setConsoleCollapsed] = useState(false);
+  const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
+  const [isDraggingConsole, setIsDraggingConsole] = useState(false);
+  const [treeContextMenu, setTreeContextMenu] = useState<{ script?: ScriptItem; parentId?: string | null; left: number; top: number } | null>(null);
 
-  const toggleFolder = (folderId: string) => {
-    setExpandedFolders(prev => {
-      const next = new Set(prev);
-      if (next.has(folderId)) next.delete(folderId);
-      else next.add(folderId);
-      return next;
-    });
-  };
+  const editorRef = useRef<any>(null);
+  const tabListRef = useRef<HTMLDivElement | null>(null);
+  const activeTabRef = useRef<HTMLButtonElement | null>(null);
+  const tabNewMenuRef = useRef<HTMLDivElement | null>(null);
+  const floatingNewMenuRef = useRef<HTMLDivElement | null>(null);
+  const treeContextMenuRef = useRef<HTMLDivElement | null>(null);
+  const settingsRef = useRef<HTMLDivElement | null>(null);
 
-  // ── 方案B：延迟关闭 timer refs ──────────────────────────────
-  const newMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const settingsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const openNewMenu = () => {
-    if (newMenuTimer.current) clearTimeout(newMenuTimer.current);
-    setShowNewMenu(true);
-  };
-  const closeNewMenu = () => {
-    newMenuTimer.current = setTimeout(() => setShowNewMenu(false), 120);
-  };
-  // ────────────────────────────────────────────────────────────
+  const folders = useMemo(() => scripts.filter(script => script.type === 'folder'), [scripts]);
+  const rootScripts = useMemo(() => scripts.filter(script => script.type !== 'folder' && !script.parentId), [scripts]);
+  const activeTemplate = useMemo(() => getTemplateByType(activeScript?.scriptType) || getLegacyTemplate(activeScript, dataSources), [activeScript, dataSources]);
+  const filteredDataSources = useMemo(() => {
+    if (!activeTemplate) return [];
+    return dataSources.filter(ds => activeTemplate.dataSourceTypes.includes(ds.type));
+  }, [activeTemplate, dataSources]);
+  const activeDataSource = filteredDataSources.find(ds => ds.id === activeScript?.dataSourceId);
+  const editorLanguage = activeScript?.editorLanguage || activeTemplate?.editorLanguage || (activeScript?.type === 'python' ? 'python' : activeScript?.type === 'shell' ? 'shell' : 'sql');
 
   useEffect(() => {
     loadScripts();
     loadDataSources();
   }, []);
 
-  // 组件卸载时清理 timer，防止内存泄漏
   useEffect(() => {
-    return () => {
-      if (newMenuTimer.current) clearTimeout(newMenuTimer.current);
-      if (settingsTimer.current) clearTimeout(settingsTimer.current);
+    if (!activeScript?.dataSourceId) return;
+    if (filteredDataSources.some(ds => ds.id === activeScript.dataSourceId)) return;
+    updateActiveDraft(script => ({ ...script, dataSourceId: '', dataSourceConfig: {} }));
+  }, [activeScript?.id, activeScript?.type, activeScript?.scriptType, activeScript?.dataSourceId, filteredDataSources]);
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      if (isDraggingSidebar) {
+        setSidebarWidth(Math.min(420, Math.max(240, event.clientX - 255)));
+      }
+
+      if (isDraggingConsole) {
+        const viewportBottom = window.innerHeight - 24;
+        setConsoleHeight(Math.min(360, Math.max(120, viewportBottom - event.clientY)));
+      }
     };
-  }, []);
+
+    const stopDragging = () => {
+      setIsDraggingSidebar(false);
+      setIsDraggingConsole(false);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', stopDragging);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', stopDragging);
+    };
+  }, [isDraggingConsole, isDraggingSidebar]);
+
+  useEffect(() => {
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const clickedNewMenu =
+        tabNewMenuRef.current?.contains(target) ||
+        floatingNewMenuRef.current?.contains(target);
+      if (!clickedNewMenu) closeNewScriptMenu();
+      if (treeContextMenuRef.current && !treeContextMenuRef.current.contains(target)) {
+        setTreeContextMenu(null);
+      }
+      if (settingsRef.current && !settingsRef.current.contains(target)) {
+        setShowSettings(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeNewScriptMenu();
+        setTreeContextMenu(null);
+        setShowSettings(false);
+        setShowVersions(false);
+      }
+
+      const key = event.key.toLowerCase();
+      const isSaveShortcut = (event.ctrlKey || event.metaKey) && key === 's';
+      const isRunShortcut = (event.ctrlKey || event.metaKey) && event.key === 'Enter';
+      const isFormatShortcut = event.altKey && event.shiftKey && key === 'f';
+
+      if (isSaveShortcut) {
+        event.preventDefault();
+        handleSave();
+      }
+      if (isRunShortcut) {
+        event.preventDefault();
+        handleRun();
+      }
+      if (isFormatShortcut) {
+        event.preventDefault();
+        editorRef.current?.getAction?.('editor.action.formatDocument')?.run?.();
+      }
+    };
+
+    document.addEventListener('mousedown', handleDocumentClick);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentClick);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activeScript, newMenuAnchor, showSettings]);
+
+  useEffect(() => {
+    activeTabRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
+  }, [activeScript?.id, openTabs.length]);
 
   const loadScripts = async () => {
     try {
       const res = await fetchScripts();
       setScripts(res);
+      const initialFolders = new Set(res.filter((script: ScriptItem) => script.type === 'folder').map((script: ScriptItem) => script.id));
+      setExpandedFolders(prev => (prev.size > 0 ? prev : initialFolders));
     } catch (e) {
       toast.error('获取脚本失败');
     }
@@ -101,77 +264,206 @@ export default function ScriptDev() {
       const res = await fetchMetadataDataSources();
       setDataSources(res);
     } catch (e) {
-      console.error('Failed to load data sources');
+      toast.error('获取数据源失败');
     }
   };
 
-  const getIcon = (type: string) => {
-    switch(type) {
-      case 'sql': return <Database className="w-4 h-4 text-blue-400" />;
-      case 'python': return <FileCode className="w-4 h-4 text-yellow-400" />;
-      case 'shell': return <Terminal className="w-4 h-4 text-green-400" />;
-      default: return <Folder className="w-4 h-4 text-gray-400" />;
+  const getIcon = (type: string, scriptType?: string) => {
+    const template = getTemplateByType(scriptType);
+    if (template) {
+      const Icon = template.icon;
+      return <Icon className={`h-4 w-4 ${template.color}`} />;
+    }
+
+    switch (type) {
+      case 'sql':
+        return <Database className="h-4 w-4 text-blue-400" />;
+      case 'python':
+        return <FileCode className="h-4 w-4 text-yellow-400" />;
+      case 'shell':
+        return <Terminal className="h-4 w-4 text-emerald-400" />;
+      default:
+        return <Folder className="h-4 w-4 text-slate-400" />;
     }
   };
 
-  const handleScriptClick = (script: any) => {
+  const updateActiveDraft = (updater: (script: ScriptItem) => ScriptItem) => {
+    setActiveScript(current => {
+      if (!current) return current;
+      const next = updater(current);
+      setOpenTabs(tabs => tabs.map(tab => (tab.id === next.id ? next : tab)));
+      setScripts(items => items.map(item => (item.id === next.id ? next : item)));
+      return next;
+    });
+  };
+
+  const toggleFolder = (folderId: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  };
+
+  const handleScriptClick = (script: ScriptItem) => {
     if (script.type === 'folder') return;
-    if (!openTabs.find(t => t.id === script.id)) {
-      setOpenTabs([...openTabs, script]);
+    const existingTab = openTabs.find(tab => tab.id === script.id);
+    if (!existingTab) {
+      setOpenTabs(tabs => [...tabs, script]);
     }
-    setActiveScript(script);
+    setActiveScript(existingTab || script);
+    setMobilePanel('editor');
   };
 
-  const handleCloseTab = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newTabs = openTabs.filter(t => t.id !== id);
-    setOpenTabs(newTabs);
+  const handleCloseTab = (id: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    const nextTabs = openTabs.filter(tab => tab.id !== id);
+    setOpenTabs(nextTabs);
     if (activeScript?.id === id) {
-      setActiveScript(newTabs.length > 0 ? newTabs[0] : null);
+      setActiveScript(nextTabs.length > 0 ? nextTabs[0] : null);
+      if (nextTabs.length === 0) setMobilePanel('files');
     }
   };
 
-  const handleCreateScript = async (type: string, dsType: string) => {
-    setShowNewMenu(false);
+  const handleCreateFolder = async () => {
+    setTreeContextMenu(null);
+    const name = window.prompt('请输入目录名称', '新建目录')?.trim();
+    if (!name) return;
+
+    try {
+      const folder = await createScript({
+        name,
+        type: 'folder',
+        parentId: null,
+      });
+      await loadScripts();
+      setExpandedFolders(prev => new Set(prev).add(folder.id));
+      toast.success('目录创建成功');
+    } catch (e) {
+      toast.error('目录创建失败');
+    }
+  };
+
+  const openTreeContextMenu = (event: React.MouseEvent, options: { script?: ScriptItem; parentId?: string | null } = {}) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const width = 224;
+    const gutter = 12;
+    setTreeContextMenu({
+      ...options,
+      left: Math.min(Math.max(gutter, event.clientX), window.innerWidth - width - gutter),
+      top: Math.min(Math.max(gutter, event.clientY), window.innerHeight - gutter),
+    });
+  };
+
+  const handleCreateScriptFromTree = (parentId: string | null = null) => {
+    setTreeContextMenu(null);
+    const fallbackLeft = window.innerWidth > 320 ? 300 : 12;
+    const fallbackTop = 180;
+    setNewMenuAnchor('tree');
+    setNewScriptParentId(parentId);
+    setNewMenuPosition({
+      left: Math.min(fallbackLeft, window.innerWidth - 268),
+      top: Math.min(fallbackTop, window.innerHeight - 80),
+    });
+  };
+
+  const patchScriptEverywhere = (updatedScript: ScriptItem) => {
+    setScripts(items => items.map(item => (item.id === updatedScript.id ? updatedScript : item)));
+    setOpenTabs(tabs => tabs.map(tab => (tab.id === updatedScript.id ? updatedScript : tab)));
+    setActiveScript(current => (current?.id === updatedScript.id ? updatedScript : current));
+  };
+
+  const handleRenameScript = async (script: ScriptItem) => {
+    setTreeContextMenu(null);
+    const name = window.prompt('请输入脚本名称', script.name)?.trim();
+    if (!name || name === script.name) return;
+
+    try {
+      const updatedScript = await updateScript(script.id, { ...script, name });
+      patchScriptEverywhere(updatedScript);
+      toast.success('脚本已重命名');
+    } catch (e) {
+      toast.error('重命名失败');
+    }
+  };
+
+  const handleMoveScript = async (script: ScriptItem, parentId: string | null) => {
+    setTreeContextMenu(null);
+    if ((script.parentId || null) === parentId) return;
+
+    try {
+      const updatedScript = await updateScript(script.id, { ...script, parentId });
+      patchScriptEverywhere(updatedScript);
+      if (parentId) {
+        setExpandedFolders(prev => new Set(prev).add(parentId));
+      }
+      toast.success('脚本已移动');
+    } catch (e) {
+      toast.error('移动失败');
+    }
+  };
+
+  const handleCreateScript = async (template: ScriptTemplate) => {
+    closeNewScriptMenu();
+    const targetFolderId = newScriptParentId !== undefined ? newScriptParentId : activeScript?.parentId || folders[0]?.id || null;
+    const preferredDataSource = dataSources.find(ds => template.dataSourceTypes.includes(ds.type));
+    const type = template.editorLanguage === 'sql' ? 'sql' : template.editorLanguage;
+    const dsType = template.shortLabel;
     const newScriptData = {
       name: `新建${dsType}脚本`,
-      type: type,
-      content: '',
+      type,
+      scriptType: template.scriptType,
+      editorLanguage: template.editorLanguage,
+      dialect: template.dialect,
+      parentId: targetFolderId,
+      content: template.defaultContent,
+      dataSourceId: preferredDataSource?.id || '',
       dataSourceConfig: {},
     };
+
     try {
       const res = await createScript(newScriptData);
       await loadScripts();
-      setOpenTabs([...openTabs, res]);
+      if (targetFolderId) {
+        setExpandedFolders(prev => new Set(prev).add(targetFolderId));
+      }
+      setOpenTabs(tabs => [...tabs, res]);
       setActiveScript(res);
+      setMobilePanel('editor');
     } catch (e) {
       toast.error('创建脚本失败');
     }
   };
 
-  const handleDataSourceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleDataSourceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     if (!activeScript) return;
-    setActiveScript({ ...activeScript, dataSourceId: e.target.value, dataSourceConfig: {} });
+    updateActiveDraft(script => ({ ...script, dataSourceId: event.target.value, dataSourceConfig: {} }));
   };
 
   const handleConfigChange = (key: string, value: string) => {
     if (!activeScript) return;
-    setActiveScript({
-      ...activeScript,
-      dataSourceConfig: { ...activeScript.dataSourceConfig, [key]: value }
-    });
+    updateActiveDraft(script => ({
+      ...script,
+      dataSourceConfig: { ...script.dataSourceConfig, [key]: value },
+    }));
   };
 
-  const activeDataSource = dataSources.find(ds => ds.id === activeScript?.dataSourceId);
-
   const handleSave = async () => {
-    if (!activeScript) return;
+    if (!activeScript) {
+      toast('请先选择脚本');
+      return;
+    }
+
     try {
-      await updateScript(activeScript.id, activeScript);
+      const savedScript = await updateScript(activeScript.id, activeScript);
       toast.success('保存成功');
-      
-      // Update in openTabs
-      setOpenTabs(tabs => tabs.map(t => t.id === activeScript.id ? activeScript : t));
+      setActiveScript(savedScript);
+      setOpenTabs(tabs => tabs.map(tab => (tab.id === savedScript.id ? savedScript : tab)));
       await loadScripts();
     } catch (e) {
       toast.error('保存失败');
@@ -179,12 +471,17 @@ export default function ScriptDev() {
   };
 
   const handlePublish = async () => {
-    if (!activeScript) return;
+    if (!activeScript) {
+      toast('请先选择脚本');
+      return;
+    }
+
     try {
       await publishScript(activeScript.id);
-      toast.success('已提交至审批流');
-      setActiveScript({ ...activeScript, status: 'approving' });
-      setOpenTabs(tabs => tabs.map(t => t.id === activeScript.id ? { ...t, status: 'approving' } : t));
+      toast.success('已提交审批');
+      const approvingScript = { ...activeScript, status: 'approving' };
+      setActiveScript(approvingScript);
+      setOpenTabs(tabs => tabs.map(tab => (tab.id === activeScript.id ? approvingScript : tab)));
       await loadScripts();
     } catch (e) {
       toast.error('发布失败');
@@ -192,22 +489,44 @@ export default function ScriptDev() {
   };
 
   const handleRun = async () => {
-    if (!activeScript) return;
+    if (!activeScript) {
+      toast('请先选择脚本');
+      return;
+    }
+
     try {
+      setConsoleCollapsed(false);
+      setMobilePanel('console');
       toast.success('正在运行脚本...');
+      setIsRunning(true);
       setConsoleLogs(['Job started...', 'Executing...']);
       const res = await runScript(activeScript.id);
-      if (res && res.logs) {
-        setConsoleLogs(res.logs);
-      }
+      setConsoleLogs(res?.logs || ['Success.']);
     } catch (e) {
       toast.error('运行失败');
       setConsoleLogs(['Error: Execution failed.']);
+    } finally {
+      setIsRunning(false);
     }
   };
 
+  const handleStop = () => {
+    if (!isRunning) {
+      toast('当前没有运行中的任务');
+      return;
+    }
+
+    setIsRunning(false);
+    setConsoleLogs(logs => [...logs, 'Job stopped by user.']);
+    toast.success('已停止运行');
+  };
+
   const loadVersions = async () => {
-    if (!activeScript) return;
+    if (!activeScript) {
+      toast('请先选择脚本');
+      return;
+    }
+
     try {
       const res = await fetchScriptVersions(activeScript.id);
       setVersions(res);
@@ -217,378 +536,560 @@ export default function ScriptDev() {
     }
   };
 
-  const editorLanguage = activeScript?.type === 'python' ? 'python' : activeScript?.type === 'shell' ? 'shell' : 'sql';
+  const handleViewVersion = (version: ScriptVersion) => {
+    updateActiveDraft(script => ({ ...script, content: version.content }));
+    setShowVersions(false);
+    toast.success(`已载入 V${version.version} 版本内容`);
+  };
 
-  return (
-    <div className="space-y-6">
-      <Breadcrumb items={[{ label: '数据开发' }, { label: '脚本开发' }]} />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">脚本开发</h1>
-        <div className="flex gap-3">
-          <button className="px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">运行历史</button>
-          <button className="px-4 py-2 rounded-lg text-sm bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:opacity-90">环境变量</button>
+  const renderScriptRow = (script: ScriptItem) => (
+    <button
+      key={script.id}
+      type="button"
+      onClick={() => handleScriptClick(script)}
+      onContextMenu={event => openTreeContextMenu(event, { script, parentId: script.parentId ?? null })}
+      className={`group flex w-full min-w-0 items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-sm transition ${
+        activeScript?.id === script.id
+          ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
+          : 'border-transparent text-slate-400 hover:border-white/10 hover:bg-white/5 hover:text-slate-200'
+      }`}
+      title={script.name}
+    >
+      <span className="shrink-0">{getIcon(script.type, script.scriptType)}</span>
+      <span className="min-w-0 flex-1 truncate">{script.name}</span>
+      {script.status === 'approving' && (
+        <span className="shrink-0 rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-300">
+          审批中
+        </span>
+      )}
+    </button>
+  );
+
+  const renderTreeContextMenu = () => {
+    if (!treeContextMenu) return null;
+
+    const { script, parentId } = treeContextMenu;
+    const moveTargets = script ? folders.filter(folder => folder.id !== script.parentId) : [];
+    const canMoveToRoot = Boolean(script?.parentId);
+
+    return (
+      <div
+        ref={treeContextMenuRef}
+        className="fixed z-[90] w-56 overflow-hidden rounded-lg border border-white/10 bg-slate-900 py-1 shadow-2xl"
+        style={{ left: treeContextMenu.left, top: treeContextMenu.top }}
+      >
+        <button
+          type="button"
+          onClick={handleCreateFolder}
+          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
+        >
+          <Folder className="h-4 w-4 text-cyan-300" />
+          新建目录
+        </button>
+        <button
+          type="button"
+          onClick={() => handleCreateScriptFromTree(parentId ?? null)}
+          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
+        >
+          <Plus className="h-4 w-4 text-cyan-300" />
+          新建脚本
+        </button>
+        {script && <div className="my-1 border-t border-white/10" />}
+        {script && (
+        <button
+          type="button"
+          onClick={() => handleRenameScript(script)}
+          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
+        >
+          <Pencil className="h-4 w-4 text-cyan-300" />
+          重命名
+        </button>
+        )}
+        {script && (
+        <div className="mt-1 border-t border-white/10 pt-1">
+          <div className="px-3 py-1 text-[11px] text-slate-500">移动到</div>
+          {canMoveToRoot && (
+            <button
+              type="button"
+              onClick={() => handleMoveScript(script, null)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
+            >
+              <FolderInput className="h-4 w-4 text-slate-400" />
+              根目录
+            </button>
+          )}
+          {moveTargets.map(folder => (
+            <button
+              key={folder.id}
+              type="button"
+              onClick={() => handleMoveScript(script, folder.id)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
+            >
+              <FolderInput className="h-4 w-4 text-cyan-300" />
+              <span className="min-w-0 flex-1 truncate">{folder.name}</span>
+            </button>
+          ))}
+          {!canMoveToRoot && moveTargets.length === 0 && <div className="px-3 py-2 text-xs text-slate-500">暂无可移动目录</div>}
+        </div>
+        )}
+      </div>
+    );
+  };
+
+  const openNewScriptMenu = (anchor: 'tree' | 'tab', event: React.MouseEvent<HTMLButtonElement>) => {
+    if (newMenuAnchor === anchor) {
+      closeNewScriptMenu();
+      return;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const width = 256;
+    const gutter = 12;
+    const preferredLeft = anchor === 'tree' ? rect.right - width : rect.left;
+    const left = Math.min(Math.max(gutter, preferredLeft), window.innerWidth - width - gutter);
+    const top = Math.min(rect.bottom + 8, window.innerHeight - gutter);
+
+    setNewMenuAnchor(anchor);
+    setNewScriptParentId(undefined);
+    setNewMenuPosition({ left, top });
+  };
+
+  const closeNewScriptMenu = () => {
+    setNewMenuAnchor(null);
+    setNewMenuPosition(null);
+    setNewScriptParentId(undefined);
+  };
+
+  const renderNewScriptMenu = () => (
+    <div
+      ref={floatingNewMenuRef}
+      className="fixed z-[80] max-h-[min(520px,calc(100vh-80px))] w-64 overflow-y-auto rounded-lg border border-white/10 bg-slate-900 shadow-2xl"
+      style={{ left: newMenuPosition?.left ?? 0, top: newMenuPosition?.top ?? 0 }}
+    >
+      {scriptTemplates.map(option => {
+        const Icon = option.icon;
+        return (
+          <button
+            key={option.scriptType}
+            type="button"
+            onClick={() => handleCreateScript(option)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
+          >
+            <Icon className={`h-4 w-4 ${option.color}`} />
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const renderScriptTree = () => (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/80 px-3 py-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+          <FolderOpen className="h-4 w-4 text-cyan-400" />
+          脚本目录
         </div>
       </div>
 
-      <div className="flex h-[calc(100vh-12rem)] gap-4 text-slate-300">
-        {/* 左侧边栏 */}
-        <div className="w-64 border border-slate-800 rounded-xl shadow-xl flex flex-col shrink-0 bg-slate-900/50 overflow-hidden">
-          <div className="p-3 border-b border-slate-800 font-medium text-slate-200 flex justify-between items-center bg-slate-900/80">
-            <span className="flex items-center gap-2">
-              <FolderOpen className="w-4 h-4 text-cyan-500" />
-              脚本目录
-            </span>
-            <div className="flex items-center gap-1">
-              <button className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition-colors" title="新建文件夹">
-                <Folder className="w-3.5 h-3.5" />
-              </button>
-              <button className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition-colors" title="新建脚本" onClick={openNewMenu}>
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto py-2 px-2 custom-scrollbar">
-            {scripts.filter(s => s.type === 'folder').map(folder => {
-              const isExpanded = expandedFolders.has(folder.id);
-              const children = scripts.filter(s => s.parentId === folder.id);
-              return (
-                <div key={folder.id} className="mb-1">
-                  {/* Folder Header */}
-                  <div 
-                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-slate-300 hover:bg-slate-800/80 cursor-pointer group transition-colors"
-                    onClick={() => toggleFolder(folder.id)}
-                  >
-                    <span className="text-slate-500 group-hover:text-slate-400 transition-colors">
-                      {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                    </span>
-                    <span className="text-cyan-500/80 group-hover:text-cyan-400 transition-colors">
-                      {isExpanded ? <FolderOpen className="w-4 h-4" /> : <Folder className="w-4 h-4" />}
-                    </span>
-                    <span className="text-sm font-medium select-none truncate flex-1">{folder.name}</span>
-                    <span className="text-[10px] text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">{children.length}</span>
-                  </div>
-                  
-                  {/* Folder Contents */}
-                  {isExpanded && (
-                    <div className="ml-4 pl-3 mt-1 space-y-0.5 border-l border-slate-700/50">
-                      {children.map(script => (
-                        <div 
-                          key={script.id}
-                          className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all duration-200 group
-                            ${activeScript?.id === script.id 
-                              ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.05)]' 
-                              : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-transparent'}`}
-                          onClick={() => handleScriptClick(script)}
-                        >
-                          <span className={`transition-transform duration-200 ${activeScript?.id === script.id ? 'scale-110' : 'group-hover:scale-110'}`}>
-                            {getIcon(script.type)}
-                          </span>
-                          <span className="text-sm truncate select-none" title={script.name}>{script.name}</span>
-                          {script.status === 'approving' && (
-                            <span className="ml-auto text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">审批中</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            
-            {/* Root Level Scripts */}
-            {scripts.filter(s => s.type !== 'folder' && !s.parentId).length > 0 && (
-              <div className="mt-3 pt-2 border-t border-slate-800/80 space-y-0.5">
-                {scripts.filter(s => s.type !== 'folder' && !s.parentId).map(script => (
-                  <div 
-                    key={script.id}
-                    className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all duration-200 group
-                      ${activeScript?.id === script.id 
-                        ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.05)]' 
-                        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-transparent'}`}
-                    onClick={() => handleScriptClick(script)}
-                  >
-                    <span className={`transition-transform duration-200 ${activeScript?.id === script.id ? 'scale-110' : 'group-hover:scale-110'}`}>
-                      {getIcon(script.type)}
-                    </span>
-                    <span className="text-sm truncate select-none" title={script.name}>{script.name}</span>
-                    {script.status === 'approving' && (
-                      <span className="ml-auto text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">审批中</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* 主编辑区 */}
-        <div className="flex-1 border border-slate-800 rounded-xl shadow-xl flex flex-col min-w-0 relative bg-slate-950 overflow-hidden">
-        {/* 标签页栏 (Tab Bar) */}
-        <div className="flex items-end bg-[#1e1e1e] pt-2 px-2 border-b border-gray-700 overflow-visible shrink-0 relative z-40">
-          {openTabs.map(tab => (
-            <div 
-              key={tab.id}
-              onClick={() => setActiveScript(tab)}
-              className={`group flex items-center gap-2 px-3 py-2 border-t border-x rounded-t-md cursor-pointer text-sm shrink-0
-                ${activeScript?.id === tab.id 
-                  ? 'bg-gray-800 border-gray-700 text-gray-200' 
-                  : 'bg-[#1e1e1e] border-transparent text-gray-500 hover:bg-gray-800'}`}
-            >
-              {getIcon(tab.type)}
-              <span>{tab.name}</span>
-              <X 
-                className={`w-3 h-3 hover:text-red-400 ${activeScript?.id === tab.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} 
-                onClick={(e) => handleCloseTab(tab.id, e)} 
-              />
-            </div>
-          ))}
-          
-          {/* 新建标签按钮及下拉菜单 —— 方案B：延迟关闭 */}
-          <div className="relative ml-2 mb-1">
-            <div 
-              className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-800 cursor-pointer text-gray-400"
-              onMouseEnter={openNewMenu}
-              onMouseLeave={closeNewMenu}
-            >
-              <Plus className="w-4 h-4" />
-            </div>
-            
-            {showNewMenu && (
-              <div 
-                className="absolute left-0 top-full mt-1 w-48 bg-gray-800 border border-gray-700 rounded shadow-lg z-50 py-1"
-                onMouseEnter={openNewMenu}
-                onMouseLeave={closeNewMenu}
-                onClick={(e) => e.stopPropagation()}
+      <div className="custom-scrollbar flex-1 overflow-y-auto px-2 py-3" onContextMenu={event => openTreeContextMenu(event, { parentId: null })}>
+        {folders.map(folder => {
+          const children = scripts.filter(script => script.parentId === folder.id);
+          const isExpanded = expandedFolders.has(folder.id);
+
+          return (
+            <div key={folder.id} className="mb-2">
+              <button
+                type="button"
+                onClick={() => toggleFolder(folder.id)}
+                onContextMenu={event => openTreeContextMenu(event, { parentId: folder.id })}
+                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-slate-300 transition hover:bg-slate-800/80"
               >
-                <div 
-                  className="px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center gap-2 text-sm text-gray-300"
-                  onClick={() => handleCreateScript('sql', 'MySQL')}
-                >
-                  <Database className="w-4 h-4 text-blue-400" /> 新建 MySQL 脚本
-                </div>
-                <div 
-                  className="px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center gap-2 text-sm text-gray-300"
-                  onClick={() => handleCreateScript('sql', 'Hive')}
-                >
-                  <Database className="w-4 h-4 text-yellow-400" /> 新建 Hive SQL 脚本
-                </div>
-                <div 
-                  className="px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center gap-2 text-sm text-gray-300"
-                  onClick={() => handleCreateScript('python', 'Python')}
-                >
-                  <FileCode className="w-4 h-4 text-yellow-400" /> 新建 Python 脚本
-                </div>
-                <div 
-                  className="px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center gap-2 text-sm text-gray-300"
-                  onClick={() => handleCreateScript('shell', 'Shell')}
-                >
-                  <Terminal className="w-4 h-4 text-green-400" /> 新建 Shell 脚本
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {!activeScript ? (
-          <div className="flex-1 flex items-center justify-center text-slate-500 bg-slate-950">
-            <div className="text-center">
-              <Terminal className="w-12 h-12 mx-auto mb-4 opacity-20 text-slate-400" />
-              <p className="text-slate-400">请在左侧选择一个脚本开始编辑，或点击上方 "+" 新建脚本</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* 顶部工具栏 */}
-            <div className="h-10 border-b border-slate-800 bg-slate-900/80 flex items-center px-4 justify-between shrink-0 backdrop-blur-sm">
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-slate-200">
-                  <input 
-                    type="text" 
-                    value={activeScript.name} 
-                    onChange={(e) => setActiveScript({...activeScript, name: e.target.value})}
-                    className="bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-cyan-500 rounded px-1 min-w-[200px]"
-                  />
-                </span>
-
-                {/* 动态数据源选择 */}
-                <div className="flex items-center gap-3 ml-6 border-l border-slate-700 pl-4">
-                  <select 
-                    value={activeScript.dataSourceId || ''} 
-                    onChange={handleDataSourceChange}
-                    className="bg-slate-950 border border-slate-700 rounded text-xs px-2 py-1 text-slate-300 outline-none focus:border-cyan-500"
-                  >
-                    <option value="">选择数据源...</option>
-                    {dataSources.map(ds => (
-                      <option key={ds.id} value={ds.id}>{ds.name} ({ds.type})</option>
-                    ))}
-                  </select>
-                  
-                  {activeDataSource?.type === 'Hive' && (
-                    <select 
-                      value={activeScript.dataSourceConfig?.queue || ''}
-                      onChange={(e) => handleConfigChange('queue', e.target.value)}
-                      className="bg-slate-950 border border-slate-700 rounded text-xs px-2 py-1 text-slate-300 outline-none focus:border-cyan-500"
-                    >
-                      <option value="">选择队列...</option>
-                      <option value="default">default</option>
-                      <option value="high_priority">high_priority</option>
-                      <option value="etl">etl</option>
-                    </select>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={handleSave} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition-colors" title="保存"><Save className="w-4 h-4" /></button>
-                <button onClick={handleRun} className="p-1 hover:bg-slate-800 rounded text-emerald-400 hover:text-emerald-300 transition-colors" title="运行"><Play className="w-4 h-4" /></button>
-                <button className="p-1 hover:bg-slate-800 rounded text-rose-400 hover:text-rose-300 transition-colors" title="停止"><Square className="w-4 h-4" /></button>
-                <button onClick={handlePublish} className="p-1 hover:bg-slate-800 rounded text-blue-400 hover:text-blue-300 transition-colors" title="发布"><Send className="w-4 h-4" /></button>
-                <button onClick={loadVersions} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200 transition-colors" title="历史版本"><History className="w-4 h-4" /></button>
-                
-                {/* 主题设置 —— 方案B：延迟关闭 */}
-                <div className="relative ml-2 border-l border-slate-700 pl-2">
-                  <button 
-                    onClick={() => setShowSettings(!showSettings)}
-                    className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200 transition-colors" 
-                    title="编辑器设置"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </button>
-                  
-                  {showSettings && (
-                    <div 
-                      className="absolute right-0 top-full mt-1 w-40 bg-slate-800 border border-slate-700 rounded shadow-xl z-50 py-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="px-3 py-1.5 text-xs text-slate-400 font-medium border-b border-slate-700/50 mb-1">主题风格</div>
-                      <div 
-                        className={`px-4 py-2 hover:bg-slate-700 cursor-pointer text-sm flex items-center justify-between transition-colors ${editorTheme === 'vs-dark' ? 'text-cyan-400 bg-slate-700/30' : 'text-slate-300'}`}
-                        onClick={(e) => { e.stopPropagation(); setEditorTheme('vs-dark'); setShowSettings(false); }}
-                      >
-                        深色 (Dark) {editorTheme === 'vs-dark' && '✓'}
-                      </div>
-                      <div 
-                        className={`px-4 py-2 hover:bg-slate-700 cursor-pointer text-sm flex items-center justify-between transition-colors ${editorTheme === 'light' ? 'text-cyan-400 bg-slate-700/30' : 'text-slate-300'}`}
-                        onClick={(e) => { e.stopPropagation(); setEditorTheme('light'); setShowSettings(false); }}
-                      >
-                        浅色 (Light) {editorTheme === 'light' && '✓'}
-                      </div>
-                      <div 
-                        className={`px-4 py-2 hover:bg-slate-700 cursor-pointer text-sm flex items-center justify-between transition-colors ${editorTheme === 'hc-black' ? 'text-cyan-400 bg-slate-700/30' : 'text-slate-300'}`}
-                        onClick={(e) => { e.stopPropagation(); setEditorTheme('hc-black'); setShowSettings(false); }}
-                      >
-                        高对比度 {editorTheme === 'hc-black' && '✓'}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            {/* 编辑器 */}
-            <div className="flex-1 min-h-0 relative bg-slate-950">
-              {activeScript.content === '' && activeScript.name.startsWith('新建') && (
-                <div className="absolute inset-0 pointer-events-none z-10 flex flex-col items-center justify-center text-slate-500 opacity-60 bg-slate-950">
-                  <div className="mb-4 text-center">
-                    <p className="text-xl font-bold mb-4 text-slate-300">开始编写代码</p>
-                    <div className="text-sm space-y-2 bg-slate-900/60 p-6 rounded-xl border border-slate-800 backdrop-blur-md shadow-lg">
-                      <p className="flex justify-between gap-8">
-                        <span className="text-slate-400">当前脚本:</span> 
-                        <span className="text-cyan-400 font-mono">{activeScript.name}</span>
-                      </p>
-                      <p className="flex justify-between gap-8">
-                        <span className="text-slate-400">脚本类型:</span> 
-                        <span className="text-emerald-400 font-mono uppercase">{activeScript.type}</span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-12 mt-8 text-xs font-mono">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="px-3 py-1.5 bg-slate-800/80 rounded-md border border-slate-700 shadow-sm text-slate-300">Ctrl + S</div>
-                      <span className="text-slate-400">保存脚本</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="px-3 py-1.5 bg-slate-800/80 rounded-md border border-slate-700 shadow-sm text-slate-300">Ctrl + Enter</div>
-                      <span className="text-slate-400">运行脚本</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="px-3 py-1.5 bg-slate-800/80 rounded-md border border-slate-700 shadow-sm text-slate-300">Alt + Shift + F</div>
-                      <span className="text-slate-400">格式化代码</span>
-                    </div>
-                  </div>
+                {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-slate-500" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-500" />}
+                {isExpanded ? <FolderOpen className="h-4 w-4 text-cyan-400" /> : <Folder className="h-4 w-4 text-cyan-400" />}
+                <span className="min-w-0 flex-1 truncate">{folder.name}</span>
+                <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-500">{children.length}</span>
+              </button>
+              {isExpanded && (
+                <div className="ml-4 mt-1 space-y-1 border-l border-slate-800 pl-3">
+                  {children.map(renderScriptRow)}
+                  {children.length === 0 && <div className="px-2 py-3 text-xs text-slate-500">暂无脚本</div>}
                 </div>
               )}
-              <Editor
-                height="100%"
-                theme={editorTheme}
-                language={editorLanguage}
-                value={activeScript.content}
-                onChange={(val) => setActiveScript({...activeScript, content: val})}
-                options={{
-                  minimap: { enabled: false },
-                  fontSize: 14,
-                  wordWrap: 'on',
-                  automaticLayout: true,
-                }}
-              />
             </div>
-            
-            {/* 底部控制台 */}
-            <div className="h-48 border-t border-slate-800 bg-slate-950 flex flex-col shrink-0">
-              <div className="px-3 py-1 border-b border-slate-800/60 bg-slate-900/50 text-xs font-medium text-slate-400 flex items-center">
-                控制台输出
+          );
+        })}
+
+        {rootScripts.length > 0 && (
+          <div className="space-y-1">
+            {rootScripts.map(renderScriptRow)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <Breadcrumb items={[{ label: '数据开发' }, { label: '脚本开发' }]} />
+          <h1 className="mt-2 text-2xl font-bold text-white">脚本开发</h1>
+          <p className="mt-1 text-sm text-slate-400">在线编写、调试和发布多数据源脚本，统一管理 SQL、任务脚本与执行配置。</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled
+            className="rounded-lg border border-white/10 bg-slate-800/70 px-4 py-2 text-sm text-slate-500"
+            title="能力规划中"
+          >
+            运行历史
+          </button>
+          <button
+            type="button"
+            disabled
+            className="rounded-lg border border-white/10 bg-slate-800/70 px-4 py-2 text-sm text-slate-500"
+            title="能力规划中"
+          >
+            环境变量
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 rounded-xl border border-white/10 bg-slate-900/50 p-1 lg:hidden">
+        {[
+          { id: 'files', label: '目录' },
+          { id: 'editor', label: '编辑器' },
+          { id: 'console', label: '控制台' },
+        ].map(panel => (
+          <button
+            key={panel.id}
+            type="button"
+            onClick={() => setMobilePanel(panel.id as typeof mobilePanel)}
+            className={`rounded-lg px-3 py-2 text-sm transition ${
+              mobilePanel === panel.id ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-400'
+            }`}
+          >
+            {panel.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex min-h-[560px] flex-col gap-4 overflow-hidden rounded-lg border border-slate-800 bg-slate-900 text-slate-300 shadow-xl lg:h-[calc(100vh-12rem)] lg:min-h-0 lg:flex-row lg:gap-0">
+        <aside
+          className={`${mobilePanel === 'files' ? 'flex' : 'hidden'} min-h-[520px] w-full flex-col overflow-hidden bg-slate-900/50 lg:flex lg:min-h-0 lg:w-[var(--sidebar-width)] lg:shrink-0`}
+          style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
+        >
+          {renderScriptTree()}
+        </aside>
+
+        <div
+          role="separator"
+          aria-label="调整脚本目录宽度"
+          className="hidden w-1 cursor-col-resize border-r border-slate-800 bg-slate-900/70 transition hover:bg-cyan-500/30 lg:block"
+          onPointerDown={() => setIsDraggingSidebar(true)}
+        />
+
+        <section className={`${mobilePanel === 'files' ? 'hidden' : 'flex'} min-w-0 flex-1 flex-col overflow-hidden bg-slate-950 lg:flex`}>
+          <div className={`${mobilePanel === 'console' ? 'hidden' : 'flex'} min-h-0 flex-1 flex-col lg:flex`}>
+            <div ref={tabListRef} className="custom-scrollbar flex shrink-0 items-end gap-2 overflow-x-auto border-b border-slate-800 bg-slate-900/60 px-2 pt-2">
+              {openTabs.map(tab => (
+                <button
+                  key={tab.id}
+                  ref={activeScript?.id === tab.id ? activeTabRef : null}
+                  type="button"
+                  onClick={() => {
+                    setActiveScript(tab);
+                    setMobilePanel('editor');
+                  }}
+                  className={`group flex max-w-[220px] shrink-0 items-center gap-2 rounded-t-lg border border-b-0 px-3 py-2 text-sm transition ${
+                    activeScript?.id === tab.id
+                      ? 'border-white/10 bg-slate-950 text-slate-100'
+                      : 'border-transparent bg-transparent text-slate-500 hover:bg-white/5 hover:text-slate-200'
+                  }`}
+                  title={tab.name}
+                >
+                  {getIcon(tab.type, tab.scriptType)}
+                  <span className="truncate">{tab.name}</span>
+                  <X
+                    className="h-3.5 w-3.5 text-slate-500 opacity-80 transition hover:text-rose-300"
+                    onClick={event => handleCloseTab(tab.id, event)}
+                  />
+                </button>
+              ))}
+              <div ref={tabNewMenuRef} className="sticky right-0 mb-1 bg-slate-900/90 pl-1">
+                <button
+                  type="button"
+                  onClick={event => openNewScriptMenu('tab', event)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-cyan-300"
+                  aria-label="新建脚本"
+                  title="新建脚本"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
               </div>
-              <div className="flex-1 p-2 overflow-y-auto font-mono text-xs text-slate-300">
+            </div>
+
+            {!activeScript ? (
+              <div className="flex min-h-[420px] flex-1 items-center justify-center bg-slate-950 px-6 text-center text-slate-500">
+                <div>
+                  <Terminal className="mx-auto mb-4 h-12 w-12 text-slate-600" />
+                  <p className="max-w-md text-sm text-slate-400">请在脚本目录中选择一个脚本开始编辑，或点击“新建脚本”创建脚本。</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="shrink-0 border-b border-white/10 bg-slate-900/60 px-3 py-3">
+                  <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                    <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center">
+                      <input
+                        type="text"
+                        value={activeScript.name}
+                        onChange={event => updateActiveDraft(script => ({ ...script, name: event.target.value }))}
+                        className="min-w-0 rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm font-medium text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 md:w-64"
+                        aria-label="脚本名称"
+                      />
+                      {activeTemplate && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-xs font-medium text-cyan-200">
+                          {activeTemplate.shortLabel}
+                          {activeTemplate.dialect && <span className="text-cyan-400/70">/{activeTemplate.dialect}</span>}
+                        </span>
+                      )}
+                      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+                        {activeTemplate?.dataSourceTypes.length === 0 ? (
+                          <span className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-slate-500">无需数据源</span>
+                        ) : (
+                        <select
+                          value={activeDataSource ? activeScript.dataSourceId : ''}
+                          onChange={handleDataSourceChange}
+                          className="min-w-0 rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-slate-300 outline-none transition focus:border-cyan-500/60 sm:w-56"
+                          aria-label="选择数据源"
+                        >
+                          <option value="">选择数据源...</option>
+                          {filteredDataSources.map(ds => (
+                            <option key={ds.id} value={ds.id}>
+                              {ds.name} ({ds.type})
+                            </option>
+                          ))}
+                        </select>
+                        )}
+
+                        {activeDataSource?.type === 'Hive' && (
+                          <select
+                            value={activeScript.dataSourceConfig?.queue || ''}
+                            onChange={event => handleConfigChange('queue', event.target.value)}
+                            className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-slate-300 outline-none transition focus:border-cyan-500/60 sm:w-40"
+                            aria-label="选择执行队列"
+                          >
+                            <option value="">选择队列...</option>
+                            <option value="default">default</option>
+                            <option value="high_priority">high_priority</option>
+                            <option value="etl">etl</option>
+                          </select>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 flex-nowrap items-center gap-2">
+                      <button type="button" onClick={handleSave} className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-cyan-300" aria-label="保存脚本" title="保存">
+                        <Save className="h-4 w-4" />
+                      </button>
+                      <button type="button" onClick={handleRun} className="rounded-lg p-2 text-emerald-400 transition hover:bg-emerald-500/10 hover:text-emerald-300" aria-label="运行脚本" title="运行">
+                        <Play className="h-4 w-4" />
+                      </button>
+                      <button type="button" onClick={handleStop} className="rounded-lg p-2 text-rose-400 transition hover:bg-rose-500/10 hover:text-rose-300" aria-label="停止运行" title="停止">
+                        <Square className="h-4 w-4" />
+                      </button>
+                      <button type="button" onClick={handlePublish} className="rounded-lg p-2 text-blue-400 transition hover:bg-blue-500/10 hover:text-blue-300" aria-label="发布脚本" title="发布">
+                        <Send className="h-4 w-4" />
+                      </button>
+                      <button type="button" onClick={loadVersions} className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-slate-200" aria-label="历史版本" title="历史版本">
+                        <History className="h-4 w-4" />
+                      </button>
+                      <div ref={settingsRef} className="relative border-l border-white/10 pl-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowSettings(open => !open)}
+                          className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-slate-200"
+                          aria-label="编辑器设置"
+                          title="编辑器设置"
+                        >
+                          <Settings className="h-4 w-4" />
+                        </button>
+                        {showSettings && (
+                          <div className="absolute right-0 top-10 z-50 w-44 overflow-hidden rounded-lg border border-white/10 bg-slate-900 shadow-2xl">
+                            <div className="border-b border-white/10 px-3 py-2 text-xs text-slate-500">涓婚椋庢牸</div>
+                            {[
+                              { value: 'vs-dark', label: '娣辫壊' },
+                              { value: 'light', label: '娴呰壊' },
+                              { value: 'hc-black', label: '高对比度' },
+                            ].map(theme => (
+                              <button
+                                key={theme.value}
+                                type="button"
+                                onClick={() => {
+                                  setEditorTheme(theme.value as typeof editorTheme);
+                                  setShowSettings(false);
+                                }}
+                                className={`flex w-full items-center justify-between px-3 py-2 text-sm transition hover:bg-white/10 ${
+                                  editorTheme === theme.value ? 'text-cyan-300' : 'text-slate-300'
+                                }`}
+                              >
+                                {theme.label}
+                                {editorTheme === theme.value && <span>✓</span>}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="monaco-editor-container" className="relative min-h-[420px] flex-1 bg-slate-950 lg:min-h-0">
+                  {activeScript.content === '' && activeScript.name.startsWith('新建') && (
+                    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-slate-950/90 px-4 text-center">
+                      <div className="rounded-xl border border-white/10 bg-slate-900/80 p-5 shadow-xl">
+                        <p className="text-base font-semibold text-slate-200">开始编写代码</p>
+                        <p className="mt-2 text-sm text-slate-400">保存 Ctrl+S · 运行 Ctrl+Enter · 格式化 Alt+Shift+F</p>
+                      </div>
+                    </div>
+                  )}
+                  <Editor
+                    height="100%"
+                    theme={editorTheme}
+                    language={editorLanguage}
+                    value={activeScript.content || ''}
+                    onMount={editor => {
+                      editorRef.current = editor;
+                    }}
+                    onChange={value => updateActiveDraft(script => ({ ...script, content: value || '' }))}
+                    options={{
+                      automaticLayout: true,
+                      fontSize: 14,
+                      minimap: { enabled: false },
+                      scrollBeyondLastLine: false,
+                      wordWrap: 'on',
+                    }}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <div
+            role="separator"
+            aria-label="调整控制台高度"
+            className={`${activeScript && !consoleCollapsed ? 'hidden lg:block' : 'hidden'} h-1 cursor-row-resize bg-white/5 transition hover:bg-cyan-500/40`}
+            onPointerDown={() => setIsDraggingConsole(true)}
+          />
+
+          <div
+            className={`${mobilePanel === 'console' ? 'flex' : 'hidden'} shrink-0 flex-col border-t border-white/10 bg-slate-950 lg:flex ${
+              consoleCollapsed ? 'lg:h-10' : 'h-[520px] lg:h-[var(--console-height)]'
+            }`}
+            style={{ '--console-height': `${consoleHeight}px` } as React.CSSProperties}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 bg-slate-900/60 px-3 py-2">
+              <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                <Terminal className="h-4 w-4 text-cyan-400" />
+                控制台输出
+                {isRunning && <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-300">运行中</span>}
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setConsoleLogs([])}
+                  className="rounded px-2 py-1 text-xs text-slate-500 transition hover:bg-white/10 hover:text-slate-300"
+                >
+                  清空
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConsoleCollapsed(collapsed => !collapsed)}
+                  className="hidden rounded p-1 text-slate-500 transition hover:bg-white/10 hover:text-slate-300 lg:block"
+                  aria-label={consoleCollapsed ? '展开控制台' : '折叠控制台'}
+                  title={consoleCollapsed ? '展开控制台' : '折叠控制台'}
+                >
+                  {consoleCollapsed ? <PanelBottomOpen className="h-4 w-4" /> : <PanelBottomClose className="h-4 w-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConsoleHeight(height => (height < 300 ? 340 : 190))}
+                  className="hidden rounded p-1 text-slate-500 transition hover:bg-white/10 hover:text-slate-300 lg:block"
+                  aria-label="切换控制台高度"
+                  title="切换控制台高度"
+                >
+                  {consoleHeight < 300 ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            {!consoleCollapsed && (
+              <div className="custom-scrollbar flex-1 overflow-y-auto p-3 font-mono text-xs text-slate-300">
                 {consoleLogs.length === 0 ? (
                   <span className="text-slate-600">No output yet...</span>
                 ) : (
-                  consoleLogs.map((log, i) => (
-                    <div key={i} className="mb-1">{log}</div>
+                  consoleLogs.map((log, index) => (
+                    <div key={`${log}-${index}`} className="mb-1 whitespace-pre-wrap">
+                      {log}
+                    </div>
                   ))
                 )}
               </div>
-            </div>
-          </>
-        )}
+            )}
+          </div>
+        </section>
       </div>
 
-      {/* 版本管理弹窗 */}
+      {newMenuAnchor && newMenuPosition && renderNewScriptMenu()}
+      {renderTreeContextMenu()}
+
       {showVersions && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-slate-950 rounded-xl p-6 w-[600px] shadow-2xl border border-slate-800">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">历史版本 - {activeScript?.name}</h3>
-              <button onClick={() => setShowVersions(false)} className="text-slate-400 hover:text-white transition-colors">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="max-h-[calc(100vh-2rem)] w-full max-w-[640px] overflow-hidden rounded-xl border border-white/10 bg-slate-950 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+              <h3 className="min-w-0 truncate text-lg font-semibold text-white">历史版本 - {activeScript?.name}</h3>
+              <button
+                type="button"
+                onClick={() => setShowVersions(false)}
+                className="rounded-lg p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white"
+                aria-label="关闭历史版本"
+              >
+                <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="max-h-[400px] overflow-y-auto rounded-lg border border-slate-800 bg-slate-900/30">
+            <div className="custom-scrollbar max-h-[60vh] overflow-y-auto">
               {versions.length === 0 ? (
-                <div className="text-center text-slate-500 py-12">暂无历史版本</div>
+                <div className="py-12 text-center text-sm text-slate-500">暂无历史版本</div>
               ) : (
-                <div className="divide-y divide-slate-800/50">
-                  {versions.map(v => (
-                    <div key={v.id} className="flex justify-between p-4 hover:bg-slate-800/50 transition-colors">
-                      <div>
-                        <div className="text-sm text-cyan-400 font-medium">版本 V{v.version}</div>
-                        <div className="text-sm text-slate-300 mt-1">{v.comment || '无备注'}</div>
-                        <div className="text-xs text-slate-500 mt-2 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-white">{v.creator.charAt(0)}</span>
-                          {v.creator}
+                <div className="divide-y divide-white/10">
+                  {versions.map(version => (
+                    <div key={version.id} className="flex flex-col gap-3 p-4 transition hover:bg-white/[0.03] sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-cyan-300">版本 V{version.version}</div>
+                        <div className="mt-1 text-sm text-slate-300">{version.comment || '无备注'}</div>
+                        <div className="mt-2 text-xs text-slate-500">
+                          {version.creator} · {version.createTime}
                         </div>
                       </div>
-                      <div className="text-xs text-slate-400 flex flex-col items-end justify-between">
-                        <span>{v.createTime}</span>
-                        <button className="text-cyan-400 hover:text-cyan-300 transition-colors bg-cyan-500/10 px-2 py-1 rounded border border-cyan-500/20">查看代码</button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleViewVersion(version)}
+                        className="self-start rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-sm text-cyan-300 transition hover:bg-cyan-500/20 sm:self-center"
+                      >
+                        查看代码
+                      </button>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            <div className="mt-6 flex justify-end">
-              <button 
-                onClick={() => setShowVersions(false)} 
-                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors text-white rounded-lg text-sm shadow-lg"
+            <div className="flex justify-end border-t border-white/10 px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setShowVersions(false)}
+                className="rounded-lg border border-white/10 bg-slate-800 px-5 py-2 text-sm text-white transition hover:bg-slate-700"
               >
                 关闭
               </button>
@@ -596,7 +1097,6 @@ export default function ScriptDev() {
           </div>
         </div>
       )}
-    </div>
     </div>
   );
 }

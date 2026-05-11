@@ -1,0 +1,152 @@
+[     358ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=b14dfc4f:20102
+[     488ms] [LOG] %cDocumentation: %chttps://mswjs.io/docs font-weight:bold font-weight:normal @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3428
+[     488ms] [LOG] Found an issue? https://github.com/mswjs/msw/issues @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3433
+[     488ms] [LOG] Worker script URL: http://127.0.0.1:5174/mockServiceWorker.js @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3434
+[     488ms] [LOG] Worker scope: http://127.0.0.1:5174/ @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3435
+[     488ms] [LOG] Client ID: %s (%s) b004293e-156b-4a38-bb5f-f5de29b256a2 top-level @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3437
+[     488ms] [LOG] [MSW] Mocking enabled successfully @ http://127.0.0.1:5174/src/main.tsx?t=1778341170897:12
+[   32536ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   32536ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   32536ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"label":"数据表总数","value":"12,847…减少 5 项","color":"from-amber-500 to-orange-500"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   32537ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   32537ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   32537ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"name":"dwd_user_behavior_log",…ds","owner":"张三","updated":"5 小时","quality":96}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   32537ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   32537ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   32537ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"month":"7 ","score":86.2,"tabl…":"1 ","score":94.6,"tables":12847,"alerts":12}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   32538ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   32538ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   32538ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"name":"每日数据质量巡检","status":"run…ogress":0,"nextRun":"今日 04:00","duration":"等待"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   32538ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   32538ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   32538ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"label":"数据表总数","value":"12,847…减少 5 项","color":"from-amber-500 to-orange-500"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   32540ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   32540ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   32540ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"name":"dwd_user_behavior_log",…ds","owner":"张三","updated":"5 小时","quality":96}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   32540ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   32540ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   32540ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"month":"7 ","score":86.2,"tabl…":"1 ","score":94.6,"tables":12847,"alerts":12}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   32541ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   32541ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   32541ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"name":"每日数据质量巡检","status":"run…ogress":0,"nextRun":"今日 04:00","duration":"等待"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   56840ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   56840ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   56840ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"folder-1","name":"数据清洗","…:"default"},"updateTime":"2026-04-19 10:05:00"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   56841ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   56841ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   56841ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"ds-001","name":"prod_orde…iption":"商品搜索与日志检索聚合集群","tags":["全文检索","倒排索引"]}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   56842ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   56842ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   56842ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"folder-1","name":"数据清洗","…:"default"},"updateTime":"2026-04-19 10:05:00"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   56843ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   56843ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   56843ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"ds-001","name":"prod_orde…iption":"商品搜索与日志检索聚合集群","tags":["全文检索","倒排索引"]}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   77144ms] [LOG] Request {url: URL, method: POST, headers: Object, body: {"name":"新建PostgreSQL SQL脚本","type":"sql","scriptT…;","dataSourceId":"ds-002","dataSourceConfig":{}}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   77144ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   77144ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":{"name":"新建PostgreSQL SQL脚本","typ…sion":1,"updateTime":"2026-05-09T15:43:13.481Z"}}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[   77158ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[   77158ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[   77158ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"folder-1","name":"数据清洗","…ion":1,"updateTime":"2026-05-09T15:43:13.481Z"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  115820ms] [LOG] Request {url: URL, method: POST, headers: Object, body: {"name":"新建Shell Task脚本","type":"shell","scriptTyp… bash\n","dataSourceId":"","dataSourceConfig":{}}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  115820ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  115820ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":{"name":"新建Shell Task脚本","type":"…sion":1,"updateTime":"2026-05-09T15:43:52.157Z"}}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  115825ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  115826ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  115826ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"folder-1","name":"数据清洗","…ion":1,"updateTime":"2026-05-09T15:43:52.157Z"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  389344ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  389344ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  389345ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"folder-1","name":"数据清洗","…ion":1,"updateTime":"2026-05-09T15:43:52.157Z"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  389345ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  389345ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  389345ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"ds-001","name":"prod_orde…iption":"商品搜索与日志检索聚合集群","tags":["全文检索","倒排索引"]}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  402866ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  402866ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  402866ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"folder-1","name":"数据清洗","…ion":1,"updateTime":"2026-05-09T15:43:52.157Z"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  402866ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  402866ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  402866ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"ds-001","name":"prod_orde…iption":"商品搜索与日志检索聚合集群","tags":["全文检索","倒排索引"]}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  495810ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778341812108:0
+[  495810ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  505921ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778341822215:0
+[  505922ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  517266ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778341833559:0
+[  517266ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  539585ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778341855874:0
+[  539586ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  574426ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778341890706:0
+[  574427ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  596521ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778341912804:0
+[  596522ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  609227ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778341925492:0
+[  609227ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  633032ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778341949317:0
+[  633032ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  657945ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778341974202:0
+[  657945ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  674383ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778341990695:0
+[  674384ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  703667ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778342019971:0
+[  703667ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  721606ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778342037908:0
+[  721607ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  739941ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778342056249:0
+[  739941ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  763052ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5174/src/pages/development/ScriptDev.tsx?t=1778342079350:0
+[  763052ms] [ERROR] [vite] Failed to reload /src/pages/development/ScriptDev.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:5174/@vite/client:808
+[  821895ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=b14dfc4f:20102
+[  821977ms] [LOG] %cDocumentation: %chttps://mswjs.io/docs font-weight:bold font-weight:normal @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3428
+[  821977ms] [LOG] Found an issue? https://github.com/mswjs/msw/issues @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3433
+[  821977ms] [LOG] Worker script URL: http://127.0.0.1:5174/mockServiceWorker.js @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3434
+[  821977ms] [LOG] Worker scope: http://127.0.0.1:5174/ @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3435
+[  821978ms] [LOG] Client ID: %s (%s) acbe23f0-0c2a-47b2-af8f-1e9bc4fe4fa0 top-level @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3437
+[  821978ms] [LOG] [MSW] Mocking enabled successfully @ http://127.0.0.1:5174/src/main.tsx?t=1778342108308:12
+[  851989ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  851989ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  851989ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"label":"数据表总数","value":"12,847…减少 5 项","color":"from-amber-500 to-orange-500"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  851989ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  851989ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  851989ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"name":"dwd_user_behavior_log",…ds","owner":"张三","updated":"5 小时","quality":96}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  851990ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  851990ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  851990ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"month":"7 ","score":86.2,"tabl…":"1 ","score":94.6,"tables":12847,"alerts":12}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  851990ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  851990ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  851990ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"name":"每日数据质量巡检","status":"run…ogress":0,"nextRun":"今日 04:00","duration":"等待"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  851990ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  851990ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  851990ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"label":"数据表总数","value":"12,847…减少 5 项","color":"from-amber-500 to-orange-500"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  851991ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  851991ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  851991ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"name":"dwd_user_behavior_log",…ds","owner":"张三","updated":"5 小时","quality":96}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  851991ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  851991ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  851991ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"month":"7 ","score":86.2,"tabl…":"1 ","score":94.6,"tables":12847,"alerts":12}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  851991ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  851991ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  851991ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"name":"每日数据质量巡检","status":"run…ogress":0,"nextRun":"今日 04:00","duration":"等待"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  858766ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  858766ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  858766ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"folder-1","name":"数据清洗","…:"default"},"updateTime":"2026-04-19 10:05:00"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  858766ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  858766ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  858766ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"ds-001","name":"prod_orde…iption":"商品搜索与日志检索聚合集群","tags":["全文检索","倒排索引"]}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  858767ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  858767ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  858767ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"folder-1","name":"数据清洗","…:"default"},"updateTime":"2026-04-19 10:05:00"}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  858767ms] [LOG] Request {url: URL, method: GET, headers: Object, body: } @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:561
+[  858767ms] [LOG] Handler: HttpHandler @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:562
+[  858767ms] [LOG] Response {status: 200, statusText: OK, headers: Object, body: {"code":0,"data":[{"id":"ds-001","name":"prod_orde…iption":"商品搜索与日志检索聚合集群","tags":["全文检索","倒排索引"]}]}} @ http://127.0.0.1:5174/node_modules/.vite/deps/msw.js?v=b14dfc4f:563
+[  946780ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=b14dfc4f:20102
+[  946942ms] [LOG] %cDocumentation: %chttps://mswjs.io/docs font-weight:bold font-weight:normal @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3428
+[  946943ms] [LOG] Found an issue? https://github.com/mswjs/msw/issues @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3433
+[  946943ms] [LOG] Worker script URL: http://127.0.0.1:5174/mockServiceWorker.js @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3434
+[  946943ms] [LOG] Worker scope: http://127.0.0.1:5174/ @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3435
+[  946943ms] [LOG] Client ID: %s (%s) df794a22-8645-445e-beb3-b7b6ea31604e top-level @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3437
+[  946943ms] [LOG] [MSW] Mocking enabled successfully @ http://127.0.0.1:5174/src/main.tsx?t=1778342232665:12
+[ 1141708ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:5174/node_modules/.vite/deps/react-dom_client.js?v=b14dfc4f:20102
+[ 1141837ms] [LOG] %cDocumentation: %chttps://mswjs.io/docs font-weight:bold font-weight:normal @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3428
+[ 1141837ms] [LOG] Found an issue? https://github.com/mswjs/msw/issues @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3433
+[ 1141837ms] [LOG] Worker script URL: http://127.0.0.1:5174/mockServiceWorker.js @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3434
+[ 1141837ms] [LOG] Worker scope: http://127.0.0.1:5174/ @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3435
+[ 1141837ms] [LOG] Client ID: %s (%s) c54456bf-050b-43a7-b60f-6e22279af689 top-level @ http://127.0.0.1:5174/node_modules/.vite/deps/msw_browser.js?v=b14dfc4f:3437
+[ 1141837ms] [LOG] [MSW] Mocking enabled successfully @ http://127.0.0.1:5174/src/main.tsx?t=1778342413350:12

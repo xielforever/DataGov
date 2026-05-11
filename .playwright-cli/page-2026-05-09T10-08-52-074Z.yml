@@ -1,0 +1,645 @@
+- generic [ref=e3]:
+  - complementary [ref=e158]:
+    - generic [ref=e159]:
+      - generic [ref=e160]:
+        - img [ref=e162]
+        - generic [ref=e164]: DataGov
+      - button [ref=e165]:
+        - img [ref=e166]
+    - navigation [ref=e168]:
+      - list [ref=e169]:
+        - listitem [ref=e170]:
+          - button "工作台" [ref=e171]:
+            - img [ref=e173]
+            - generic [ref=e175]: 工作台
+        - listitem [ref=e176]:
+          - button "数据资产" [ref=e177]:
+            - img [ref=e179]
+            - generic [ref=e181]: 数据资产
+            - img [ref=e182]
+          - list [ref=e184]:
+            - listitem [ref=e185]:
+              - button "资产总览" [ref=e186]
+            - listitem [ref=e187]:
+              - button "资产注册" [ref=e188]
+            - listitem [ref=e189]:
+              - button "数据目录" [ref=e190]
+            - listitem [ref=e191]:
+              - button "数据地图" [ref=e192]
+            - listitem [ref=e193]:
+              - button "数据血缘" [ref=e194]
+            - listitem [ref=e195]:
+              - button "数据源管理" [ref=e196]
+        - listitem [ref=e197]:
+          - button "元数据管理" [ref=e198]:
+            - img [ref=e200]
+            - generic [ref=e202]: 元数据管理
+            - img [ref=e203]
+        - listitem [ref=e205]:
+          - button "数据标准" [ref=e206]:
+            - img [ref=e208]
+            - generic [ref=e210]: 数据标准
+            - img [ref=e211]
+        - listitem [ref=e213]:
+          - button "数据质量 3" [ref=e214]:
+            - img [ref=e216]
+            - generic [ref=e218]: 数据质量
+            - generic [ref=e219]: "3"
+            - img [ref=e220]
+        - listitem [ref=e222]:
+          - button "数据安全" [ref=e223]:
+            - img [ref=e225]
+            - generic [ref=e227]: 数据安全
+            - img [ref=e228]
+        - listitem [ref=e230]:
+          - button "数据开发" [active] [ref=e231]:
+            - img [ref=e233]
+            - generic [ref=e235]: 数据开发
+            - img [ref=e236]
+          - list [ref=e1057]:
+            - listitem [ref=e1058]:
+              - button "数据建模" [ref=e1059]
+            - listitem [ref=e1060]:
+              - button "任务开发" [ref=e1061]
+            - listitem [ref=e1062]:
+              - button "脚本开发" [ref=e1063]
+            - listitem [ref=e1064]:
+              - button "任务编排" [ref=e1065]
+            - listitem [ref=e1066]:
+              - button "任务调度" [ref=e1067]
+            - listitem [ref=e1068]:
+              - button "实时计算" [ref=e1069]
+            - listitem [ref=e1070]:
+              - button "数据同步" [ref=e1071]
+            - listitem [ref=e1072]:
+              - button "任务运维" [ref=e1073]
+            - listitem [ref=e1074]:
+              - button "资源管理" [ref=e1075]
+        - listitem [ref=e238]:
+          - button "数据服务" [ref=e239]:
+            - img [ref=e241]
+            - generic [ref=e243]: 数据服务
+            - img [ref=e244]
+        - listitem [ref=e246]:
+          - button "审批中心" [ref=e247]:
+            - img [ref=e249]
+            - generic [ref=e251]: 审批中心
+            - img [ref=e252]
+        - listitem [ref=e254]:
+          - button "系统管理" [ref=e255]:
+            - img [ref=e257]
+            - generic [ref=e260]: 系统管理
+            - img [ref=e261]
+  - banner [ref=e263]:
+    - generic [ref=e264]:
+      - generic [ref=e266]:
+        - img [ref=e267]
+        - textbox "搜索数据表、字段、任务..." [ref=e269]
+        - generic [ref=e270]: ⌘K
+      - generic [ref=e271]:
+        - button [ref=e272]:
+          - img [ref=e273]
+        - button [ref=e276]:
+          - img [ref=e277]
+        - button [ref=e280]:
+          - img [ref=e281]
+        - button "张" [ref=e285]:
+          - generic [ref=e286]: 张
+          - img [ref=e287]
+  - main [ref=e289]:
+    - generic [ref=e291]:
+      - generic [ref=e292]:
+        - generic [ref=e293]:
+          - generic [ref=e294]:
+            - heading "工作" [level=1] [ref=e295]
+            - generic [ref=e296]: 数据治理开发平'
+          - paragraph [ref=e297]: 欢迎回来，张三丰 · 数据治理负责人'· 上次登录 2025-01-15 09:30
+        - generic [ref=e298]:
+          - button "导出报告" [ref=e299]:
+            - img [ref=e300]
+            - text: 导出报告
+          - button "新建任务" [ref=e302]:
+            - img [ref=e303]
+            - text: 新建任务
+      - generic [ref=e305]:
+        - button "数据表注" [ref=e306]:
+          - img [ref=e309]
+          - generic [ref=e311]: 数据表注
+        - button "质量规则配置" [ref=e312]:
+          - img [ref=e315]
+          - generic [ref=e317]: 质量规则配置
+        - button "血缘关系分" [ref=e318]:
+          - img [ref=e321]
+          - generic [ref=e323]: 血缘关系分
+        - button "元数据采" [ref=e324]:
+          - img [ref=e327]
+          - generic [ref=e329]: 元数据采
+        - button "数据标准管理" [ref=e330]:
+          - img [ref=e333]
+          - generic [ref=e335]: 数据标准管理
+        - button "敏感数据扫描" [ref=e336]:
+          - img [ref=e339]
+          - generic [ref=e341]: 敏感数据扫描
+        - button "调度任务管理" [ref=e342]:
+          - img [ref=e345]
+          - generic [ref=e347]: 调度任务管理
+        - button "数据地图" [ref=e348]:
+          - img [ref=e351]
+          - generic [ref=e353]: 数据地图
+      - generic [ref=e354]:
+        - generic [ref=e355] [cursor=pointer]:
+          - generic [ref=e357]:
+            - img [ref=e360]
+            - generic [ref=e362]:
+              - img [ref=e363]
+              - text: +12%
+          - paragraph [ref=e365]: 12,847
+          - paragraph [ref=e366]: 数据表总数
+          - paragraph [ref=e367]: 较上月增加 1,380 项
+        - generic [ref=e368] [cursor=pointer]:
+          - generic [ref=e370]:
+            - img [ref=e373]
+            - generic [ref=e375]:
+              - img [ref=e376]
+              - text: +8.5%
+          - paragraph [ref=e378]: 256,392
+          - paragraph [ref=e379]: 元数据条目
+          - paragraph [ref=e380]: 较上月增加 20,113 项
+        - generic [ref=e381] [cursor=pointer]:
+          - generic [ref=e383]:
+            - img [ref=e386]
+            - generic [ref=e388]:
+              - img [ref=e389]
+              - text: "+2.1"
+          - paragraph [ref=e391]: "94.6"
+          - paragraph [ref=e392]: 数据质量得分
+          - paragraph [ref=e393]: 超过目标 4.6 分
+        - generic [ref=e394] [cursor=pointer]:
+          - generic [ref=e396]:
+            - img [ref=e399]
+            - generic [ref=e401]:
+              - img [ref=e402]
+              - text: "-5"
+          - paragraph [ref=e404]: "23"
+          - paragraph [ref=e405]: 待处理任务
+          - paragraph [ref=e406]: 较昨日减少 5 项
+      - generic [ref=e407]:
+        - generic [ref=e408]:
+          - generic [ref=e409]:
+            - heading "数据质量趋势" [level=3] [ref=e410]: 数据质量趋势
+            - paragraph [ref=e412]: 全平台数据表质量评分变化趋势 · 覆盖 12,847 张数据表
+          - generic [ref=e413]:
+            - generic [ref=e414]:
+              - generic [ref=e415]:
+                - paragraph [ref=e416]: "94.6"
+                - paragraph [ref=e417]: 当前评分
+              - generic [ref=e419]:
+                - paragraph [ref=e420]: "+8.4"
+                - paragraph [ref=e421]: 半年提升
+              - generic [ref=e423]:
+                - paragraph [ref=e424]: "12"
+                - paragraph [ref=e425]: 待处理告'
+            - generic [ref=e426]:
+              - button "6个月" [ref=e427]
+              - button "12个月" [ref=e428]
+              - button "本年" [ref=e429]
+        - generic [ref=e430]:
+          - generic [ref=e431]:
+            - generic [ref=e432]:
+              - generic [ref=e434]: "84"
+              - generic [ref=e436]: "87"
+              - generic [ref=e438]: "89"
+              - generic [ref=e440]: "92"
+              - generic [ref=e442]: "94"
+              - generic [ref=e444]: "97"
+              - generic [ref=e445]:
+                - generic [ref=e446] [cursor=pointer]:
+                  - generic:
+                    - generic: 86.2 '
+                    - generic: "表总量: 11,200"
+                    - generic: "告警: 45 '"
+                  - generic [ref=e448]: "86.2"
+                  - generic [ref=e453]: "7"
+                - generic [ref=e454] [cursor=pointer]:
+                  - generic:
+                    - generic: 88 '
+                    - generic: "表总量: 11,580"
+                    - generic: "告警: 38 '"
+                  - generic [ref=e456]: "88"
+                  - generic [ref=e460]:
+                    - generic [ref=e461]: "8"
+                    - generic [ref=e462]: "1.8"
+                - generic [ref=e463] [cursor=pointer]:
+                  - generic:
+                    - generic: 90.1 '
+                    - generic: "表总量: 11,900"
+                    - generic: "告警: 31 '"
+                  - generic [ref=e465]: "90.1"
+                  - generic [ref=e469]:
+                    - generic [ref=e470]: "9"
+                    - generic [ref=e471]: "2.1"
+                - generic [ref=e472] [cursor=pointer]:
+                  - generic:
+                    - generic: 89.3 '
+                    - generic: "表总量: 12,100"
+                    - generic: "告警: 35 '"
+                  - generic [ref=e474]: "89.3"
+                  - generic [ref=e478]:
+                    - generic [ref=e479]: "10"
+                    - generic [ref=e480]: "0.8"
+                - generic [ref=e481] [cursor=pointer]:
+                  - generic:
+                    - generic: 92.4 '
+                    - generic: "表总量: 12,480"
+                    - generic: "告警: 22 '"
+                  - generic [ref=e483]: "92.4"
+                  - generic [ref=e487]:
+                    - generic [ref=e488]: "11"
+                    - generic [ref=e489]: "3.1"
+                - generic [ref=e490] [cursor=pointer]:
+                  - generic:
+                    - generic: 93.1 '
+                    - generic: "表总量: 12,650"
+                    - generic: "告警: 18 '"
+                  - generic [ref=e492]: "93.1"
+                  - generic [ref=e496]:
+                    - generic [ref=e497]: "12"
+                    - generic [ref=e498]: "0.7"
+                - generic [ref=e499] [cursor=pointer]:
+                  - generic:
+                    - generic: 94.6 '
+                    - generic: "表总量: 12,847"
+                    - generic: "告警: 12 '"
+                  - generic [ref=e501]: "94.6"
+                  - generic [ref=e505]:
+                    - generic [ref=e506]: "1"
+                    - generic [ref=e507]: "1.5"
+              - img
+            - generic [ref=e508]:
+              - generic [ref=e511]: 质量得分提升
+              - generic [ref=e514]: 质量得分下降
+              - generic [ref=e517]: 趋势'
+          - generic [ref=e518]:
+            - heading "质量维度分布" [level=4] [ref=e519]
+            - generic [ref=e521]:
+              - generic [ref=e522]: 完整
+              - generic [ref=e523]: 96.8%
+            - generic [ref=e527]:
+              - generic [ref=e528]: 一致
+              - generic [ref=e529]: 94.2%
+            - generic [ref=e533]:
+              - generic [ref=e534]: 及时
+              - generic [ref=e535]: 97.1%
+            - generic [ref=e539]:
+              - generic [ref=e540]: 准确
+              - generic [ref=e541]: 91.5%
+            - generic [ref=e545]:
+              - generic [ref=e546]: 唯一
+              - generic [ref=e547]: 98.3%
+            - generic [ref=e551]:
+              - generic [ref=e552]: 有效
+              - generic [ref=e553]: 89.6%
+            - generic [ref=e557]:
+              - generic [ref=e558]: 综合评分
+              - generic [ref=e559]: 94.6/ 100
+      - generic [ref=e562]:
+        - generic [ref=e563]:
+          - generic [ref=e564]:
+            - heading "定时任务 4 个调度中" [level=3] [ref=e565]:
+              - text: 定时任务
+              - generic [ref=e567]: 4 个调度中
+            - paragraph [ref=e568]: 实时跟踪平台所有定时调度任务的执行状态'
+          - generic [ref=e569]:
+            - generic [ref=e570]:
+              - button "全部" [ref=e571]
+              - button "运行" [ref=e572]
+              - button "完成" [ref=e573]
+              - button "警告" [ref=e574]
+            - button "新建任务" [ref=e575]:
+              - img [ref=e576]
+              - text: 新建任务
+            - button "查看全部" [ref=e578]:
+              - text: 查看全部
+              - img [ref=e579]
+        - generic [ref=e581]:
+          - generic [ref=e586]:
+            - generic [ref=e587]: "1"
+            - generic [ref=e588]: 运行
+          - generic [ref=e592]:
+            - generic [ref=e593]: "1"
+            - generic [ref=e594]: 已完
+          - generic [ref=e598]:
+            - generic [ref=e599]: "1"
+            - generic [ref=e600]: 警告
+          - generic [ref=e604]:
+            - generic [ref=e605]: "1"
+            - generic [ref=e606]: 待执
+        - generic [ref=e607]:
+          - generic [ref=e608] [cursor=pointer]:
+            - generic [ref=e610]:
+              - generic [ref=e611]:
+                - img [ref=e613]
+                - generic [ref=e615]:
+                  - generic [ref=e616]:
+                    - generic [ref=e617]: 每日数据质量巡检
+                    - generic [ref=e618]: 运行
+                  - generic [ref=e619]:
+                    - generic [ref=e620]:
+                      - img [ref=e621]
+                      - text: 12分钟
+                    - generic [ref=e623]:
+                      - img [ref=e624]
+                      - text: 进行
+              - generic [ref=e626]:
+                - button "重新运行" [ref=e627]:
+                  - img [ref=e628]
+                - button "查看日志" [ref=e630]:
+                  - img [ref=e631]
+            - generic [ref=e634]:
+              - generic [ref=e635]: 执行进度
+              - generic [ref=e636]: 75%
+          - generic [ref=e640] [cursor=pointer]:
+            - generic [ref=e642]:
+              - generic [ref=e643]:
+                - img [ref=e645]
+                - generic [ref=e647]:
+                  - generic [ref=e648]:
+                    - generic [ref=e649]: 元数据自动采
+                    - generic [ref=e650]: 完成
+                  - generic [ref=e651]:
+                    - generic [ref=e652]:
+                      - img [ref=e653]
+                      - text: 已完
+                    - generic [ref=e655]:
+                      - img [ref=e656]
+                      - text: 今日 02:00
+              - generic [ref=e658]:
+                - button "重新运行" [ref=e659]:
+                  - img [ref=e660]
+                - button "查看日志" [ref=e662]:
+                  - img [ref=e663]
+            - generic [ref=e666]:
+              - generic [ref=e667]: 执行进度
+              - generic [ref=e668]: 100%
+          - generic [ref=e671] [cursor=pointer]:
+            - generic [ref=e673]:
+              - generic [ref=e674]:
+                - img [ref=e676]
+                - generic [ref=e678]:
+                  - generic [ref=e679]:
+                    - generic [ref=e680]: 数据血缘分
+                    - generic [ref=e681]: 警告
+                  - generic [ref=e682]:
+                    - generic [ref=e683]:
+                      - img [ref=e684]
+                      - text: 进行
+                    - generic [ref=e686]:
+                      - img [ref=e687]
+                      - text: 今日 03:00
+              - generic [ref=e689]:
+                - button "重新运行" [ref=e690]:
+                  - img [ref=e691]
+                - button "查看日志" [ref=e693]:
+                  - img [ref=e694]
+            - generic [ref=e697]:
+              - generic [ref=e698]: 执行进度
+              - generic [ref=e699]: 45%
+          - generic [ref=e702] [cursor=pointer]:
+            - generic [ref=e704]:
+              - generic [ref=e705]:
+                - img [ref=e707]
+                - generic [ref=e709]:
+                  - generic [ref=e710]:
+                    - generic [ref=e711]: 敏感数据扫描
+                    - generic [ref=e712]: 待执
+                  - generic [ref=e713]:
+                    - generic [ref=e714]:
+                      - img [ref=e715]
+                      - text: 等待
+                    - generic [ref=e717]:
+                      - img [ref=e718]
+                      - text: 今日 04:00
+              - generic [ref=e720]:
+                - button "重新运行" [ref=e721]:
+                  - img [ref=e722]
+                - button "查看日志" [ref=e724]:
+                  - img [ref=e725]
+            - generic [ref=e728]:
+              - generic [ref=e729]: 执行进度
+              - generic [ref=e730]: 0%
+        - button "添加新的定时任务" [ref=e732]:
+          - img [ref=e733]
+          - text: 添加新的定时任务
+      - generic [ref=e735]:
+        - generic [ref=e738]:
+          - generic [ref=e739]:
+            - heading "数据血缘分'" [level=3] [ref=e740]: 数据血缘分'
+            - paragraph [ref=e742]: 全链路数据流向追踪与影响分析
+          - button "进入血缘分'" [ref=e743]:
+            - img [ref=e744]
+            - text: 进入血缘分'
+        - generic [ref=e746]:
+          - img [ref=e747]:
+            - generic [ref=e752]: ODS 原始'
+            - generic [ref=e753]: DWD 明细'
+            - generic [ref=e754]: DWS 汇总层
+            - generic [ref=e755]: ADS 应用'
+            - generic [ref=e780] [cursor=pointer]:
+              - generic [ref=e783]: ods_order
+              - generic [ref=e784]: 日增'2.3M
+            - generic [ref=e785] [cursor=pointer]:
+              - generic [ref=e788]: ods_user
+              - generic [ref=e789]: 全量 15M
+            - generic [ref=e790] [cursor=pointer]:
+              - generic [ref=e793]: ods_product
+              - generic [ref=e794]: 全量 50K
+            - generic [ref=e795] [cursor=pointer]:
+              - generic [ref=e798]: dwd_order_detail
+              - generic [ref=e799]: 分区'365
+            - generic [ref=e800] [cursor=pointer]:
+              - generic [ref=e803]: dwd_user_order
+              - generic [ref=e804]: 日增'1.2M
+            - generic [ref=e805] [cursor=pointer]:
+              - generic [ref=e808]: dwd_traffic_log
+              - generic [ref=e809]: 日增'8.5M
+            - generic [ref=e810] [cursor=pointer]:
+              - generic [ref=e813]: dwd_payment
+              - generic [ref=e814]: 日增'800K
+            - generic [ref=e815] [cursor=pointer]:
+              - generic [ref=e818]: dws_order_daily
+              - generic [ref=e819]: 存储 45GB
+            - generic [ref=e820] [cursor=pointer]:
+              - generic [ref=e823]: dws_user_stats
+              - generic [ref=e824]: 存储 23GB
+            - generic [ref=e825] [cursor=pointer]:
+              - generic [ref=e828]: dws_gmv_region
+              - generic [ref=e829]: 存储 12GB
+            - generic [ref=e830] [cursor=pointer]:
+              - generic [ref=e833]: ads_sales_report
+              - generic [ref=e834]: 报表 12 '
+            - generic [ref=e835] [cursor=pointer]:
+              - generic [ref=e838]: ads_user_portrait
+              - generic [ref=e839]: 标签 156 '
+            - generic [ref=e840] [cursor=pointer]:
+              - generic [ref=e843]: ads_ops_kpi
+              - generic [ref=e844]: 看板 8 '
+          - generic [ref=e845]:
+            - generic [ref=e846]:
+              - generic [ref=e849]: ODS
+              - generic [ref=e852]: DWD
+              - generic [ref=e855]: DWS
+              - generic [ref=e858]: ADS
+            - generic [ref=e859]:
+              - generic [ref=e860]: 13 个数据表
+              - generic [ref=e861]: ·
+              - generic [ref=e862]: 14 条血缘链'
+              - generic [ref=e863]: ·
+              - generic [ref=e864]: 实时更新
+      - generic [ref=e866]:
+        - generic [ref=e867]:
+          - generic [ref=e868]:
+            - heading "最近访问的数据源'" [level=3] [ref=e869]: 最近访问的数据源'
+            - paragraph [ref=e871]: 今日共访'23 张数据表
+          - generic [ref=e872]:
+            - generic [ref=e873]:
+              - textbox "搜索表名..." [ref=e874]
+              - img [ref=e875]
+            - button "查看全部" [ref=e877]:
+              - text: 查看全部
+              - img [ref=e878]
+        - table [ref=e881]:
+          - rowgroup [ref=e882]:
+            - row "表名 分层 数据源' 负责人' 更新时间 质量得分 操作" [ref=e883]:
+              - columnheader "表名" [ref=e884]
+              - columnheader "分层" [ref=e885]
+              - columnheader "数据源'" [ref=e886]
+              - columnheader "负责人'" [ref=e887]
+              - columnheader "更新时间" [ref=e888]
+              - columnheader "质量得分" [ref=e889]
+              - columnheader "操作" [ref=e890]
+          - rowgroup [ref=e891]:
+            - row "dwd_user_behavior_log dwd ods_db 张 张三 2 分钟 98" [ref=e892] [cursor=pointer]:
+              - cell "dwd_user_behavior_log" [ref=e893]:
+                - generic [ref=e894]:
+                  - img [ref=e895]
+                  - generic [ref=e897]: dwd_user_behavior_log
+              - cell "dwd" [ref=e898]
+              - cell "ods_db" [ref=e899]
+              - cell "张 张三" [ref=e900]:
+                - generic [ref=e901]:
+                  - generic [ref=e902]: 张
+                  - generic [ref=e903]: 张三
+              - cell "2 分钟" [ref=e904]:
+                - generic [ref=e905]:
+                  - img [ref=e906]
+                  - text: 2 分钟
+              - cell "98" [ref=e908]:
+                - generic [ref=e912]: "98"
+              - cell [ref=e913]:
+                - generic [ref=e914]:
+                  - button "查看" [ref=e915]:
+                    - img [ref=e916]
+                  - button "血" [ref=e919]:
+                    - img [ref=e920]
+                  - button "分享" [ref=e922]:
+                    - img [ref=e923]
+            - row "dim_product_category dim dim_db 李 李四 15 分钟 95" [ref=e925] [cursor=pointer]:
+              - cell "dim_product_category" [ref=e926]:
+                - generic [ref=e927]:
+                  - img [ref=e928]
+                  - generic [ref=e930]: dim_product_category
+              - cell "dim" [ref=e931]
+              - cell "dim_db" [ref=e932]
+              - cell "李 李四" [ref=e933]:
+                - generic [ref=e934]:
+                  - generic [ref=e935]: 李
+                  - generic [ref=e936]: 李四
+              - cell "15 分钟" [ref=e937]:
+                - generic [ref=e938]:
+                  - img [ref=e939]
+                  - text: 15 分钟
+              - cell "95" [ref=e941]:
+                - generic [ref=e945]: "95"
+              - cell [ref=e946]:
+                - generic [ref=e947]:
+                  - button "查看" [ref=e948]:
+                    - img [ref=e949]
+                  - button "血" [ref=e952]:
+                    - img [ref=e953]
+                  - button "分享" [ref=e955]:
+                    - img [ref=e956]
+            - row "dws_order_daily_stat dws dws_db 王 王五 1 小时 92" [ref=e958] [cursor=pointer]:
+              - cell "dws_order_daily_stat" [ref=e959]:
+                - generic [ref=e960]:
+                  - img [ref=e961]
+                  - generic [ref=e963]: dws_order_daily_stat
+              - cell "dws" [ref=e964]
+              - cell "dws_db" [ref=e965]
+              - cell "王 王五" [ref=e966]:
+                - generic [ref=e967]:
+                  - generic [ref=e968]: 王
+                  - generic [ref=e969]: 王五
+              - cell "1 小时" [ref=e970]:
+                - generic [ref=e971]:
+                  - img [ref=e972]
+                  - text: 1 小时
+              - cell "92" [ref=e974]:
+                - generic [ref=e978]: "92"
+              - cell [ref=e979]:
+                - generic [ref=e980]:
+                  - button "查看" [ref=e981]:
+                    - img [ref=e982]
+                  - button "血" [ref=e985]:
+                    - img [ref=e986]
+                  - button "分享" [ref=e988]:
+                    - img [ref=e989]
+            - row "ads_sales_report_2024 ads ads_db 赵 赵六 3 小时 89" [ref=e991] [cursor=pointer]:
+              - cell "ads_sales_report_2024" [ref=e992]:
+                - generic [ref=e993]:
+                  - img [ref=e994]
+                  - generic [ref=e996]: ads_sales_report_2024
+              - cell "ads" [ref=e997]
+              - cell "ads_db" [ref=e998]
+              - cell "赵 赵六" [ref=e999]:
+                - generic [ref=e1000]:
+                  - generic [ref=e1001]: 赵
+                  - generic [ref=e1002]: 赵六
+              - cell "3 小时" [ref=e1003]:
+                - generic [ref=e1004]:
+                  - img [ref=e1005]
+                  - text: 3 小时
+              - cell "89" [ref=e1007]:
+                - generic [ref=e1011]: "89"
+              - cell [ref=e1012]:
+                - generic [ref=e1013]:
+                  - button "查看" [ref=e1014]:
+                    - img [ref=e1015]
+                  - button "血" [ref=e1018]:
+                    - img [ref=e1019]
+                  - button "分享" [ref=e1021]:
+                    - img [ref=e1022]
+            - row "ods_crm_customer_info ods ods_db 张 张三 5 小时 96" [ref=e1024] [cursor=pointer]:
+              - cell "ods_crm_customer_info" [ref=e1025]:
+                - generic [ref=e1026]:
+                  - img [ref=e1027]
+                  - generic [ref=e1029]: ods_crm_customer_info
+              - cell "ods" [ref=e1030]
+              - cell "ods_db" [ref=e1031]
+              - cell "张 张三" [ref=e1032]:
+                - generic [ref=e1033]:
+                  - generic [ref=e1034]: 张
+                  - generic [ref=e1035]: 张三
+              - cell "5 小时" [ref=e1036]:
+                - generic [ref=e1037]:
+                  - img [ref=e1038]
+                  - text: 5 小时
+              - cell "96" [ref=e1040]:
+                - generic [ref=e1044]: "96"
+              - cell [ref=e1045]:
+                - generic [ref=e1046]:
+                  - button "查看" [ref=e1047]:
+                    - img [ref=e1048]
+                  - button "血" [ref=e1051]:
+                    - img [ref=e1052]
+                  - button "分享" [ref=e1054]:
+                    - img [ref=e1055]

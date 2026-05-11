@@ -1,4 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
+import type { LucideIcon } from "lucide-react";
+import { Activity, BarChart3, CircleDot, Database, Gauge, HardDrive, MessageSquare, Search, Server, Table2, Zap } from "lucide-react";
+import toast from "react-hot-toast";
 import { fetchMetadataDataSources } from '../../services/api';
 import Breadcrumb from '../../components/common/Breadcrumb';
 
@@ -41,17 +44,17 @@ interface DataSource {
 
 // 数据已全部迁移至 src/mock/data.ts mockAllDataSources，通过 fetchMetadataDataSources() 加载
 
-const TYPE_ICONS: Record<DataSourceType, { icon: string; color: string; bg: string }> = {
-  MySQL: { icon: "🐬", color: "from-blue-400 to-cyan-500", bg: "from-blue-500/20 to-cyan-500/10" },
-  PostgreSQL: { icon: "🐘", color: "from-indigo-400 to-blue-500", bg: "from-indigo-500/20 to-blue-500/10" },
-  Hive: { icon: "🐝", color: "from-amber-400 to-yellow-500", bg: "from-amber-500/20 to-yellow-500/10" },
-  Kafka: { icon: "📨", color: "from-slate-400 to-slate-600", bg: "from-slate-500/20 to-slate-600/10" },
-  ClickHouse: { icon: "", color: "from-yellow-400 to-orange-500", bg: "from-yellow-500/20 to-orange-500/10" },
-  MongoDB: { icon: "🍃", color: "from-green-400 to-emerald-500", bg: "from-green-500/20 to-emerald-500/10" },
-  Oracle: { icon: "🔴", color: "from-red-400 to-rose-500", bg: "from-red-500/20 to-rose-500/10" },
-  Redis: { icon: "🟥", color: "from-red-500 to-pink-600", bg: "from-red-500/20 to-pink-600/10" },
-  Elasticsearch: { icon: "🔍", color: "from-teal-400 to-cyan-500", bg: "from-teal-500/20 to-cyan-500/10" },
-  Doris: { icon: "🌟", color: "from-purple-400 to-fuchsia-500", bg: "from-purple-500/20 to-fuchsia-500/10" },
+const TYPE_ICONS: Record<DataSourceType, { Icon: LucideIcon; color: string; bg: string }> = {
+  MySQL: { Icon: Database, color: "from-blue-400 to-cyan-500", bg: "from-blue-500/20 to-cyan-500/10" },
+  PostgreSQL: { Icon: Server, color: "from-indigo-400 to-blue-500", bg: "from-indigo-500/20 to-blue-500/10" },
+  Hive: { Icon: HardDrive, color: "from-amber-400 to-yellow-500", bg: "from-amber-500/20 to-yellow-500/10" },
+  Kafka: { Icon: MessageSquare, color: "from-slate-400 to-slate-600", bg: "from-slate-500/20 to-slate-600/10" },
+  ClickHouse: { Icon: BarChart3, color: "from-yellow-400 to-orange-500", bg: "from-yellow-500/20 to-orange-500/10" },
+  MongoDB: { Icon: CircleDot, color: "from-green-400 to-emerald-500", bg: "from-green-500/20 to-emerald-500/10" },
+  Oracle: { Icon: Database, color: "from-red-400 to-rose-500", bg: "from-red-500/20 to-rose-500/10" },
+  Redis: { Icon: Zap, color: "from-red-500 to-pink-600", bg: "from-red-500/20 to-pink-600/10" },
+  Elasticsearch: { Icon: Search, color: "from-teal-400 to-cyan-500", bg: "from-teal-500/20 to-cyan-500/10" },
+  Doris: { Icon: Activity, color: "from-purple-400 to-fuchsia-500", bg: "from-purple-500/20 to-fuchsia-500/10" },
 };
 
 const CATEGORIES = ["全部", "关系型", "大数据", "消息队列", "NoSQL", "搜索引擎", "OLAP"] as const;
@@ -88,15 +91,15 @@ export default function DataSource() {
   useEffect(() => {
     setLoadingData(true);
     fetchMetadataDataSources().then((data) => {
-      // 'api 返回的数据结构映射到组件所需'DataSource 类型
+      // API 返回的数据结构映射到组件所需 DataSource 类型
       const mapped: DataSource[] = (data as Array<Record<string, unknown>>).map((d) => ({
         id: d.id as string,
         name: d.name as string,
         type: d.type as DataSourceType,
         category: (() => {
           const t = d.type as string;
-          if (['MySQL','PostgreSQL','Oracle'].includes(t)) return '关系数';
-          if (['Hive'].includes(t)) return '大数';
+          if (['MySQL','PostgreSQL','Oracle'].includes(t)) return '关系型';
+          if (['Hive'].includes(t)) return '大数据';
           if (['Kafka'].includes(t)) return '消息队列';
           if (['MongoDB','Redis'].includes(t)) return 'NoSQL';
           if (['Elasticsearch'].includes(t)) return '搜索引擎';
@@ -175,14 +178,18 @@ export default function DataSource() {
         <div>
           <Breadcrumb items={[{ label: '数据资产' }, { label: '数据源管理' }]} />
           <h1 className="flex items-center gap-3 text-2xl font-semibold text-white">
-            数据源管理'            <span className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-300">
+            数据源管理
+            <span className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-300">
               {stats.total} 个数据源
             </span>
           </h1>
           <p className="mt-1 text-sm text-slate-400">统一管理平台所有数据源接入，支持连接测试、元数据采集、性能监控</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800">
+          <button
+            onClick={() => toast.success("数据源列表导出任务已提交")}
+            className="rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+          >
             <svg className="mr-1 inline h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
             导出列表
           </button>
@@ -191,17 +198,18 @@ export default function DataSource() {
             className="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40"
           >
             <svg className="mr-1 inline h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-            新建数据源'          </button>
+            新建数据源
+          </button>
         </div>
       </div>
 
       {/* 顶部统计卡片 */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: "数据源总数", value: stats.total, unit: "个", icon: "🗄", color: "from-cyan-500/20 to-blue-500/5", text: "text-cyan-400", trend: "+3 本月新增" },
-          { label: "在线数据源", value: stats.online, unit: `/ ${stats.total}`, icon: "🟢", color: "from-emerald-500/20 to-green-500/5", text: "text-emerald-400", trend: `健康度 ${((stats.online / stats.total) * 100).toFixed(1)}%` },
-          { label: "数据表总量", value: (stats.totalTables / 1000).toFixed(1), unit: "K 张", icon: "📊", color: "from-purple-500/20 to-fuchsia-500/5", text: "text-purple-400", trend: "+285 本周" },
-          { label: "实时 QPS", value: (stats.totalQps / 10000).toFixed(1), unit: "万/s", icon: "⚡", color: "from-amber-500/20 to-orange-500/5", text: "text-amber-400", trend: "峰值 156 万" },
+          { label: "数据源总数", value: stats.total, unit: "个", Icon: Database, color: "from-cyan-500/20 to-blue-500/5", text: "text-cyan-400", trend: "+3 本月新增" },
+          { label: "在线数据源", value: stats.online, unit: `/ ${stats.total}`, Icon: Activity, color: "from-emerald-500/20 to-green-500/5", text: "text-emerald-400", trend: `健康度 ${((stats.online / stats.total) * 100).toFixed(1)}%` },
+          { label: "数据表总量", value: (stats.totalTables / 1000).toFixed(1), unit: "K 张", Icon: Table2, color: "from-purple-500/20 to-fuchsia-500/5", text: "text-purple-400", trend: "+285 本周" },
+          { label: "实时 QPS", value: (stats.totalQps / 10000).toFixed(1), unit: "万/s", Icon: Gauge, color: "from-amber-500/20 to-orange-500/5", text: "text-amber-400", trend: "峰值 156 万" },
         ].map((stat) => (
           <div key={stat.label} className={`relative overflow-hidden rounded-xl border border-slate-800 bg-gradient-to-br ${stat.color} p-5 backdrop-blur-sm`}>
             <div className="flex items-start justify-between">
@@ -213,7 +221,7 @@ export default function DataSource() {
                 </div>
                 <div className="mt-2 text-xs text-slate-500">{stat.trend}</div>
               </div>
-              <div className="text-3xl opacity-80">{stat.icon}</div>
+              <stat.Icon className={`h-7 w-7 opacity-80 ${stat.text}`} />
             </div>
           </div>
         ))}
@@ -226,25 +234,26 @@ export default function DataSource() {
             <div className="h-4 w-1 rounded-full bg-gradient-to-b from-cyan-400 to-blue-500"></div>
             <h3 className="text-sm font-semibold text-white">数据源类型分布</h3>
           </div>
-          <span className="text-xs text-slate-500">点击类型快速筛选'</span>
+          <span className="text-xs text-slate-500">点击类型快速筛选</span>
         </div>
         <div className="grid grid-cols-10 gap-3">
           {typeStats.map((t) => {
             const config = TYPE_ICONS[t.type];
+            const TypeIcon = config.Icon;
             return (
               <button
                 key={t.type}
                 onClick={() => {
-                  // 找到该类型对应的 category 并筛'                  
+                  // 找到该类型对应的 category 并筛选
                   const ds = allSources.find((d) => d.type === t.type);
                     if (ds) setSelectedCategory(ds.category);
                 }}
                 className={`group flex flex-col items-center rounded-lg border border-slate-800 bg-gradient-to-br ${config.bg} p-3 transition hover:border-slate-600 hover:scale-105`}
               >
-                <div className="text-2xl">{config.icon}</div>
+                <TypeIcon className="h-6 w-6 text-slate-100" />
                 <div className="mt-1 text-xs font-medium text-white">{t.type}</div>
                 <div className="mt-1 flex items-center gap-1 text-[10px]">
-                  <span className="text-slate-400">{t.count} '</span>
+                  <span className="text-slate-400">{t.count} 个</span>
                   <span className="h-1 w-1 rounded-full bg-emerald-400"></span>
                   <span className="text-emerald-400">{t.online}</span>
                 </div>
@@ -365,6 +374,7 @@ export default function DataSource() {
         <div className="grid grid-cols-3 gap-4">
           {filteredSources.map((ds) => {
             const config = TYPE_ICONS[ds.type];
+            const TypeIcon = config.Icon;
             const status = STATUS_CONFIG[ds.status];
             return (
               <div
@@ -378,8 +388,8 @@ export default function DataSource() {
                 {/* 头部 */}
                 <div className="relative flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${config.color} text-2xl shadow-lg`}>
-                      {config.icon}
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${config.color} shadow-lg`}>
+                      <TypeIcon className="h-5 w-5 text-white" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -449,14 +459,16 @@ export default function DataSource() {
                     {testingId === ds.id ? (
                       <span className="flex items-center justify-center gap-1">
                         <svg className="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        测试'                      </span>
+                        测试中
+                      </span>
                     ) : "测试连接"}
                   </button>
-                  <button onClick={(e) => e.stopPropagation()} className="rounded-md border border-slate-700 bg-slate-800/50 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800">
+                  <button onClick={(e) => { e.stopPropagation(); toast.success("元数据同步任务已提交"); }} className="rounded-md border border-slate-700 bg-slate-800/50 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800">
                     同步
                   </button>
-                  <button onClick={(e) => e.stopPropagation()} className="rounded-md border border-slate-700 bg-slate-800/50 px-2 py-1.5 text-xs text-slate-300 hover:bg-slate-800">
-                    '                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); toast("更多操作将在后续接入"); }} className="rounded-md border border-slate-700 bg-slate-800/50 px-2 py-1.5 text-xs text-slate-300 hover:bg-slate-800">
+                    更多
+                  </button>
                 </div>
               </div>
             );
@@ -486,6 +498,7 @@ export default function DataSource() {
             <tbody>
               {filteredSources.map((ds) => {
                 const config = TYPE_ICONS[ds.type];
+                const TypeIcon = config.Icon;
                 const status = STATUS_CONFIG[ds.status];
                 return (
                   <tr
@@ -495,7 +508,7 @@ export default function DataSource() {
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-xl">{config.icon}</span>
+                        <TypeIcon className="h-5 w-5 text-slate-300" />
                         <div>
                           <div className="font-mono font-medium text-white">{ds.name}</div>
                           <div className="text-xs text-slate-500">{ds.description.slice(0, 28)}...</div>
@@ -550,8 +563,11 @@ export default function DataSource() {
             <div className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/95 backdrop-blur-md">
               <div className="flex items-start justify-between p-5">
                 <div className="flex items-start gap-3">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${TYPE_ICONS[selectedSource.type].color} text-2xl shadow-lg`}>
-                    {TYPE_ICONS[selectedSource.type].icon}
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${TYPE_ICONS[selectedSource.type].color} shadow-lg`}>
+                    {(() => {
+                      const SourceIcon = TYPE_ICONS[selectedSource.type].Icon;
+                      return <SourceIcon className="h-6 w-6 text-white" />;
+                    })()}
                   </div>
                   <div>
                     <div className="font-mono text-lg font-semibold text-white">{selectedSource.name}</div>
@@ -570,12 +586,12 @@ export default function DataSource() {
                 </button>
               </div>
               <div className="flex gap-2 border-t border-slate-800 px-5 py-3">
-                <button className="flex-1 rounded-md bg-gradient-to-r from-cyan-500 to-blue-500 py-2 text-xs font-medium text-white">浏览数据'</button>
+                <button onClick={() => toast("数据浏览能力将在目录详情中接入")} className="flex-1 rounded-md bg-gradient-to-r from-cyan-500 to-blue-500 py-2 text-xs font-medium text-white">浏览数据</button>
                 <button onClick={() => handleTest(selectedSource.id)} className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-xs text-cyan-300 hover:bg-cyan-500/20">
-                  {testingId === selectedSource.id ? "测试'.." : "测试连接"}
+                  {testingId === selectedSource.id ? "测试中..." : "测试连接"}
                 </button>
-                <button className="rounded-md border border-slate-700 bg-slate-800/50 px-4 py-2 text-xs text-slate-300 hover:bg-slate-800">立即同步</button>
-                <button className="rounded-md border border-slate-700 bg-slate-800/50 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800">'</button>
+                <button onClick={() => toast.success("元数据同步任务已提交")} className="rounded-md border border-slate-700 bg-slate-800/50 px-4 py-2 text-xs text-slate-300 hover:bg-slate-800">立即同步</button>
+                <button onClick={() => toast("更多操作将在后续接入")} className="rounded-md border border-slate-700 bg-slate-800/50 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800">更多</button>
               </div>
             </div>
 
@@ -767,16 +783,17 @@ export default function DataSource() {
               </button>
             </div>
             <div className="p-6">
-              <div className="mb-4 text-sm text-slate-400">选择要接入的数据源类型'</div>
+              <div className="mb-4 text-sm text-slate-400">选择要接入的数据源类型</div>
               <div className="grid grid-cols-5 gap-3">
                 {(Object.keys(TYPE_ICONS) as DataSourceType[]).map((type) => {
                   const config = TYPE_ICONS[type];
+                  const TypeIcon = config.Icon;
                   return (
                     <button
                       key={type}
                       className={`group flex flex-col items-center rounded-xl border border-slate-800 bg-gradient-to-br ${config.bg} p-4 transition hover:border-cyan-500/50 hover:scale-105`}
                     >
-                      <div className="text-3xl">{config.icon}</div>
+                      <TypeIcon className="h-7 w-7 text-slate-100" />
                       <div className="mt-2 text-sm font-medium text-white">{type}</div>
                       <div className="mt-1 text-[10px] text-slate-500">点击接入</div>
                     </button>

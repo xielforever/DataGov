@@ -1,0 +1,514 @@
+- generic [ref=e3]:
+  - complementary [ref=e75]:
+    - generic [ref=e77]:
+      - img [ref=e79]
+      - generic [ref=e81]: DataGov
+    - navigation [ref=e82]:
+      - list [ref=e83]:
+        - listitem [ref=e84]:
+          - button "工作台" [ref=e85]:
+            - img [ref=e87]
+            - generic [ref=e89]: 工作台
+        - listitem [ref=e90]:
+          - button "数据资产" [ref=e91]:
+            - img [ref=e93]
+            - generic [ref=e95]: 数据资产
+            - img [ref=e96]
+          - list [ref=e98]:
+            - listitem [ref=e99]:
+              - button "资产总览" [ref=e100]
+            - listitem [ref=e101]:
+              - button "资产注册" [ref=e102]
+            - listitem [ref=e103]:
+              - button "数据目录" [active] [ref=e104]
+            - listitem [ref=e105]:
+              - button "数据地图" [ref=e106]
+            - listitem [ref=e107]:
+              - button "数据血缘" [ref=e108]
+            - listitem [ref=e109]:
+              - button "数据源管理" [ref=e110]
+        - listitem [ref=e111]:
+          - button "元数据管理" [ref=e112]:
+            - img [ref=e114]
+            - generic [ref=e116]: 元数据管理
+            - img [ref=e117]
+        - listitem [ref=e119]:
+          - button "数据标准" [ref=e120]:
+            - img [ref=e122]
+            - generic [ref=e124]: 数据标准
+            - img [ref=e125]
+        - listitem [ref=e127]:
+          - button "数据质量 3" [ref=e128]:
+            - img [ref=e130]
+            - generic [ref=e132]: 数据质量
+            - generic [ref=e133]: "3"
+            - img [ref=e134]
+        - listitem [ref=e136]:
+          - button "数据安全" [ref=e137]:
+            - img [ref=e139]
+            - generic [ref=e141]: 数据安全
+            - img [ref=e142]
+        - listitem [ref=e144]:
+          - button "数据开发" [ref=e145]:
+            - img [ref=e147]
+            - generic [ref=e149]: 数据开发
+            - img [ref=e150]
+        - listitem [ref=e152]:
+          - button "数据服务" [ref=e153]:
+            - img [ref=e155]
+            - generic [ref=e157]: 数据服务
+            - img [ref=e158]
+        - listitem [ref=e160]:
+          - button "审批中心" [ref=e161]:
+            - img [ref=e163]
+            - generic [ref=e165]: 审批中心
+            - img [ref=e166]
+        - listitem [ref=e168]:
+          - button "系统管理" [ref=e169]:
+            - img [ref=e171]
+            - generic [ref=e174]: 系统管理
+            - img [ref=e175]
+  - banner [ref=e177]:
+    - generic [ref=e178]:
+      - generic [ref=e179]:
+        - button "打开侧边栏" [ref=e180]:
+          - img [ref=e181]
+        - generic [ref=e183]:
+          - img [ref=e184]
+          - textbox "搜索数据表、字段、任务..." [ref=e186]
+      - generic [ref=e187]:
+        - button "通知中心" [ref=e189]:
+          - img [ref=e190]
+        - button "用户菜单" [ref=e195]:
+          - generic [ref=e196]: 张
+          - img [ref=e197]
+  - main [ref=e199]:
+    - generic [ref=e951]:
+      - generic [ref=e952]:
+        - generic [ref=e953]:
+          - generic [ref=e954]:
+            - generic [ref=e956]: 数据资产
+            - generic [ref=e957]:
+              - img [ref=e958]
+              - generic [ref=e960]: 数据目录
+          - generic [ref=e961]:
+            - heading "数据目录" [level=1] [ref=e962]
+            - generic [ref=e963]: 18 个资产
+          - paragraph [ref=e964]: 浏览、搜索和发现平台所有数据资产
+        - generic [ref=e965]:
+          - button "📥 导出目录" [ref=e966]:
+            - generic [ref=e967]: 📥
+            - generic [ref=e968]: 导出目录
+          - button "+ 注册资产" [ref=e969]:
+            - generic [ref=e970]: +
+            - generic [ref=e971]: 注册资产
+      - generic [ref=e972]:
+        - generic [ref=e973]:
+          - generic [ref=e974]:
+            - generic [ref=e975]: 🔍
+            - textbox "搜索资产名称、中文名、描述、负责人..." [ref=e976]
+            - generic [ref=e978]: ⌘K
+          - button "✓ 仅看已认证" [ref=e979]:
+            - generic [ref=e980]: ✓
+            - generic [ref=e981]: 仅看已认证
+        - generic [ref=e982]:
+          - generic [ref=e983]: 热门搜索
+          - button "用户订单" [ref=e984]
+          - button "用户画像" [ref=e985]
+          - button "销售报表" [ref=e986]
+          - button "商品维度" [ref=e987]
+          - button "风控评分" [ref=e988]
+      - generic [ref=e989]:
+        - generic [ref=e991]:
+          - heading "筛选条" [level=3] [ref=e994]
+          - generic [ref=e995]:
+            - generic [ref=e996]:
+              - button "🏢 业务 ⌄" [ref=e997]:
+                - generic [ref=e998]:
+                  - generic [ref=e999]: 🏢
+                  - generic [ref=e1000]: 业务
+                - generic [ref=e1001]: ⌄
+              - generic [ref=e1003]:
+                - generic [ref=e1004] [cursor=pointer]:
+                  - generic [ref=e1007]: 交易域
+                  - generic [ref=e1008]: "4"
+                - generic [ref=e1009] [cursor=pointer]:
+                  - generic [ref=e1012]: 用户域
+                  - generic [ref=e1013]: "3"
+                - generic [ref=e1014] [cursor=pointer]:
+                  - generic [ref=e1017]: 商品域
+                  - generic [ref=e1018]: "3"
+                - generic [ref=e1019] [cursor=pointer]:
+                  - generic [ref=e1022]: 营销域
+                  - generic [ref=e1023]: "2"
+                - generic [ref=e1024] [cursor=pointer]:
+                  - generic [ref=e1027]: 财务域
+                  - generic [ref=e1028]: "1"
+                - generic [ref=e1029] [cursor=pointer]:
+                  - generic [ref=e1032]: 风控域
+                  - generic [ref=e1033]: "2"
+                - generic [ref=e1034] [cursor=pointer]:
+                  - generic [ref=e1037]: 物流域
+                  - generic [ref=e1038]: "2"
+                - generic [ref=e1039] [cursor=pointer]:
+                  - generic [ref=e1042]: 其他
+                  - generic [ref=e1043]: "1"
+            - generic [ref=e1044]:
+              - button "📊 数据分层 ⌄" [ref=e1045]:
+                - generic [ref=e1046]:
+                  - generic [ref=e1047]: 📊
+                  - generic [ref=e1048]: 数据分层
+                - generic [ref=e1049]: ⌄
+              - generic [ref=e1051]:
+                - generic [ref=e1052] [cursor=pointer]:
+                  - generic [ref=e1055]: ODS
+                  - generic [ref=e1056]: "5"
+                - generic [ref=e1057] [cursor=pointer]:
+                  - generic [ref=e1060]: DWD
+                  - generic [ref=e1061]: "4"
+                - generic [ref=e1062] [cursor=pointer]:
+                  - generic [ref=e1065]: DWS
+                  - generic [ref=e1066]: "3"
+                - generic [ref=e1067] [cursor=pointer]:
+                  - generic [ref=e1070]: ADS
+                  - generic [ref=e1071]: "4"
+                - generic [ref=e1072] [cursor=pointer]:
+                  - generic [ref=e1075]: DIM
+                  - generic [ref=e1076]: "2"
+            - generic [ref=e1077]:
+              - button "🔒 敏感级别 ⌄" [ref=e1078]:
+                - generic [ref=e1079]:
+                  - generic [ref=e1080]: 🔒
+                  - generic [ref=e1081]: 敏感级别
+                - generic [ref=e1082]: ⌄
+              - generic [ref=e1084]:
+                - generic [ref=e1085] [cursor=pointer]:
+                  - generic [ref=e1088]: 公开
+                  - generic [ref=e1089]: "2"
+                - generic [ref=e1090] [cursor=pointer]:
+                  - generic [ref=e1093]: 内部
+                  - generic [ref=e1094]: "9"
+                - generic [ref=e1095] [cursor=pointer]:
+                  - generic [ref=e1098]: 敏感
+                  - generic [ref=e1099]: "4"
+                - generic [ref=e1100] [cursor=pointer]:
+                  - generic [ref=e1103]: 机密
+                  - generic [ref=e1104]: "3"
+            - generic [ref=e1105]:
+              - button "🔌 数据源 ⌄" [ref=e1106]:
+                - generic [ref=e1107]:
+                  - generic [ref=e1108]: 🔌
+                  - generic [ref=e1109]: 数据源
+                - generic [ref=e1110]: ⌄
+              - generic [ref=e1112]:
+                - generic [ref=e1113] [cursor=pointer]:
+                  - generic [ref=e1116]: MySQL
+                  - generic [ref=e1117]: "2"
+                - generic [ref=e1118] [cursor=pointer]:
+                  - generic [ref=e1121]: Hive
+                  - generic [ref=e1122]: "7"
+                - generic [ref=e1123] [cursor=pointer]:
+                  - generic [ref=e1126]: Kafka
+                  - generic [ref=e1127]: "1"
+                - generic [ref=e1128] [cursor=pointer]:
+                  - generic [ref=e1131]: ClickHouse
+                  - generic [ref=e1132]: "2"
+                - generic [ref=e1133] [cursor=pointer]:
+                  - generic [ref=e1136]: PostgreSQL
+                  - generic [ref=e1137]: "1"
+                - generic [ref=e1138] [cursor=pointer]:
+                  - generic [ref=e1141]: MongoDB
+                  - generic [ref=e1142]: "1"
+                - generic [ref=e1143] [cursor=pointer]:
+                  - generic [ref=e1146]: Oracle
+                  - generic [ref=e1147]: "1"
+                - generic [ref=e1148] [cursor=pointer]:
+                  - generic [ref=e1151]: Redis
+                  - generic [ref=e1152]: "0"
+                - generic [ref=e1153] [cursor=pointer]:
+                  - generic [ref=e1156]: Elasticsearch
+                  - generic [ref=e1157]: "1"
+                - generic [ref=e1158] [cursor=pointer]:
+                  - generic [ref=e1161]: Doris
+                  - generic [ref=e1162]: "2"
+            - generic [ref=e1163]:
+              - button "🏷 资产标签 ⌄" [ref=e1164]:
+                - generic [ref=e1165]:
+                  - generic [ref=e1166]: 🏷
+                  - generic [ref=e1167]: 资产标签
+                - generic [ref=e1168]: ⌄
+              - generic [ref=e1170]:
+                - button "核心资产" [ref=e1171]
+                - button "高价值" [ref=e1172]
+                - button "高频访问" [ref=e1173]
+                - button "敏感数据" [ref=e1174]
+                - button "机密数据" [ref=e1175]
+                - button "已认证" [ref=e1176]
+                - button "已脱敏" [ref=e1177]
+                - button "维表" [ref=e1178]
+                - button "待治理" [ref=e1179]
+        - generic [ref=e1180]:
+          - generic [ref=e1181]:
+            - generic [ref=e1182]: 共找到 18 个资产
+            - generic [ref=e1183]:
+              - generic [ref=e1184]:
+                - generic [ref=e1185]: 排序
+                - combobox [ref=e1186]:
+                  - option "更新时间" [selected]
+                  - option "访问次数"
+                  - option "质量评分"
+                  - option "资产名称"
+                - button "降序" [ref=e1187]
+              - generic [ref=e1188]:
+                - button "卡片" [ref=e1189]
+                - button "列表" [ref=e1190]
+          - generic [ref=e1191]:
+            - generic [ref=e1192] [cursor=pointer]:
+              - generic [ref=e1193]:
+                - generic [ref=e1194]:
+                  - generic [ref=e1195]: ODS
+                  - generic [ref=e1196]:
+                    - generic [ref=e1197]:
+                      - heading "ods_order" [level=3] [ref=e1198]
+                      - generic "已认证" [ref=e1199]: ✅
+                    - paragraph [ref=e1200]: 订单原始表
+                - button
+              - paragraph [ref=e1201]: 交易系统订单主数据贴源表，作为核心血缘起点之一
+              - generic [ref=e1202]:
+                - generic [ref=e1203]: 内部
+                - generic [ref=e1204]: 交易域
+                - generic [ref=e1205]: 核心资产
+                - generic [ref=e1206]: 已认证
+              - generic [ref=e1207]:
+                - generic [ref=e1208]:
+                  - generic [ref=e1209]: 数据量
+                  - generic [ref=e1210]: 82000 万
+                - generic [ref=e1211]:
+                  - generic [ref=e1212]: 字段
+                  - generic [ref=e1213]: "58"
+                - generic [ref=e1214]:
+                  - generic [ref=e1215]: 质量
+                  - generic [ref=e1216]: "96.3"
+              - generic [ref=e1217]:
+                - generic [ref=e1220]: 王大
+                - generic [ref=e1221]:
+                  - generic [ref=e1222]: 👁 11,248
+                  - generic [ref=e1223]: 🐬
+            - generic [ref=e1224] [cursor=pointer]:
+              - generic [ref=e1225]:
+                - generic [ref=e1226]:
+                  - generic [ref=e1227]: ODS
+                  - generic [ref=e1228]:
+                    - generic [ref=e1229]:
+                      - heading "ods_payment" [level=3] [ref=e1230]
+                      - generic "已认证" [ref=e1231]: ✅
+                    - paragraph [ref=e1232]: 支付原始流水
+                - button
+              - paragraph [ref=e1233]: 支付系统流水贴源明细，包含支付渠道、状态、优惠与分账信息
+              - generic [ref=e1234]:
+                - generic [ref=e1235]: 机密
+                - generic [ref=e1236]: 财务域
+                - generic [ref=e1237]: 机密数据
+                - generic [ref=e1238]: 核心资产
+              - generic [ref=e1239]:
+                - generic [ref=e1240]:
+                  - generic [ref=e1241]: 数据量
+                  - generic [ref=e1242]: 35600 万
+                - generic [ref=e1243]:
+                  - generic [ref=e1244]: 字段
+                  - generic [ref=e1245]: "52"
+                - generic [ref=e1246]:
+                  - generic [ref=e1247]: 质量
+                  - generic [ref=e1248]: "92.1"
+              - generic [ref=e1249]:
+                - generic [ref=e1252]: 刘畅
+                - generic [ref=e1253]:
+                  - generic [ref=e1254]: 👁 7,240
+                  - generic [ref=e1255]: 📨
+            - generic [ref=e1256] [cursor=pointer]:
+              - generic [ref=e1257]:
+                - generic [ref=e1258]:
+                  - generic [ref=e1259]: ODS
+                  - generic [ref=e1260]:
+                    - generic [ref=e1261]:
+                      - heading "ods_user" [level=3] [ref=e1262]
+                      - generic "已认证" [ref=e1263]: ✅
+                    - paragraph [ref=e1264]: 用户原始表
+                - button
+              - paragraph [ref=e1265]: 来自用户中心主库的贴源数据，覆盖注册、认证、渠道等信息
+              - generic [ref=e1266]:
+                - generic [ref=e1267]: 敏感
+                - generic [ref=e1268]: 用户域
+                - generic [ref=e1269]: 敏感数据
+                - generic [ref=e1270]: 核心资产
+              - generic [ref=e1271]:
+                - generic [ref=e1272]:
+                  - generic [ref=e1273]: 数据量
+                  - generic [ref=e1274]: 12000 万
+                - generic [ref=e1275]:
+                  - generic [ref=e1276]: 字段
+                  - generic [ref=e1277]: "44"
+                - generic [ref=e1278]:
+                  - generic [ref=e1279]: 质量
+                  - generic [ref=e1280]: "93.8"
+              - generic [ref=e1281]:
+                - generic [ref=e1284]: 李秀
+                - generic [ref=e1285]:
+                  - generic [ref=e1286]: 👁 9,780
+                  - generic [ref=e1287]: 🐘
+            - generic [ref=e1288] [cursor=pointer]:
+              - generic [ref=e1289]:
+                - generic [ref=e1290]:
+                  - generic [ref=e1291]: ODS
+                  - generic [ref=e1292]:
+                    - heading "ods_shipment" [level=3] [ref=e1294]
+                    - paragraph [ref=e1295]: 物流原始表
+                - button
+              - paragraph [ref=e1296]: 物流履约过程原始明细，覆盖揽收、干线、派送与签收状态轨迹
+              - generic [ref=e1297]:
+                - generic [ref=e1298]: 敏感
+                - generic [ref=e1299]: 物流域
+                - generic [ref=e1300]: 敏感数据
+              - generic [ref=e1301]:
+                - generic [ref=e1302]:
+                  - generic [ref=e1303]: 数据量
+                  - generic [ref=e1304]: 6800 万
+                - generic [ref=e1305]:
+                  - generic [ref=e1306]: 字段
+                  - generic [ref=e1307]: "40"
+                - generic [ref=e1308]:
+                  - generic [ref=e1309]: 质量
+                  - generic [ref=e1310]: "89.8"
+              - generic [ref=e1311]:
+                - generic [ref=e1314]: 周涛
+                - generic [ref=e1315]:
+                  - generic [ref=e1316]: 👁 5,412
+                  - generic [ref=e1317]: 🐬
+            - generic [ref=e1318] [cursor=pointer]:
+              - generic [ref=e1319]:
+                - generic [ref=e1320]:
+                  - generic [ref=e1321]: DWD
+                  - generic [ref=e1322]:
+                    - generic [ref=e1323]:
+                      - heading "dwd_order_detail" [level=3] [ref=e1324]
+                      - generic "已认证" [ref=e1325]: ✅
+                    - paragraph [ref=e1326]: 订单明细宽表
+                - button
+              - paragraph [ref=e1327]: 交易主链路核心明细表，汇聚订单、支付、用户行为与物流关键字段
+              - generic [ref=e1328]:
+                - generic [ref=e1329]: 内部
+                - generic [ref=e1330]: 交易域
+                - generic [ref=e1331]: 核心资产
+                - generic [ref=e1332]: 高频访问
+              - generic [ref=e1333]:
+                - generic [ref=e1334]:
+                  - generic [ref=e1335]: 数据量
+                  - generic [ref=e1336]: 85000 万
+                - generic [ref=e1337]:
+                  - generic [ref=e1338]: 字段
+                  - generic [ref=e1339]: "68"
+                - generic [ref=e1340]:
+                  - generic [ref=e1341]: 质量
+                  - generic [ref=e1342]: "97.2"
+              - generic [ref=e1343]:
+                - generic [ref=e1346]: 王大
+                - generic [ref=e1347]:
+                  - generic [ref=e1348]: 👁 16,234
+                  - generic [ref=e1349]: 🐝
+            - generic [ref=e1350] [cursor=pointer]:
+              - generic [ref=e1351]:
+                - generic [ref=e1352]:
+                  - generic [ref=e1353]: DWD
+                  - generic [ref=e1354]:
+                    - generic [ref=e1355]:
+                      - heading "dwd_delivery" [level=3] [ref=e1356]
+                      - generic "已认证" [ref=e1357]: ✅
+                    - paragraph [ref=e1358]: 配送明细表
+                - button
+              - paragraph [ref=e1359]: 物流履约明细数据，包含时效、签收与异常配送信息
+              - generic [ref=e1360]:
+                - generic [ref=e1361]: 内部
+                - generic [ref=e1362]: 物流域
+                - generic [ref=e1363]: 已认证
+              - generic [ref=e1364]:
+                - generic [ref=e1365]:
+                  - generic [ref=e1366]: 数据量
+                  - generic [ref=e1367]: 12600 万
+                - generic [ref=e1368]:
+                  - generic [ref=e1369]: 字段
+                  - generic [ref=e1370]: "48"
+                - generic [ref=e1371]:
+                  - generic [ref=e1372]: 质量
+                  - generic [ref=e1373]: "92.6"
+              - generic [ref=e1374]:
+                - generic [ref=e1377]: 周涛
+                - generic [ref=e1378]:
+                  - generic [ref=e1379]: 👁 6,124
+                  - generic [ref=e1380]: 🐝
+            - generic [ref=e1381] [cursor=pointer]:
+              - generic [ref=e1382]:
+                - generic [ref=e1383]:
+                  - generic [ref=e1384]: DWD
+                  - generic [ref=e1385]:
+                    - heading "dwd_campaign" [level=3] [ref=e1387]
+                    - paragraph [ref=e1388]: 营销活动明细
+                - button
+              - paragraph [ref=e1389]: 活动参与、触达、转化全过程明细，支持效果复盘与归因分析
+              - generic [ref=e1390]:
+                - generic [ref=e1391]: 内部
+                - generic [ref=e1392]: 营销域
+                - generic [ref=e1393]: 待治理
+              - generic [ref=e1394]:
+                - generic [ref=e1395]:
+                  - generic [ref=e1396]: 数据量
+                  - generic [ref=e1397]: 9800 万
+                - generic [ref=e1398]:
+                  - generic [ref=e1399]: 字段
+                  - generic [ref=e1400]: "46"
+                - generic [ref=e1401]:
+                  - generic [ref=e1402]: 质量
+                  - generic [ref=e1403]: "90.4"
+              - generic [ref=e1404]:
+                - generic [ref=e1407]: 孙立
+                - generic [ref=e1408]:
+                  - generic [ref=e1409]: 👁 7,245
+                  - generic [ref=e1410]: 🐝
+            - generic [ref=e1411] [cursor=pointer]:
+              - generic [ref=e1412]:
+                - generic [ref=e1413]:
+                  - generic [ref=e1414]: DWD
+                  - generic [ref=e1415]:
+                    - generic [ref=e1416]:
+                      - heading "dwd_fraud_event" [level=3] [ref=e1417]
+                      - generic "已认证" [ref=e1418]: ✅
+                    - paragraph [ref=e1419]: 欺诈事件明细
+                - button
+              - paragraph [ref=e1420]: 融合行为特征与设备特征的欺诈事件识别明细
+              - generic [ref=e1421]:
+                - generic [ref=e1422]: 机密
+                - generic [ref=e1423]: 风控域
+                - generic [ref=e1424]: 机密数据
+                - generic [ref=e1425]: 高价值
+              - generic [ref=e1426]:
+                - generic [ref=e1427]:
+                  - generic [ref=e1428]: 数据量
+                  - generic [ref=e1429]: 12600 万
+                - generic [ref=e1430]:
+                  - generic [ref=e1431]: 字段
+                  - generic [ref=e1432]: "58"
+                - generic [ref=e1433]:
+                  - generic [ref=e1434]: 质量
+                  - generic [ref=e1435]: "91.2"
+              - generic [ref=e1436]:
+                - generic [ref=e1439]: 黄琦
+                - generic [ref=e1440]:
+                  - generic [ref=e1441]: 👁 5,220
+                  - generic [ref=e1442]: 🌟
+          - generic [ref=e1443]:
+            - generic [ref=e1444]: 1 - 8 条，共 18 条
+            - generic [ref=e1445]:
+              - button "上一步" [disabled] [ref=e1446]
+              - button "1" [ref=e1447]
+              - button "2" [ref=e1448]
+              - button "3" [ref=e1449]
+              - button "下一步" [ref=e1450]
