@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { fetchApprovals, processApproval } from "../../services/api";
 import Breadcrumb from "../../components/common/Breadcrumb";
 import { CheckCircle, XCircle, Clock, Search, X, Filter } from "lucide-react";
@@ -145,17 +145,17 @@ export default function ApprovalCenter({ viewType }: ApprovalCenterProps) {
               暂无匹配的工单
             </div>
           ) : (
-            <div className="rounded-lg border border-slate-800 overflow-hidden">
-              <table className="w-full text-left text-sm">
+            <div className="rounded-lg border border-slate-800 overflow-x-auto">
+              <table className="min-w-[780px] w-full table-fixed text-left text-sm">
                 <thead className="bg-slate-900/60 text-xs text-slate-400">
                   <tr>
-                    <th className="px-4 py-3 font-medium">工单编号</th>
-                    <th className="px-4 py-3 font-medium">所属模块</th>
-                    <th className="px-4 py-3 font-medium">申请事项</th>
-                    <th className="px-4 py-3 font-medium">申请人</th>
-                    <th className="px-4 py-3 font-medium">申请时间</th>
-                    <th className="px-4 py-3 font-medium">状态</th>
-                    <th className="px-4 py-3 font-medium text-right">操作</th>
+                    <th className="px-4 py-3 font-medium w-[120px]">工单编号</th>
+                    <th className="px-4 py-3 font-medium w-[100px]">所属模块</th>
+                    <th className="px-4 py-3 font-medium w-[180px]">申请事项</th>
+                    <th className="px-4 py-3 font-medium w-[90px]">申请人</th>
+                    <th className="px-4 py-3 font-medium w-[110px]">申请时间</th>
+                    <th className="px-4 py-3 font-medium w-[80px]">状态</th>
+                    <th className="px-4 py-3 font-medium w-[100px] text-right">操作</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50">

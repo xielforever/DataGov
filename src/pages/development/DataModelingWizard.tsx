@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save, ChevronRight, Check, Plus, Trash2, Code, Link as LinkIcon } from 'lucide-react';
-import { fetchMetadataDataSources, fetchStandardDefinitions, createModel, updateModel } from '../../services/api';
+import { fetchBusinessDomainOptions, fetchMetadataDataSources, fetchStandardDefinitions, createModel, updateModel } from '../../services/api';
 import toast from 'react-hot-toast';
 
 export interface ModelField {
@@ -41,6 +41,7 @@ export default function DataModelingWizard({ mode, initialData, onBack, defaultD
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dataSources, setDataSources] = useState<any[]>([]);
   const [standards, setStandards] = useState<any[]>([]);
+  const [businessDomains, setBusinessDomains] = useState<string[]>([]);
   const [ddlInput, setDdlInput] = useState('');
   const [showDdlParser, setShowDdlParser] = useState(false);
 
@@ -66,6 +67,13 @@ export default function DataModelingWizard({ mode, initialData, onBack, defaultD
     });
     fetchStandardDefinitions().then(res => {
       setStandards(res);
+    });
+    fetchBusinessDomainOptions().then(res => {
+      const names = (res as Array<{ name: string }>).map((domain) => domain.name);
+      setBusinessDomains(names);
+      if (!formData.domain && names.length) {
+        setFormData(curr => ({ ...curr, domain: curr.domain || names[0] }));
+      }
     });
   }, []);
 
@@ -318,11 +326,9 @@ export default function DataModelingWizard({ mode, initialData, onBack, defaultD
                       className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-white focus:border-blue-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <option value="">请选择业务域</option>
-                      <option value="交易域">交易域</option>
-                      <option value="用户域">用户域</option>
-                      <option value="商品域">商品域</option>
-                      <option value="营销域">营销域</option>
-                      <option value="通用域">通用域</option>
+                      {businessDomains.map((domain) => (
+                        <option key={domain} value={domain}>{domain}</option>
+                      ))}
                     </select>
                   </div>
 

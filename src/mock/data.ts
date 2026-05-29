@@ -5,6 +5,185 @@ export const mockDashboardStats = [
   { label: '待处理任务', value: '23', change: '-5', trend: 'down', icon: 'task', detail: '较昨日减少 5 项', color: 'from-amber-500 to-orange-500' },
 ];
 
+export const mockHomeGovernanceOverview = {
+  lifecycleStages: [
+    {
+      phase: '01',
+      title: '数据规划',
+      module: '审批中心 / 组织管理',
+      flow: '业务目标、用数需求 -> 数据责任、范围、申请单',
+      gate: '无责任边界不启动',
+      view: 'approvals-todos',
+      iconKey: 'clipboard',
+      tone: 'amber',
+      domain: '规划准入',
+    },
+    {
+      phase: '02',
+      title: '来源登记',
+      module: '数据源管理',
+      flow: '系统、接口、文件、Topic -> 可管控数据源',
+      gate: '源未登记不采集',
+      view: 'data-source',
+      iconKey: 'database',
+      tone: 'cyan',
+      domain: '规划准入',
+    },
+    {
+      phase: '03',
+      title: '采集入湖',
+      module: '数据同步 / 实时计算',
+      flow: '批流数据、接口数据 -> ODS / 明细原始数据',
+      gate: '链路、频率、失败重试可追溯',
+      view: 'data-sync',
+      iconKey: 'rotate',
+      tone: 'sky',
+      domain: '规划准入',
+    },
+    {
+      phase: '04',
+      title: '元数据血缘',
+      module: '元数据管理 / 数据血缘',
+      flow: '表、字段、作业、依赖 -> 技术元数据与影响关系',
+      gate: '关键链路无血缘预警',
+      view: 'metadata-query',
+      iconKey: 'search',
+      tone: 'teal',
+      domain: '治理资产',
+    },
+    {
+      phase: '05',
+      title: '资产编目',
+      module: '数据目录 / 数据地图',
+      flow: '元数据、责任边界 -> 可发现、可运营资产',
+      gate: '无 Owner 不发布',
+      view: 'data-catalog',
+      iconKey: 'boxes',
+      tone: 'teal',
+      domain: '治理资产',
+    },
+    {
+      phase: '06',
+      title: '标准口径',
+      module: '标准定义 / 字典 / 码值',
+      flow: '字段、术语、指标 -> 统一口径、码值和映射',
+      gate: '核心字段必须映射',
+      view: 'standard-map',
+      iconKey: 'clipboard',
+      tone: 'amber',
+      domain: '治理资产',
+    },
+    {
+      phase: '07',
+      title: '可信合规',
+      module: '质量核查 / 安全分级',
+      flow: '资产、规则、敏感特征 -> 质量评分、安全标签、脱敏策略',
+      gate: '低分或未分级阻断',
+      view: 'quality-check',
+      iconKey: 'shield',
+      tone: 'rose',
+      domain: '加工供给',
+    },
+    {
+      phase: '08',
+      title: '建模加工',
+      module: '数据建模 / 脚本开发',
+      flow: '合规资产、加工需求 -> DWD / DWS / ADS、任务脚本',
+      gate: '开发规范与环境校验',
+      view: 'data-modeling',
+      iconKey: 'code',
+      tone: 'violet',
+      domain: '加工供给',
+    },
+    {
+      phase: '09',
+      title: '编排调度',
+      module: '任务编排 / 任务调度',
+      flow: '模型、脚本、同步任务 -> DAG、周期、依赖、告警',
+      gate: '依赖闭环后上线',
+      view: 'task-orchestration',
+      iconKey: 'branch',
+      tone: 'cyan',
+      domain: '加工供给',
+    },
+    {
+      phase: '10',
+      title: '服务共享',
+      module: '指标管理 / 数据服务 / 数据共享',
+      flow: '数据产品、指标、服务申请 -> API、指标、共享数据集',
+      gate: '审批授权后消费',
+      view: 'data-service-api',
+      iconKey: 'network',
+      tone: 'lime',
+      domain: '运营闭环',
+    },
+    {
+      phase: '11',
+      title: '消费运营',
+      module: '任务运维 / 运维监控 / 审计日志',
+      flow: '访问、调用、任务、审计日志 -> SLA、热度、成本、问题单',
+      gate: '异常闭环后归档',
+      view: 'task-ops',
+      iconKey: 'alert',
+      tone: 'sky',
+      domain: '运营闭环',
+    },
+    {
+      phase: '12',
+      title: '归档退役',
+      module: '数据地图 / 审计日志',
+      flow: '低价值、过期、停用资产 -> 归档记录、下线审批、影响通知',
+      gate: '血缘影响确认后退役',
+      view: 'data-map',
+      iconKey: 'archive',
+      tone: 'rose',
+      domain: '运营闭环',
+    },
+  ],
+  controls: [
+    { name: '责任控制', desc: '来源、资产、服务都有 Owner 和组织边界', state: '关注', view: 'org-manage' },
+    { name: '质量控制', desc: '采集后、加工后、发布前三处校验', state: '关注', view: 'quality-rules' },
+    { name: '安全控制', desc: '分级分类、敏感识别、脱敏和访问策略', state: '阻断', view: 'security-level' },
+    { name: '标准控制', desc: '术语、码值、指标和字段映射统一管理', state: '关注', view: 'standard-def' },
+    { name: '审计控制', desc: '申请、变更、授权、消费和退役全程留痕', state: '正常', view: 'audit-log' },
+  ],
+  signals: [
+    { label: '准入缺口', value: '6', desc: '源、Owner、申请待补齐' },
+    { label: '发布阻断', value: '1', desc: '安全分级未完成' },
+    { label: '退役待审', value: '4', desc: '低价值资产待归档' },
+  ],
+  workItems: [
+    {
+      title: '补齐来源责任',
+      desc: '6 个源系统缺少 Owner 或组织边界，影响采集准入。',
+      owner: '组织管理员',
+      severity: 'P1',
+      view: 'org-manage',
+    },
+    {
+      title: '安全分级阻断',
+      desc: '生产域 7 张表未绑定安全级别，禁止对外共享。',
+      owner: '安全管理员',
+      severity: 'P1',
+      view: 'security-level',
+    },
+    {
+      title: '血缘完整性复核',
+      desc: '关键调度链路缺少下游影响关系，退役审批需要补证据。',
+      owner: '元数据管理员',
+      severity: 'P2',
+      view: 'data-lineage',
+    },
+    {
+      title: '低价值资产退役',
+      desc: '4 项低访问资产待确认归档范围和通知对象。',
+      owner: '资产 Owner',
+      severity: 'P3',
+      view: 'data-map',
+    },
+  ],
+};
+
 export const mockMetadataQueryData = {
   stats: [
     { id: '1', label: '收录数据源表', value: '12,847', detail: '每日凌晨2点自动增量更新', color: 'from-cyan-500 to-blue-500', icon: '🗂' },
@@ -200,16 +379,403 @@ export const mockAssetLayerDistribution = [
   { name: 'DIM', label: '维度数据源', count: 544, percent: 4.3, color: 'from-rose-500 to-red-500', textColor: 'text-rose-400' },
 ];
 
-export const mockAssetBusinessDomains = [
-  { name: '交易域', count: 3028, percent: 23.9, growth: '+7.6%', color: 'bg-cyan-500' },
-  { name: '用户域', count: 2684, percent: 21.2, growth: '+6.4%', color: 'bg-purple-500' },
-  { name: '商品牌', count: 2068, percent: 16.3, growth: '+4.1%', color: 'bg-emerald-500' },
-  { name: '营销域', count: 1586, percent: 12.5, growth: '+9.8%', color: 'bg-amber-500' },
-  { name: '财务域', count: 1240, percent: 9.8, growth: '+3.2%', color: 'bg-rose-500' },
-  { name: '风控域', count: 986, percent: 7.8, growth: '+11.6%', color: 'bg-blue-500' },
-  { name: '物流', count: 704, percent: 5.5, growth: '+5.1%', color: 'bg-indigo-500' },
-  { name: '其他', count: 388, percent: 3.1, growth: '+1.8%', color: 'bg-slate-500' },
+const mockBusinessDomainRoots = [
+  {
+    id: 'bd-trade',
+    code: 'TRADE',
+    name: '交易域',
+    parentId: null,
+    level: 1,
+    status: 'active',
+    owner: '王大',
+    ownerUsername: 'wang.da',
+    org: '交易数据组',
+    assetCount: 3028,
+    qualityScore: 98.6,
+    standardCoverage: 94,
+    sensitiveAssets: 86,
+    defaultSecurityLevel: 'L2 内部',
+    qualityGate: '核心交易表发布前必须通过唯一性、金额准确性和账期完整性校验',
+    standardRequired: true,
+    colorClass: 'bg-cyan-500',
+    growth: '+7.6%',
+    updatedAt: '2026-05-10 14:20',
+    description: '覆盖订单、支付、履约、退款等交易主链路数据资产。',
+    childDomains: ['订单子域', '支付子域', '履约子域'],
+    references: { assets: 3028, standards: 142, qualityRules: 38, models: 84, permissions: 19 },
+  },
+  {
+    id: 'bd-user',
+    code: 'USER',
+    name: '用户域',
+    parentId: null,
+    level: 1,
+    status: 'active',
+    owner: '李秀',
+    ownerUsername: 'li.xiu',
+    org: '用户数据组',
+    assetCount: 2684,
+    qualityScore: 97.9,
+    standardCoverage: 91,
+    sensitiveAssets: 214,
+    defaultSecurityLevel: 'L3 敏感',
+    qualityGate: '用户标识、手机号、实名信息必须完成标准映射和敏感识别',
+    standardRequired: true,
+    colorClass: 'bg-purple-500',
+    growth: '+6.4%',
+    updatedAt: '2026-05-09 18:35',
+    description: '覆盖用户主数据、画像、会员、触达和行为明细。',
+    childDomains: ['用户主数据', '用户画像', '触达明细'],
+    references: { assets: 2684, standards: 168, qualityRules: 45, models: 72, permissions: 27 },
+  },
+  {
+    id: 'bd-product',
+    code: 'PRODUCT',
+    name: '商品域',
+    parentId: null,
+    level: 1,
+    status: 'active',
+    owner: '陈伟',
+    ownerUsername: 'chen.wei',
+    org: '商品数据组',
+    assetCount: 2068,
+    qualityScore: 96.8,
+    standardCoverage: 88,
+    sensitiveAssets: 18,
+    defaultSecurityLevel: 'L2 内部',
+    qualityGate: '商品、类目、品牌维度必须绑定码值和类目标准',
+    standardRequired: true,
+    colorClass: 'bg-emerald-500',
+    growth: '+4.1%',
+    updatedAt: '2026-05-08 16:10',
+    description: '覆盖商品 SPU/SKU、类目、品牌、价格和库存快照。',
+    childDomains: ['商品主数据', '类目体系', '库存快照'],
+    references: { assets: 2068, standards: 96, qualityRules: 29, models: 56, permissions: 11 },
+  },
+  {
+    id: 'bd-marketing',
+    code: 'MKT',
+    name: '营销域',
+    parentId: null,
+    level: 1,
+    status: 'active',
+    owner: '孙立',
+    ownerUsername: 'sun.li',
+    org: '营销数据组',
+    assetCount: 1586,
+    qualityScore: 95.4,
+    standardCoverage: 84,
+    sensitiveAssets: 62,
+    defaultSecurityLevel: 'L2 内部',
+    qualityGate: '活动、券码、投放归因数据发布前必须校验口径一致性',
+    standardRequired: true,
+    colorClass: 'bg-amber-500',
+    growth: '+9.8%',
+    updatedAt: '2026-05-07 10:05',
+    description: '覆盖活动、投放、优惠券、渠道归因和营销转化数据。',
+    childDomains: ['活动子域', '投放子域', '优惠券子域'],
+    references: { assets: 1586, standards: 73, qualityRules: 22, models: 43, permissions: 9 },
+  },
+  {
+    id: 'bd-finance',
+    code: 'FIN',
+    name: '财务域',
+    parentId: null,
+    level: 1,
+    status: 'active',
+    owner: '刘畅',
+    ownerUsername: 'liu.chang',
+    org: '财务数据组',
+    assetCount: 1240,
+    qualityScore: 99.1,
+    standardCoverage: 96,
+    sensitiveAssets: 41,
+    defaultSecurityLevel: 'L3 敏感',
+    qualityGate: '收入、成本、结算类资产必须完成金额精度和账实一致性校验',
+    standardRequired: true,
+    colorClass: 'bg-rose-500',
+    growth: '+3.2%',
+    updatedAt: '2026-05-06 15:50',
+    description: '覆盖收入、成本、结算、发票和财务经营指标。',
+    childDomains: ['收入子域', '成本子域', '结算子域'],
+    references: { assets: 1240, standards: 88, qualityRules: 31, models: 35, permissions: 15 },
+  },
+  {
+    id: 'bd-risk',
+    code: 'RISK',
+    name: '风控域',
+    parentId: null,
+    level: 1,
+    status: 'active',
+    owner: '黄琦',
+    ownerUsername: 'huang.qi',
+    org: '风控数据组',
+    assetCount: 986,
+    qualityScore: 97.3,
+    standardCoverage: 89,
+    sensitiveAssets: 126,
+    defaultSecurityLevel: 'L3 敏感',
+    qualityGate: '风险特征、评分、策略命中数据必须通过脱敏和授权审批',
+    standardRequired: true,
+    colorClass: 'bg-blue-500',
+    growth: '+11.6%',
+    updatedAt: '2026-05-05 19:25',
+    description: '覆盖欺诈事件、风险评分、策略命中和黑白名单特征。',
+    childDomains: ['欺诈识别', '策略命中', '风险特征'],
+    references: { assets: 986, standards: 61, qualityRules: 27, models: 44, permissions: 21 },
+  },
+  {
+    id: 'bd-logistics',
+    code: 'LOGI',
+    name: '物流域',
+    parentId: null,
+    level: 1,
+    status: 'active',
+    owner: '周涛',
+    ownerUsername: 'zhou.tao',
+    org: '物流数据组',
+    assetCount: 704,
+    qualityScore: 94.8,
+    standardCoverage: 81,
+    sensitiveAssets: 23,
+    defaultSecurityLevel: 'L2 内部',
+    qualityGate: '履约、运单、轨迹数据必须校验状态流转和时效口径',
+    standardRequired: true,
+    colorClass: 'bg-indigo-500',
+    growth: '+5.1%',
+    updatedAt: '2026-05-04 12:15',
+    description: '覆盖仓配、运单、轨迹、签收和时效分析资产。',
+    childDomains: ['仓配子域', '运单子域', '轨迹子域'],
+    references: { assets: 704, standards: 42, qualityRules: 17, models: 23, permissions: 7 },
+  },
+  {
+    id: 'bd-customer',
+    code: 'CUSTOMER',
+    name: '客户域',
+    parentId: null,
+    level: 1,
+    status: 'active',
+    owner: '周芷若',
+    ownerUsername: 'zhou.zhiruo',
+    org: '客户成功数据组',
+    assetCount: 388,
+    qualityScore: 98.2,
+    standardCoverage: 92,
+    sensitiveAssets: 38,
+    defaultSecurityLevel: 'L3 敏感',
+    qualityGate: '客户主数据必须通过唯一性、联系方式有效性和授权来源校验',
+    standardRequired: true,
+    colorClass: 'bg-teal-500',
+    growth: '+2.8%',
+    updatedAt: '2026-05-03 09:30',
+    description: '覆盖客户档案、客户分层、服务触点和客户生命周期数据。',
+    childDomains: ['客户档案', '客户分层', '服务触点'],
+    references: { assets: 388, standards: 36, qualityRules: 14, models: 18, permissions: 8 },
+  },
+  {
+    id: 'bd-public',
+    code: 'COMMON',
+    name: '公共域',
+    parentId: null,
+    level: 1,
+    status: 'active',
+    owner: '陈静',
+    ownerUsername: 'chen.jing',
+    org: '公共数据组',
+    assetCount: 544,
+    qualityScore: 96.1,
+    standardCoverage: 86,
+    sensitiveAssets: 9,
+    defaultSecurityLevel: 'L1 公开',
+    qualityGate: '公共维表和基础码表必须完成码值标准绑定',
+    standardRequired: true,
+    colorClass: 'bg-slate-500',
+    growth: '+1.8%',
+    updatedAt: '2026-05-02 17:45',
+    description: '覆盖区域、日期、组织、公共码表和通用维度资产。',
+    childDomains: ['公共维表', '组织码表', '区域码表'],
+    references: { assets: 544, standards: 58, qualityRules: 16, models: 25, permissions: 5 },
+  },
+  {
+    id: 'bd-security',
+    code: 'SEC',
+    name: '安全域',
+    parentId: null,
+    level: 1,
+    status: 'paused',
+    owner: '王审计',
+    ownerUsername: 'wang.audit',
+    org: '安全合规组',
+    assetCount: 96,
+    qualityScore: 98.9,
+    standardCoverage: 90,
+    sensitiveAssets: 96,
+    defaultSecurityLevel: 'L4 机密',
+    qualityGate: '安全审计证据、访问明细和脱敏策略变更必须审批',
+    standardRequired: true,
+    colorClass: 'bg-red-500',
+    growth: '+0.9%',
+    updatedAt: '2026-05-01 11:20',
+    description: '覆盖敏感识别、访问审计、脱敏策略和安全证据链数据。',
+    childDomains: ['审计证据', '访问明细', '脱敏策略'],
+    references: { assets: 96, standards: 21, qualityRules: 12, models: 9, permissions: 18 },
+  },
 ];
+
+const mockBusinessDomainChildSpecs: Record<string, Array<{ name: string; code: string; owner?: string; ownerUsername?: string; org?: string }>> = {
+  'bd-trade': [
+    { name: '订单子域', code: 'TRADE_ORDER' },
+    { name: '支付子域', code: 'TRADE_PAY' },
+    { name: '履约子域', code: 'TRADE_FULFILL' },
+  ],
+  'bd-user': [
+    { name: '用户主数据', code: 'USER_MASTER' },
+    { name: '用户画像', code: 'USER_PROFILE' },
+    { name: '触达明细', code: 'USER_TOUCH' },
+  ],
+  'bd-product': [
+    { name: '商品主数据', code: 'PRODUCT_MASTER' },
+    { name: '类目体系', code: 'PRODUCT_CATEGORY' },
+    { name: '库存快照', code: 'PRODUCT_STOCK' },
+  ],
+  'bd-marketing': [
+    { name: '活动子域', code: 'MKT_CAMPAIGN' },
+    { name: '投放子域', code: 'MKT_ADS' },
+    { name: '优惠券子域', code: 'MKT_COUPON' },
+  ],
+  'bd-finance': [
+    { name: '收入子域', code: 'FIN_REVENUE' },
+    { name: '成本子域', code: 'FIN_COST' },
+    { name: '结算子域', code: 'FIN_SETTLEMENT' },
+  ],
+  'bd-risk': [
+    { name: '欺诈识别', code: 'RISK_FRAUD' },
+    { name: '策略命中', code: 'RISK_STRATEGY' },
+    { name: '风险特征', code: 'RISK_FEATURE' },
+  ],
+  'bd-logistics': [
+    { name: '仓配子域', code: 'LOGI_WAREHOUSE' },
+    { name: '运单子域', code: 'LOGI_WAYBILL' },
+    { name: '轨迹子域', code: 'LOGI_TRACK' },
+  ],
+  'bd-customer': [
+    { name: '客户档案', code: 'CUSTOMER_PROFILE' },
+    { name: '客户分层', code: 'CUSTOMER_SEGMENT' },
+    { name: '服务触点', code: 'CUSTOMER_TOUCH' },
+  ],
+  'bd-public': [
+    { name: '公共维表', code: 'COMMON_DIM' },
+    { name: '组织码表', code: 'COMMON_ORG' },
+    { name: '区域码表', code: 'COMMON_REGION' },
+  ],
+  'bd-security': [
+    { name: '审计证据', code: 'SEC_AUDIT' },
+    { name: '访问明细', code: 'SEC_ACCESS' },
+    { name: '脱敏策略', code: 'SEC_MASKING' },
+  ],
+};
+
+const mockBusinessDomainChildren = mockBusinessDomainRoots.flatMap((parent) => {
+  const specs = mockBusinessDomainChildSpecs[parent.id] || [];
+  return specs.map((spec, index) => {
+    const ratio = [0.46, 0.34, 0.2][index] || 0.2;
+    const assetCount = Math.round(parent.assetCount * ratio);
+    const sensitiveAssets = Math.round(parent.sensitiveAssets * ratio);
+    const standards = Math.max(1, Math.round(parent.references.standards * ratio));
+    const qualityRules = Math.max(1, Math.round(parent.references.qualityRules * ratio));
+    const models = Math.max(1, Math.round(parent.references.models * ratio));
+    const permissions = Math.max(0, Math.round(parent.references.permissions * ratio));
+
+    return {
+      ...parent,
+      id: `${parent.id}-${index + 1}`,
+      code: spec.code,
+      name: spec.name,
+      parentId: parent.id,
+      level: 2,
+      owner: spec.owner || parent.owner,
+      ownerUsername: spec.ownerUsername || parent.ownerUsername,
+      org: spec.org || parent.org,
+      assetCount,
+      sensitiveAssets,
+      qualityScore: Number(Math.max(88, parent.qualityScore - index * 0.7).toFixed(1)),
+      standardCoverage: Math.max(70, parent.standardCoverage - index * 2),
+      growth: parent.growth,
+      description: `${parent.name}下的${spec.name}，用于细化资产归属、标准映射和治理责任。`,
+      childDomains: [],
+      references: { assets: assetCount, standards, qualityRules, models, permissions },
+    };
+  });
+});
+
+const mockBusinessDomainDeepSpecs = [
+  { parentCode: 'TRADE_ORDER', code: 'TRADE_ORDER_REVERSE', name: '逆向订单', ratio: 0.32 },
+  { parentCode: 'TRADE_ORDER_REVERSE', code: 'TRADE_ORDER_REFUND', name: '退款申请', ratio: 0.42 },
+  { parentCode: 'TRADE_ORDER_REFUND', code: 'TRADE_ORDER_REFUND_REASON', name: '退款原因明细', ratio: 0.35 },
+  { parentCode: 'USER_PROFILE', code: 'USER_PROFILE_TAG', name: '标签画像', ratio: 0.38 },
+  { parentCode: 'USER_PROFILE_TAG', code: 'USER_PROFILE_LIFECYCLE', name: '生命周期标签', ratio: 0.45 },
+];
+
+const mockBusinessDomainDeepNodes = mockBusinessDomainDeepSpecs.reduce((nodes, spec, index) => {
+  const source = [...mockBusinessDomainRoots, ...mockBusinessDomainChildren, ...nodes];
+  const parent = source.find((domain) => domain.code === spec.parentCode);
+  if (!parent) return nodes;
+
+  const assetCount = Math.max(1, Math.round(parent.assetCount * spec.ratio));
+  const sensitiveAssets = Math.max(0, Math.round(parent.sensitiveAssets * spec.ratio));
+  const standards = Math.max(1, Math.round(parent.references.standards * spec.ratio));
+  const qualityRules = Math.max(1, Math.round(parent.references.qualityRules * spec.ratio));
+  const models = Math.max(1, Math.round(parent.references.models * spec.ratio));
+  const permissions = Math.max(0, Math.round(parent.references.permissions * spec.ratio));
+
+  return [
+    ...nodes,
+    {
+      ...parent,
+      id: `${parent.id}-d${index + 1}`,
+      code: spec.code,
+      name: spec.name,
+      parentId: parent.id,
+      level: Math.min(parent.level + 1, 5),
+      assetCount,
+      sensitiveAssets,
+      qualityScore: Number(Math.max(88, parent.qualityScore - 0.4).toFixed(1)),
+      standardCoverage: Math.max(70, parent.standardCoverage - 1),
+      description: `${parent.name}下的${spec.name}，用于展示业务域最多五级的治理层级。`,
+      childDomains: [],
+      references: { assets: assetCount, standards, qualityRules, models, permissions },
+    },
+  ];
+}, [] as typeof mockBusinessDomainChildren);
+
+export const mockBusinessDomains = [
+  ...mockBusinessDomainRoots,
+  ...mockBusinessDomainChildren,
+  ...mockBusinessDomainDeepNodes,
+];
+
+export const mockAssetBusinessDomains = mockBusinessDomainRoots
+  .filter((domain) => domain.status !== 'retired')
+  .map((domain) => ({
+    name: domain.name,
+    count: domain.assetCount,
+    percent: Number(((domain.assetCount / mockBusinessDomainRoots.reduce((sum, item) => sum + item.assetCount, 0)) * 100).toFixed(1)),
+    growth: domain.growth,
+    color: domain.colorClass,
+  }));
+
+export const mockActiveBusinessDomainNames = mockBusinessDomains
+  .filter((domain) => domain.status === 'active')
+  .map((domain) => domain.name);
+
+export const mockBusinessDomainOptions = mockBusinessDomains.map((domain) => ({
+  id: domain.id,
+  code: domain.code,
+  name: domain.name,
+  parentId: domain.parentId,
+  level: domain.level,
+  status: domain.status,
+}));
 
 export const mockAssetDataSources = [
   { name: 'MySQL', type: '关系型数据库', count: 2, tables: 372, status: 'healthy', icon: '🐬', color: 'from-blue-500 to-cyan-500' },
@@ -329,7 +895,7 @@ export const mockAssetCatalog = [
       id: 'a11', name: 'dim_region', cnName: '地区维度',
       description: '全国行政区域标准维表，提供多级区域编码映射与地理属性',
       database: 'dim_common', source: 'prod-oracle-finance', sourceType: 'oracle',
-      layer: 'DIM', domain: '其他', owner: '陈静', ownerAvatar: '',
+      layer: 'DIM', domain: '公共域', owner: '陈静', ownerAvatar: '',
       department: '数据治理', sensitivity: '公开', qualityScore: 99.7,
       rowCount: 3500, size: '1 MB', fieldCount: 18, visitCount: 7826,
       updateTime: '2026-04-16 23:40', tags: ['维表', '高频访问', '已认证'],
@@ -407,6 +973,139 @@ export const mockAssetCatalog = [
     },
   ];
 
+const assetDetailFieldTemplates: Record<string, Array<{ name: string; type: string; comment: string; isPrimary?: boolean; isSensitive?: boolean }>> = {
+  trade: [
+    { name: 'order_id', type: 'BIGINT', comment: '订单ID', isPrimary: true },
+    { name: 'user_id', type: 'BIGINT', comment: '用户ID', isSensitive: true },
+    { name: 'item_id', type: 'BIGINT', comment: '商品明细ID' },
+    { name: 'order_amount', type: 'DECIMAL(18,2)', comment: '订单金额' },
+    { name: 'pay_status', type: 'VARCHAR(32)', comment: '支付状态' },
+    { name: 'create_time', type: 'TIMESTAMP', comment: '下单时间' },
+  ],
+  user: [
+    { name: 'user_id', type: 'BIGINT', comment: '用户ID', isPrimary: true, isSensitive: true },
+    { name: 'member_level', type: 'VARCHAR(32)', comment: '会员等级' },
+    { name: 'register_channel', type: 'VARCHAR(64)', comment: '注册渠道' },
+    { name: 'mobile_hash', type: 'VARCHAR(128)', comment: '手机号哈希', isSensitive: true },
+    { name: 'lifecycle_stage', type: 'VARCHAR(32)', comment: '生命周期阶段' },
+    { name: 'update_time', type: 'TIMESTAMP', comment: '更新时间' },
+  ],
+  product: [
+    { name: 'sku_id', type: 'BIGINT', comment: 'SKU ID', isPrimary: true },
+    { name: 'spu_id', type: 'BIGINT', comment: 'SPU ID' },
+    { name: 'category_id', type: 'BIGINT', comment: '类目ID' },
+    { name: 'brand_id', type: 'BIGINT', comment: '品牌ID' },
+    { name: 'sale_status', type: 'VARCHAR(32)', comment: '销售状态' },
+    { name: 'update_time', type: 'TIMESTAMP', comment: '更新时间' },
+  ],
+  finance: [
+    { name: 'payment_id', type: 'BIGINT', comment: '支付流水ID', isPrimary: true },
+    { name: 'order_id', type: 'BIGINT', comment: '订单ID' },
+    { name: 'pay_channel', type: 'VARCHAR(32)', comment: '支付渠道' },
+    { name: 'pay_amount', type: 'DECIMAL(18,2)', comment: '支付金额' },
+    { name: 'settlement_no', type: 'VARCHAR(64)', comment: '结算单号', isSensitive: true },
+    { name: 'pay_time', type: 'TIMESTAMP', comment: '支付时间' },
+  ],
+  logistics: [
+    { name: 'waybill_no', type: 'VARCHAR(64)', comment: '运单号', isPrimary: true },
+    { name: 'order_id', type: 'BIGINT', comment: '订单ID' },
+    { name: 'carrier_code', type: 'VARCHAR(32)', comment: '承运商编码' },
+    { name: 'delivery_status', type: 'VARCHAR(32)', comment: '配送状态' },
+    { name: 'receiver_city', type: 'VARCHAR(64)', comment: '收货城市', isSensitive: true },
+    { name: 'signed_time', type: 'TIMESTAMP', comment: '签收时间' },
+  ],
+  risk: [
+    { name: 'risk_event_id', type: 'BIGINT', comment: '风险事件ID', isPrimary: true },
+    { name: 'user_id', type: 'BIGINT', comment: '用户ID', isSensitive: true },
+    { name: 'device_id', type: 'VARCHAR(128)', comment: '设备ID', isSensitive: true },
+    { name: 'risk_score', type: 'DECIMAL(8,4)', comment: '风险评分' },
+    { name: 'strategy_code', type: 'VARCHAR(64)', comment: '策略编码' },
+    { name: 'event_time', type: 'TIMESTAMP', comment: '事件时间' },
+  ],
+  marketing: [
+    { name: 'campaign_id', type: 'BIGINT', comment: '活动ID', isPrimary: true },
+    { name: 'user_id', type: 'BIGINT', comment: '用户ID', isSensitive: true },
+    { name: 'channel_code', type: 'VARCHAR(64)', comment: '渠道编码' },
+    { name: 'touch_status', type: 'VARCHAR(32)', comment: '触达状态' },
+    { name: 'conversion_amount', type: 'DECIMAL(18,2)', comment: '转化金额' },
+    { name: 'event_time', type: 'TIMESTAMP', comment: '事件时间' },
+  ],
+  common: [
+    { name: 'dim_id', type: 'VARCHAR(64)', comment: '维度编码', isPrimary: true },
+    { name: 'dim_name', type: 'VARCHAR(128)', comment: '维度名称' },
+    { name: 'parent_id', type: 'VARCHAR(64)', comment: '上级编码' },
+    { name: 'standard_code', type: 'VARCHAR(64)', comment: '标准码值' },
+    { name: 'is_enabled', type: 'BOOLEAN', comment: '是否启用' },
+    { name: 'update_time', type: 'TIMESTAMP', comment: '更新时间' },
+  ],
+};
+
+const getAssetFieldTemplateKey = (domain: string) => {
+  if (domain.includes('用户')) return 'user';
+  if (domain.includes('商品')) return 'product';
+  if (domain.includes('财务')) return 'finance';
+  if (domain.includes('物流')) return 'logistics';
+  if (domain.includes('风控')) return 'risk';
+  if (domain.includes('营销')) return 'marketing';
+  if (domain.includes('公共')) return 'common';
+  return 'trade';
+};
+
+export const buildAssetCatalogDetail = (asset: typeof mockAssetCatalog[number]) => {
+  const templateKey = getAssetFieldTemplateKey(asset.domain);
+  const fields = assetDetailFieldTemplates[templateKey].map((field, index) => ({
+    ...field,
+    isPrimary: Boolean(field.isPrimary || index === 0),
+    isSensitive: Boolean(field.isSensitive),
+  }));
+  const score = asset.qualityScore;
+  const qualityChecks = [
+    { name: '完整性', score: Math.min(100, Math.round(score + 1)), status: score >= 90 ? '通过' : '关注' },
+    { name: '准确性', score: Math.max(70, Math.round(score - 1)), status: score >= 92 ? '通过' : '关注' },
+    { name: '一致性', score: Math.max(70, Math.round(score - 3)), status: score >= 94 ? '通过' : '关注' },
+    { name: '及时性', score: Math.min(100, Math.round(score + (asset.layer === 'ODS' ? 0 : 2))), status: score >= 88 ? '通过' : '关注' },
+    { name: '唯一性', score: Math.max(70, Math.round(score - 2)), status: score >= 90 ? '通过' : '关注' },
+    { name: '有效性', score: Math.max(70, Math.round(score - 4)), status: score >= 95 ? '通过' : '关注' },
+  ];
+  const sourceNode = asset.layer === 'ODS' ? `${asset.source}.${asset.database}` : `上游加工层.${asset.database}`;
+  const upstream = asset.layer === 'ODS'
+    ? [
+      { name: sourceNode, type: '数据源', desc: `${asset.sourceType.toUpperCase()} 贴源采集` },
+      { name: `${asset.source}.${asset.name}`, type: '源表/Topic', desc: '原始业务数据入口' },
+    ]
+    : [
+      { name: asset.layer === 'ADS' ? `dws_${asset.domain.replace('域', '').toLowerCase()}_summary` : `ods_${asset.name.replace(/^(dwd|dws|ads|dim)_/, '')}`, type: '上游表', desc: '加工依赖资产' },
+      { name: `dim_${asset.domain.replace('域', '').toLowerCase()}_standard`, type: '维表', desc: '标准映射依赖' },
+    ];
+  const downstream = asset.layer === 'ADS'
+    ? [
+      { name: `${asset.domain}看板`, type: '报表', desc: '经营分析消费' },
+      { name: `${asset.domain}API`, type: '数据服务', desc: '服务化共享' },
+    ]
+    : [
+      { name: `dws_${asset.domain.replace('域', '').toLowerCase()}_daily`, type: '汇总表', desc: '主题汇总加工' },
+      { name: `ads_${asset.domain.replace('域', '').toLowerCase()}_analysis`, type: '应用表', desc: '应用层消费' },
+    ];
+
+  return {
+    assetId: asset.id,
+    fields,
+    lineage: {
+      upstream,
+      downstream,
+    },
+    quality: {
+      status: score >= 95 ? '通过' : score >= 90 ? '关注' : '待治理',
+      lastCheckTime: asset.updateTime,
+      ruleCount: Math.max(4, Math.round(asset.fieldCount / 4)),
+      issueCount: score >= 95 ? 0 : score >= 90 ? 1 : 3,
+      checks: qualityChecks,
+    },
+  };
+};
+
+export const mockAssetCatalogDetails = mockAssetCatalog.map(buildAssetCatalogDetail);
+
 export const mockAssetRegisterOptions = {
   dataSources: [
     { id: 'ds1', name: 'prod-mysql-trade', type: 'MySQL', icon: '🐬', status: 'online', host: '10.20.30.101:3306', databases: 3, tables: 7 },
@@ -452,7 +1151,7 @@ export const mockAssetRegisterOptions = {
     { id: 't19', dataSourceId: 'ds6', name: 'ods_content_post', database: 'content_db', rowCount: 35600000, size: '18.6 GB', lastUpdate: '2026-04-17 09:22', selected: false },
     { id: 't20', dataSourceId: 'ds7', name: 'dwd_fraud_event', database: 'risk_model', rowCount: 126000000, size: '9.6 GB', lastUpdate: '2026-04-17 09:55', selected: false },
   ],
-  businessDomains: ['交易域', '用户域', '商品域', '营销域', '财务域', '风控域', '物流域', '其他'],
+  businessDomains: mockActiveBusinessDomainNames,
   dataLayers: [
     { value: 'ods', label: 'ODS 贴源', color: 'from-blue-500 to-blue-600' },
     { value: 'dwd', label: 'DWD 明细', color: 'from-cyan-500 to-cyan-600' },
@@ -492,10 +1191,10 @@ export const mockAssetHotAssets = [
   { rank: 2, name: 'ads_sales_report', layer: 'ADS', domain: '交易域', visits: 12486, owner: '赵敏' },
   { rank: 3, name: 'dws_user_profile', layer: 'DWS', domain: '用户域', visits: 10258, owner: '李秀' },
   { rank: 4, name: 'ods_order', layer: 'ODS', domain: '交易域', visits: 9642, owner: '王大' },
-  { rank: 5, name: 'dim_product_category', layer: 'DIM', domain: '商品牌', visits: 8536, owner: '陈伟' },
+  { rank: 5, name: 'dim_product_category', layer: 'DIM', domain: '商品域', visits: 8536, owner: '陈伟' },
   { rank: 6, name: 'dwd_campaign', layer: 'DWD', domain: '营销域', visits: 7245, owner: '孙立' },
   { rank: 7, name: 'ads_risk_score', layer: 'ADS', domain: '风控域', visits: 6982, owner: '周涛' },
-  { rank: 8, name: 'dwd_delivery', layer: 'DWD', domain: '物流', visits: 6124, owner: '刘畅' },
+  { rank: 8, name: 'dwd_delivery', layer: 'DWD', domain: '物流域', visits: 6124, owner: '刘畅' },
 ];
 
 export const mockAssetPendingItems = [
@@ -917,7 +1616,7 @@ export const mockDevelopmentModels = [
     name: "dim_date_info",
     cnName: "日期维度表",
     layer: "DIM",
-    domain: "通用域",
+    domain: "公共域",
     status: "published",
     owner: "张三丰",
     updateTime: "2026-04-18 10:00:00",
@@ -4148,4 +4847,104 @@ export const mockSystemConfigChanges = [
     submittedAt: "2026-05-09 11:32",
     impact: "短信供应商切换会影响告警触达稳定性，需要验证送达率。",
   },
+];
+
+// ─── 指标管理 ────────────────────────────────────────────────────────────────
+
+export const mockMetricOverview = {
+  totalMetrics: 128,
+  publishedMetrics: 104,
+  draftMetrics: 18,
+  deprecatedMetrics: 6,
+  atomicCount: 42,
+  derivedCount: 53,
+  compositeCount: 33,
+  certifiedRate: 81.3,
+  avgUsedBy: 6.4,
+  coverageByDomain: [
+    { domain: '交易域', count: 38, certified: 35 },
+    { domain: '用户域', count: 29, certified: 25 },
+    { domain: '营销域', count: 21, certified: 17 },
+    { domain: '商品域', count: 18, certified: 15 },
+    { domain: '财务域', count: 14, certified: 12 },
+    { domain: '风控域', count: 8, certified: 0 },
+  ],
+};
+
+export const mockMetrics = [
+  { id: 'm1', name: 'gmv', bizName: '成交总额', type: 'atomic', category: '交易域', definition: '统计周期内所有已完成订单的支付金额之和', formula: 'SUM(pay_amount) WHERE order_status = "completed"', sourceTable: 'dwd.dwd_order_detail', dimensions: ['日期', '类目', '渠道', '地域'], unit: '元', updateFreq: '每日', owner: '张明', department: '交易数据组', status: 'published', certified: true, usedBy: 12, version: 'v3.1', tags: ['核心', '高管看板'], createdAt: '2023-06-15', updatedAt: '2026-05-10' },
+  { id: 'm2', name: 'order_cnt', bizName: '成交订单数', type: 'atomic', category: '交易域', definition: '统计周期内所有已完成订单的数量', formula: 'COUNT(order_id) WHERE order_status = "completed"', sourceTable: 'dwd.dwd_order_detail', dimensions: ['日期', '类目', '渠道'], unit: '笔', updateFreq: '每日', owner: '张明', department: '交易数据组', status: 'published', certified: true, usedBy: 8, version: 'v2.4', tags: ['核心'], createdAt: '2023-06-15', updatedAt: '2026-05-10' },
+  { id: 'm3', name: 'avg_order_amount', bizName: '客单价', type: 'derived', category: '交易域', definition: '成交总额 / 成交订单数', formula: 'gmv / order_cnt', sourceTable: '-', dimensions: ['日期', '类目', '渠道'], unit: '元', updateFreq: '每日', owner: '张明', department: '交易数据组', status: 'published', certified: true, usedBy: 5, version: 'v1.8', tags: ['派生'], createdAt: '2023-07-01', updatedAt: '2026-05-10' },
+  { id: 'm4', name: 'dau', bizName: '日活跃用户数', type: 'atomic', category: '用户域', definition: '当日至少产生一次有效行为的独立用户数', formula: 'COUNT(DISTINCT user_id) WHERE action_date = TODAY()', sourceTable: 'dwd.dwd_user_event', dimensions: ['日期', '平台', '渠道'], unit: '人', updateFreq: '每日', owner: '赵敏', department: '用户增长组', status: 'published', certified: true, usedBy: 15, version: 'v2.1', tags: ['核心', '高管看板'], createdAt: '2023-07-20', updatedAt: '2026-05-09' },
+  { id: 'm5', name: 'retention_7d', bizName: '7日留存率', type: 'derived', category: '用户域', definition: '7 天前新增用户中，今日仍有行为的比例', formula: 'COUNT(DISTINCT act_user_d7) / COUNT(DISTINCT new_user_d7) * 100', sourceTable: '-', dimensions: ['日期', '渠道', '版本'], unit: '%', updateFreq: '每日', owner: '赵敏', department: '用户增长组', status: 'published', certified: true, usedBy: 6, version: 'v1.5', tags: ['留存'], createdAt: '2023-08-01', updatedAt: '2026-05-08' },
+  { id: 'm6', name: 'conversion_rate', bizName: '整体转化率', type: 'composite', category: '交易域', definition: '从浏览商详到成交的完整转化率', formula: 'order_cnt / product_detail_pv * 100', sourceTable: '-', dimensions: ['日期', '类目', '渠道', '人群'], unit: '%', updateFreq: '实时', owner: '林峰', department: '数据平台', status: 'published', certified: false, usedBy: 4, version: 'v2.0', tags: ['转化'], createdAt: '2023-09-10', updatedAt: '2026-05-07' },
+  { id: 'm7', name: 'inventory_turnover_days', bizName: '库存周转天数', type: 'derived', category: '商品域', definition: '平均库存量 / 日均销售量', formula: 'avg_inventory_qty / avg_daily_sales_qty', sourceTable: '-', dimensions: ['日期', '仓库', '类目', '品牌'], unit: '天', updateFreq: '每周', owner: '孙立', department: '商品数据组', status: 'draft', certified: false, usedBy: 2, version: 'v0.9', tags: ['供应链'], createdAt: '2024-01-05', updatedAt: '2026-05-01' },
+  { id: 'm8', name: 'marketing_roi', bizName: '营销投资回报率', type: 'composite', category: '营销域', definition: '营销活动带来的 GMV / 活动总投入成本', formula: 'campaign_attributed_gmv / campaign_total_cost * 100', sourceTable: '-', dimensions: ['日期', '活动', '渠道', '人群'], unit: '%', updateFreq: '每日', owner: '陈静', department: '营销数据组', status: 'published', certified: true, usedBy: 3, version: 'v1.2', tags: ['营销', '效果'], createdAt: '2023-10-15', updatedAt: '2026-05-06' },
+  { id: 'm9', name: 'risk_intercept_rate', bizName: '风险拦截率', type: 'atomic', category: '风控域', definition: '命中风控策略并拦截的交易比例', formula: 'COUNT(intercepted_txn) / COUNT(total_txn) * 100', sourceTable: 'dwd.dwd_risk_event', dimensions: ['日期', '策略', '交易类型'], unit: '%', updateFreq: '实时', owner: '郑伟', department: '风控数据组', status: 'draft', certified: false, usedBy: 1, version: 'v0.5', tags: ['风控'], createdAt: '2024-02-01', updatedAt: '2026-04-30' },
+  { id: 'm10', name: 'nps', bizName: '净推荐值', type: 'composite', category: '用户域', definition: '推荐者比例 - 贬损者比例（问卷分值 9-10 为推荐者，0-6 为贬损者）', formula: '(promoter_cnt - detractor_cnt) / total_survey_cnt * 100', sourceTable: '-', dimensions: ['日期', '渠道', '业务线'], unit: '分', updateFreq: '每月', owner: '吴静', department: '客户成功组', status: 'published', certified: true, usedBy: 7, version: 'v1.0', tags: ['体验', '高管看板'], createdAt: '2023-11-01', updatedAt: '2026-05-05' },
+  { id: 'm11', name: 'revenue_per_user', bizName: '人均收入', type: 'derived', category: '财务域', definition: '统计周期内收入 / 活跃用户数', formula: 'total_revenue / dau', sourceTable: '-', dimensions: ['日期', '平台', '用户层级'], unit: '元', updateFreq: '每日', owner: '刘畅', department: '财务数据组', status: 'published', certified: true, usedBy: 4, version: 'v1.3', tags: ['财务', '核心'], createdAt: '2023-12-01', updatedAt: '2026-05-04' },
+  { id: 'm12', name: 'coupon_usage_rate', bizName: '优惠券核销率', type: 'derived', category: '营销域', definition: '已核销优惠券数量 / 发放优惠券数量', formula: 'used_coupon_cnt / issued_coupon_cnt * 100', sourceTable: '-', dimensions: ['日期', '活动', '券类型', '面额'], unit: '%', updateFreq: '每日', owner: '陈静', department: '营销数据组', status: 'published', certified: false, usedBy: 2, version: 'v1.1', tags: ['营销'], createdAt: '2024-01-10', updatedAt: '2026-05-03' },
+];
+
+export const mockMetricCategories = [
+  { name: '交易域', count: 38, icon: 'shopping', color: 'text-cyan-400' },
+  { name: '用户域', count: 29, icon: 'user', color: 'text-purple-400' },
+  { name: '营销域', count: 21, icon: 'megaphone', color: 'text-amber-400' },
+  { name: '商品域', count: 18, icon: 'box', color: 'text-emerald-400' },
+  { name: '财务域', count: 14, icon: 'coins', color: 'text-rose-400' },
+  { name: '风控域', count: 8, icon: 'shield', color: 'text-blue-400' },
+];
+
+// ─── 数据服务 API ─────────────────────────────────────────────────────────────
+
+export const mockServiceApiOverview = {
+  totalApis: 42,
+  onlineApis: 36,
+  offlineApis: 2,
+  maintainingApis: 4,
+  totalQps: 73800,
+  totalCallsToday: '5.6亿',
+  avgLatencyMs: 18,
+  p99LatencyMs: 82,
+  avgErrorRate: 0.024,
+  slaCompliance: 99.96,
+};
+
+export const mockServiceApis = [
+  { id: 'a1', name: '订单查询', enName: 'order-query', path: '/api/v1/orders', method: 'GET', category: '交易服务', description: '根据订单号或多维条件查询订单详情，支持分页', status: 'online', version: 'v2.1', qps: 12500, avgLatency: '12ms', p99Latency: '45ms', errorRate: '0.01%', totalCalls: '1.2亿', callerCount: 8, owner: '张明', department: '交易数据组', authType: 'AppKey', createdAt: '2023-06-15', updatedAt: '2026-05-10', sla: '99.99%' },
+  { id: 'a2', name: '用户画像查询', enName: 'user-profile', path: '/api/v1/user/profile', method: 'GET', category: '用户服务', description: '获取用户基础信息、标签体系、RFM 评分和行为偏好', status: 'online', version: 'v1.8', qps: 8500, avgLatency: '18ms', p99Latency: '62ms', errorRate: '0.03%', totalCalls: '8,500万', callerCount: 12, owner: '赵敏', department: '用户增长组', authType: 'OAuth2', createdAt: '2023-07-20', updatedAt: '2026-05-09', sla: '99.9%' },
+  { id: 'a3', name: '商品推荐', enName: 'product-recommend', path: '/api/v1/recommend', method: 'POST', category: '推荐服务', description: '基于用户画像和商品关系实时推荐商品列表', status: 'online', version: 'v3.0', qps: 22000, avgLatency: '35ms', p99Latency: '120ms', errorRate: '0.05%', totalCalls: '2.5亿', callerCount: 5, owner: '林峰', department: '算法团队', authType: 'AppKey', createdAt: '2023-08-10', updatedAt: '2026-05-08', sla: '99.9%' },
+  { id: 'a4', name: '库存实时查询', enName: 'inventory-query', path: '/api/v1/inventory', method: 'GET', category: '商品服务', description: '按 SKU 实时查询库存余量及库位信息', status: 'online', version: 'v1.5', qps: 15000, avgLatency: '8ms', p99Latency: '28ms', errorRate: '0.02%', totalCalls: '1.8亿', callerCount: 6, owner: '孙立', department: '商品数据组', authType: 'AppKey', createdAt: '2023-09-01', updatedAt: '2026-05-07', sla: '99.99%' },
+  { id: 'a5', name: '核心指标查询', enName: 'core-metrics', path: '/api/v1/metrics/core', method: 'GET', category: '指标服务', description: '查询 GMV、DAU、订单量、客单价等核心业务指标', status: 'online', version: 'v2.0', qps: 3500, avgLatency: '22ms', p99Latency: '68ms', errorRate: '0.01%', totalCalls: '3,200万', callerCount: 4, owner: '陈静', department: 'BI 团队', authType: 'OAuth2', createdAt: '2023-10-15', updatedAt: '2026-05-06', sla: '99.9%' },
+  { id: 'a6', name: '风控评分', enName: 'risk-score', path: '/api/v1/risk/score', method: 'POST', category: '风控服务', description: '对交易进行实时风控评分，返回风险等级和建议操作', status: 'online', version: 'v1.3', qps: 9800, avgLatency: '15ms', p99Latency: '52ms', errorRate: '0.04%', totalCalls: '9,800万', callerCount: 3, owner: '郑伟', department: '风控数据组', authType: 'AppKey', createdAt: '2023-11-05', updatedAt: '2026-05-05', sla: '99.95%' },
+  { id: 'a7', name: '数据异步导出', enName: 'data-export', path: '/api/v1/export', method: 'POST', category: '数据服务', description: '异步创建数据导出任务，支持 CSV / Excel / Parquet 格式', status: 'maintaining', version: 'v1.0', qps: 0, avgLatency: '-', p99Latency: '-', errorRate: '-', totalCalls: '56万', callerCount: 15, owner: '李雪', department: '数据平台', authType: 'OAuth2', createdAt: '2023-12-01', updatedAt: '2026-05-04', sla: '99.0%' },
+  { id: 'a8', name: '血缘关系查询', enName: 'lineage-query', path: '/api/v1/lineage', method: 'GET', category: '元数据服务', description: '查询表级或字段级数据血缘关系和下游影响范围', status: 'offline', version: 'v0.9', qps: 0, avgLatency: '-', p99Latency: '-', errorRate: '-', totalCalls: '12万', callerCount: 2, owner: '王浩', department: '元数据组', authType: 'OAuth2', createdAt: '2024-01-10', updatedAt: '2026-04-01', sla: '-' },
+  { id: 'a9', name: '地理位置解析', enName: 'geo-parse', path: '/api/v1/geo/parse', method: 'GET', category: '公共服务', description: '将坐标或地址字符串解析为标准行政区划编码', status: 'online', version: 'v1.1', qps: 2800, avgLatency: '6ms', p99Latency: '18ms', errorRate: '0.00%', totalCalls: '2,800万', callerCount: 9, owner: '周涛', department: '公共数据组', authType: 'AppKey', createdAt: '2024-02-01', updatedAt: '2026-05-03', sla: '99.99%' },
+  { id: 'a10', name: '标签人群圈选', enName: 'tag-audience', path: '/api/v1/audience/tag', method: 'POST', category: '用户服务', description: '基于标签体系圈定目标人群，返回用户 ID 列表', status: 'online', version: 'v2.2', qps: 480, avgLatency: '120ms', p99Latency: '380ms', errorRate: '0.08%', totalCalls: '480万', callerCount: 7, owner: '赵敏', department: '用户增长组', authType: 'OAuth2', createdAt: '2024-03-01', updatedAt: '2026-05-02', sla: '99.5%' },
+];
+
+// ─── 数据共享 ─────────────────────────────────────────────────────────────────
+
+export const mockDataSharingOverview = {
+  totalAssets: 86,
+  approvedAssets: 64,
+  pendingAssets: 12,
+  appliedThisMonth: 38,
+  totalDownloads: 2840,
+  weeklyVisits: 18600,
+  avgRating: 4.6,
+  topCategory: '交易域',
+};
+
+export const mockShareAssets = [
+  { id: 'sh1', name: 'dwd_order_detail', bizName: '订单明细宽表', category: '交易域', type: 'dataset', provider: '张明', providerDept: '交易数据组', description: '包含订单、用户、商品、支付关联信息的事实宽表，日更新，覆盖正向/逆向交易全链路', level: 'internal', downloads: 128, visits: 2450, rating: 4.8, tags: ['核心', 'DWD', '日更', '宽表'], updatedAt: '2026-05-15', status: 'approved', schema: 68, size: '62.4 GB', updateFreq: '每日 T+1' },
+  { id: 'sh2', name: 'dim_user_portrait', bizName: '用户画像维度表', category: '用户域', type: 'dataset', provider: '赵敏', providerDept: '用户增长组', description: 'RFM 分群、兴趣标签、消费能力、生命周期阶段等 200+ 维度用户画像特征', level: 'sensitive', downloads: 56, visits: 1890, rating: 4.6, tags: ['画像', 'DIM', '周更', '敏感'], updatedAt: '2026-05-14', status: 'approved', schema: 212, size: '28.6 GB', updateFreq: '每周五' },
+  { id: 'sh3', name: 'ads_sales_daily', bizName: '日销售汇总报表', category: '交易域', type: 'dataset', provider: '陈静', providerDept: 'BI 团队', description: '按日汇总的 GMV、订单量、客单价等核心销售指标，支持全维度交叉分析', level: 'public', downloads: 230, visits: 5200, rating: 4.9, tags: ['报表', 'ADS', '日更', '核心'], updatedAt: '2026-05-15', status: 'approved', schema: 42, size: '1.2 GB', updateFreq: '每日 T+1' },
+  { id: 'sh4', name: '用户行为分析 API', bizName: '', category: '用户域', type: 'api', provider: '林峰', providerDept: '数据平台', description: '查询用户行为路径、漏斗分析、留存矩阵等分析结果，支持自定义时间窗口', level: 'internal', downloads: 45, visits: 890, rating: 4.5, tags: ['API', '分析', '实时'], updatedAt: '2026-05-13', status: 'approved', schema: 0, size: '-', updateFreq: '实时' },
+  { id: 'sh5', name: 'dim_product_spu', bizName: '商品 SPU 维度表', category: '商品域', type: 'dataset', provider: '孙立', providerDept: '商品数据组', description: '商品 SPU/SKU 基础信息、类目层级、品牌、价格区间，商品主数据权威来源', level: 'public', downloads: 180, visits: 3200, rating: 4.7, tags: ['主数据', 'DIM', '日更'], updatedAt: '2026-05-14', status: 'approved', schema: 88, size: '3.8 GB', updateFreq: '每日 T+0' },
+  { id: 'sh6', name: '实时风控评分服务', bizName: '', category: '风控域', type: 'api', provider: '郑伟', providerDept: '风控数据组', description: '对交易进行实时风控评分，返回风险等级（L1-L4）和处置建议', level: 'sensitive', downloads: 12, visits: 340, rating: 4.3, tags: ['风控', 'API', '实时', '敏感'], updatedAt: '2026-05-12', status: 'pending', schema: 0, size: '-', updateFreq: '实时' },
+  { id: 'sh7', name: 'dws_user_behavior_1d', bizName: '用户行为日汇总', category: '用户域', type: 'dataset', provider: '赵敏', providerDept: '用户增长组', description: '按天汇总的用户行为指标：PV、UV、停留时长、跳出率、转化漏斗', level: 'internal', downloads: 89, visits: 1560, rating: 4.4, tags: ['DWS', '用户', '日更'], updatedAt: '2026-05-15', status: 'applied', schema: 54, size: '8.2 GB', updateFreq: '每日 T+1' },
+  { id: 'sh8', name: 'ads_campaign_effect', bizName: '活动效果汇总', category: '营销域', type: 'dataset', provider: '吴静', providerDept: '营销数据组', description: '营销活动参与人数、核销率、ROI、GMV 归因等效果指标，支持 A/B 对比', level: 'internal', downloads: 34, visits: 670, rating: 4.2, tags: ['营销', '活动', 'ADS'], updatedAt: '2026-05-11', status: 'approved', schema: 36, size: '0.6 GB', updateFreq: '活动结束后 T+1' },
+  { id: 'sh9', name: 'dim_region', bizName: '地区维度表', category: '公共域', type: 'dataset', provider: '周涛', providerDept: '公共数据组', description: '国家、省、市、区四级标准行政区划编码和名称映射，与国家标准一致', level: 'public', downloads: 312, visits: 6800, rating: 4.9, tags: ['维表', '公共', '区划'], updatedAt: '2026-04-01', status: 'approved', schema: 12, size: '0.02 GB', updateFreq: '按需' },
+  { id: 'sh10', name: '财务收入明细报表', bizName: '', category: '财务域', type: 'dataset', provider: '刘畅', providerDept: '财务数据组', description: '按渠道、商品、业务线拆分的收入明细，用于财务对账和管理报告', level: 'sensitive', downloads: 18, visits: 420, rating: 4.7, tags: ['财务', '敏感', '月报'], updatedAt: '2026-05-01', status: 'approved', schema: 24, size: '0.8 GB', updateFreq: '每月 5 日' },
 ];

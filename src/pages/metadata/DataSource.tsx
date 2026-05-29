@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Activity, BarChart3, CircleDot, Database, Gauge, HardDrive, MessageSquare, Search, Server, Table2, Zap } from "lucide-react";
 import toast from "react-hot-toast";
@@ -478,21 +478,21 @@ export default function DataSource() {
 
       {/* 表格视图 */}
       {viewMode === "table" && (
-        <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm">
-          <table className="w-full">
+        <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm">
+          <table className="min-w-[1060px] w-full table-fixed text-left text-sm">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-900/60 text-left text-xs text-slate-400">
                 <th className="px-4 py-3 font-medium">数据源'</th>
-                <th className="px-4 py-3 font-medium">类型</th>
-                <th className="px-4 py-3 font-medium">主机地址</th>
-                <th className="px-4 py-3 font-medium">环境</th>
-                <th className="px-4 py-3 font-medium">表数</th>
-                <th className="px-4 py-3 font-medium">存储</th>
-                <th className="px-4 py-3 font-medium">QPS</th>
-                <th className="px-4 py-3 font-medium">延迟</th>
+                <th className="px-4 py-3 font-medium w-[90px]">类型</th>
+                <th className="px-4 py-3 font-medium w-[180px]">主机地址</th>
+                <th className="px-4 py-3 font-medium w-[80px]">环境</th>
+                <th className="px-4 py-3 font-medium w-[70px]">表数</th>
+                <th className="px-4 py-3 font-medium w-[70px]">存储</th>
+                <th className="px-4 py-3 font-medium w-[70px]">QPS</th>
+                <th className="px-4 py-3 font-medium w-[70px]">延迟</th>
                 <th className="px-4 py-3 font-medium">状态'</th>
                 <th className="px-4 py-3 font-medium">负责人'</th>
-                <th className="px-4 py-3 font-medium">操作</th>
+                <th className="px-4 py-3 font-medium w-[100px]">操作</th>
               </tr>
             </thead>
             <tbody>

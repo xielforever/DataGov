@@ -1,6 +1,6 @@
 # DataGov Project Status
 
-Last updated: 2026-05-11
+Last updated: 2026-05-29
 
 ## Purpose
 
@@ -24,12 +24,14 @@ Do not remove architecture-level menu items only because implementation is incom
 - Keep `CapabilityPlaceholder` as the App-level fallback for unknown route ids only; do not maintain a separate placeholder registry.
 - App shell supports `?view=<menu-id>` deep links for opening a specific workbench during development and browser review.
 - Menu metadata and route components are centralized in `src/navigation/registry.tsx`; `App.tsx` and `Sidebar.tsx` must consume that registry instead of maintaining duplicate route/menu lists.
+- Business domains are managed as shared master data under Data assets. Asset registration, asset catalog filters, standard definition filters, quality rule filters, and modeling entry forms should consume the business-domain mock API instead of hardcoded option lists.
+- Data asset pages should avoid dead operational CTAs. Cross-page actions use `?view=<menu-id>` deep links with context parameters such as `asset` or `center` where useful.
 
 ## Current Implementation Snapshot
 
 Build status:
 
-- `npx.cmd vite build --emptyOutDir=false` passes as of 2026-05-11.
+- `npx.cmd vite build --emptyOutDir=false` passes as of 2026-05-16.
 
 Core files:
 
@@ -43,7 +45,7 @@ Core files:
 Implemented page groups currently routed from `App.tsx`:
 
 - Dashboard: `dashboard`
-- Data assets: `asset-overview`, `asset-register`, `data-catalog`, `data-map`, `data-lineage`, `data-source`
+- Data assets: `asset-overview`, `business-domain`, `asset-register`, `data-catalog`, `data-map`, `data-lineage`, `data-source`
 - Metadata: `metadata-model`, `metadata-collect`, `metadata-manage`, `metadata-query`
 - Data standards: `standard-def`, `standard-map`, `standard-eval`, `data-dict`, `code-manage`
 - Data development: `data-modeling`, `script-dev`, `task-orchestration`, `realtime-compute`, `data-sync`
@@ -60,8 +62,16 @@ Route coverage:
 
 ## Completed
 
+- Removed 15+ root-level temporary fix scripts (`fix-*.cjs`, etc.) to clean up the repository.
+- Removed local development artifacts (`dev-server.log`, `.playwright-cli/`).
 - Added root `AGENTS.md` with project instructions for Codex.
 - Added `PROJECT_STATUS.md` for project progress tracking.
+- Completed P0/P1/P2 table layout optimization across 12 pages:
+  - P0 (6 pages): DataSource, StandardDef, DataSync, CodeManage, QualityRules, ApprovalCenter - fixed overflow-hidden clipping + added table-fixed + min-w + th column widths
+  - P1 (4 pages): MetricManage, DataServiceApi, DataSharing, DataCatalog - added table-fixed + min-w to already-widthed tables
+  - P2 (2 pages): StandardEval, AssetOverview - added table-fixed for stability
+  - Fixed 3 mojibake instances in DataSync.tsx (状态'、记录'、最近同')
+  - All tables now use consistent pattern: overflow-x-auto wrapper + table-fixed + min-w-[calculated] + explicit th widths
 - Added shared `CapabilityPlaceholder` as the App-level fallback for unknown route ids.
 - Replaced the long `activeMenu` ternary chain in `App.tsx` with a route/view registry.
 - Wired every current sidebar leaf menu item to a real page or the App-level fallback.
@@ -109,6 +119,7 @@ Route coverage:
 - Reframed the `home` page again from a development-delivery pipeline into a full data lifecycle governance overview. The main map now covers planning/intake, source registration, ingestion, metadata lineage, asset cataloging, standards, quality/security, modeling, scheduling, service sharing, consumption operations, and archive/retirement. Development is treated as one lifecycle segment rather than the whole story.
 - Cleaned up the `home` lifecycle layout after review: restored maintainable Chinese source text, normalized the lifecycle map to four domains with three stages each, moved the cross-cutting governance controls into a visible control strip inside the main map, and kept the detailed governance panel as a wide-screen companion rather than the only source of control context.
 - Removed duplicated right-side lifecycle/governance panels from the `home` page. The homepage now uses one main lifecycle map for `规划准入 -> 治理资产 -> 加工供给 -> 运营闭环`, while the right side focuses on待治理事项、生命周期风险信号和处置建议.
+- Moved `home` lifecycle, control, risk signal, and work item data behind an MSW-backed home overview API, and delayed the wide-screen companion panel breakpoint so the lifecycle map keeps readable flow/gate text on 1600px desktop viewports.
 - Tuned the `data-modeling` table layout so narrow columns no longer force Chinese headers and dates into vertical wrapping at the default desktop viewport.
 - Reworked the script development page into a more IDE-like workspace.
 - Changed script creation from coarse `sql/python/shell` to a capability/template model:
@@ -150,12 +161,29 @@ Route coverage:
   - Removed duplicated abnormal-source presentation and kept one access-governance conclusion.
   - Fixed the growth trend chart spacing by keeping the row visually aligned while letting the chart fill the stretched card height.
   - Polished the growth trend chart with a framed plot area, refined bars, highlighted latest month, trend glow, area fill, and data nodes.
+- Added `business-domain` under Data assets as the shared business-domain configuration page:
+  - Added MSW-backed business-domain master data APIs for list, options, create, update, and status changes.
+  - Made asset overview business-domain distribution derive from the shared business-domain registry.
+  - Rewired asset catalog, asset registration options, quality rule filters, standard definition filters, and modeling entry forms to consume the shared business-domain options.
+  - Refined the business-domain form so users only maintain master-data fields and governance policies; asset counts, sensitive counts, quality scores, and standard coverage are read-only metrics derived from other modules.
+  - Reduced redundancy in the business-domain workbench: the left pane is now only for quick location, the center table is the master-data ledger, lifecycle actions are concentrated in the detail pane, and top summary cards now report configuration health instead of repeating operational metrics.
+  - Reworked business-domain hierarchy management into a two-column workbench: the left pane now combines an expandable parent-child domain tree with status, owner, and security-level filters, while the right pane shows the scoped domain ledger and selected-domain governance details. Business-domain child nodes are now represented as real mock master-data records with `parentId` instead of display-only strings.
+  - Adjusted the business-domain workbench to the final interaction model: the left pane is now search/filter tooling only, the right pane shows all matching business domains, row click opens a read-only domain detail modal, and create/update parent selection enforces a maximum 5-level hierarchy.
+  - Tightened the data-catalog workbench after review: the left filter panel now hides empty business domains and zero-count sources by default, uses denser spacing, and collapses lower-frequency filters; asset search now includes business domain, tags, database, source, layer, and sensitivity; asset detail schema, lineage, and quality tabs now load from MSW-backed asset detail data instead of component-local hardcoded rows.
+- Repaired the data asset workbench flow after a full review: data source management now has clean Chinese copy plus mock-backed create/sync/offline actions; asset registration writes registered tables into the mock asset catalog; data lineage field/impact views follow the selected center table; asset map/detail and asset overview CTAs now navigate to catalog, lineage, data source, approval, metadata, or business-domain pages instead of acting as dead buttons.
+- Upgraded the data service module from skeleton cards to full MSW-backed workbenches:
+  - `metric-manage`: overview cards with domain distribution bar, metric table with type/category/status filters, column sorting, inline publish/deprecate status actions, and a right-side detail panel showing definition, formula, dimensions, tags, usage count, and version.
+  - `data-service-api`: overview cards (QPS, SLA, latency, calls), API table with method/status/QPS/latency/error-rate columns, column sorting, online/offline status actions, and a detail panel with runtime metrics grid and operation buttons.
+  - `data-sharing`: overview cards (assets, downloads, visits, rating), share asset table with level/type filters, star ratings, column sorting, apply-to-use action, and a detail panel with schema size, update frequency, tags, and star rating display.
+  - All three pages' business mock data moved from component-local arrays to `src/mock/data.ts` with MSW handlers in `src/mock/handlers.ts` and service functions in `src/services/api.ts`.
+  - Fixed all Chinese mojibake in the previous data-service-api and data-sharing pages (错误'→错误率, 调用'→调用方, 负责人'→负责人, 审核'→审核中, 已申'→已申请, 提供'→提供人, 业务'→业务域, 被引'→引用, 个应'→个应用).
+  - Replaced emoji icons with Lucide icons across all three pages.
 
 ## Pending
 
 Highest priority:
 
-- Review whether any remaining dense workbench tables need the same fixed-column treatment as `data-modeling`.
+- Completed: All dense workbench tables now have fixed-column treatment matching `data-modeling` pattern.
 
 Data quality:
 
@@ -172,16 +200,19 @@ Data development operations:
 - Core data development operations pages are now implemented: `task-schedule` and `task-ops`.
 - Decide whether task scheduling and task operations should share one implementation with tabs or remain separate pages.
 
+Data services:
+
+- Core data service workbench pages are now implemented: `metric-manage`, `data-service-api`, and `data-sharing`.
+- All three use MSW-backed mock data through the standard mock API layer.
+
 System management:
 
 - Core system management workbench pages are now implemented: `user-manage`, `role-manage`, `org-manage`, `notification`, `operation-log`, and `system-config`.
 
 General cleanup:
 
-- Remove or classify temporary fix scripts at repository root: `fix-*.cjs`.
 - Decide whether `src/pages/development/ScriptDev-2.tsx` is a backup to delete or a reference to keep.
 - Avoid committing generated `dist/index.html` unless project policy requires it.
-- Review `.playwright-cli/` and `dev-server.log`; these are likely local artifacts.
 - Continue replacing mojibake in untouched files, especially global shell, sidebar, and high-traffic pages.
 - Continue replacing remaining emoji-style visual markers outside the reviewed data asset pages with the project's icon system where practical.
 

@@ -1,96 +1,137 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { Share2, Download, Eye, Star, Search, Plus, Database, Globe2, Lock, ShieldAlert, ArrowUpDown, ExternalLink, Tag, Clock, User, HardDrive, FileText, Columns } from 'lucide-react';
 import Breadcrumb from '../../components/common/Breadcrumb';
+import { fetchDataSharingOverview, fetchServiceShares, applyShareAsset } from '../../services/api';
 
-interface ShareAsset {
-  id: string;
-  name: string;
-  bizName: string;
-  category: string;
-  type: string;
-  provider: string;
-  providerDept: string;
-  description: string;
-  level: 'public' | 'internal' | 'sensitive';
-  downloads: number;
-  visits: number;
-  rating: number;
-  tags: string[];
-  updatedAt: string;
-  status: 'approved' | 'pending' | 'applied';
-}
+/* ── UI constants ────────────────────────────────────────────────────────── */
 
-const SHARE_ASSETS: ShareAsset[] = [
-  { id: 'sh1', name: 'dwd_order_detail', bizName: '订单明细宽表', category: '交易', type: '数据源', provider: '张明', providerDept: '数据平台', description: '包含订单、用户、商品关联信息的事实宽表，日更新', level: 'internal', downloads: 128, visits: 2450, rating: 4.8, tags: ['核心', 'DWD', '日更'], updatedAt: '2024-01-15', status: 'approved' },
-  { id: 'sh2', name: 'dim_user_portrait', bizName: '用户画像维度', category: '用户', type: '数据源', provider: '赵敏', providerDept: '用户中心', description: 'RFM 分群、兴趣标签、消费能力分', level: 'sensitive', downloads: 56, visits: 1890, rating: 4.6, tags: ['画像', 'DIM', '周更'], updatedAt: '2024-01-14', status: 'approved' },
-  { id: 'sh3', name: 'ads_sales_daily', bizName: '日销售汇总报', category: '交易', type: '数据源', provider: '陈静', providerDept: 'BI 团队', description: '按日汇总的 GMV、订单量、客单价指标', level: 'public', downloads: 230, visits: 5200, rating: 4.9, tags: ['报表', 'ADS', '日更'], updatedAt: '2024-01-15', status: 'approved' },
-  { id: 'sh4', name: '用户行为分析 API', bizName: '', category: '用户', type: 'API', provider: '林峰', providerDept: '数据平台', description: '查询用户行为路径、漏斗、留存等分析结果', level: 'internal', downloads: 45, visits: 890, rating: 4.5, tags: ['API', '分析', '实时'], updatedAt: '2024-01-13', status: 'approved' },
-  { id: 'sh5', name: '商品主数据', bizName: '', category: '商品', type: '数据源', provider: '孙立', providerDept: '商品中心', description: '商品 SPU/SKU 基础信息、分类、品牌', level: 'public', downloads: 180, visits: 3200, rating: 4.7, tags: ['主数', 'DIM'], updatedAt: '2024-01-14', status: 'approved' },
-  { id: 'sh6', name: '实时风控评分服务', bizName: '', category: '风控', type: 'API', provider: '郑伟', providerDept: '风控域', description: '对交易实时风控评分，返回风险等级和建议操', level: 'sensitive', downloads: 12, visits: 340, rating: 4.3, tags: ['风控', 'API', '实时'], updatedAt: '2024-01-12', status: 'pending' },
-  { id: 'sh7', name: 'dws_user_behavior_agg', bizName: '用户行为汇', category: '用户', type: '数据源', provider: '赵敏', providerDept: '用户中心', description: '按天汇总的用户行为指标（PV/UV/停留时长', level: 'internal', downloads: 89, visits: 1560, rating: 4.4, tags: ['DWS', '用户', '日更'], updatedAt: '2024-01-15', status: 'applied' },
-  { id: 'sh8', name: '营销活动效果数据源', bizName: '', category: '营销', type: '数据源', provider: '吴静', providerDept: '营销域', description: '活动参与、转化、ROI 等效果指', level: 'internal', downloads: 34, visits: 670, rating: 4.2, tags: ['营销', '活动'], updatedAt: '2024-01-11', status: 'approved' },
-];
-
-const levelConfig: Record<string, { color: string; bg: string; label: string }> = {
-  public: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: '公开' },
-  internal: { color: 'text-blue-400', bg: 'bg-blue-500/10', label: '内部' },
-  sensitive: { color: 'text-red-400', bg: 'bg-red-500/10', label: '敏感' },
+const levelConfig: Record<string, { color: string; bg: string; label: string; Icon: typeof Globe2 }> = {
+  public:    { color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: '公开',   Icon: Globe2 },
+  internal:  { color: 'text-blue-400',    bg: 'bg-blue-500/10',    label: '内部',   Icon: Lock },
+  sensitive: { color: 'text-red-400',     bg: 'bg-red-500/10',     label: '敏感',   Icon: ShieldAlert },
 };
 
+const typeConfig: Record<string, { color: string; bg: string; label: string }> = {
+  dataset: { color: 'text-cyan-400',   bg: 'bg-cyan-500/10',   label: '数据集' },
+  api:     { color: 'text-purple-400', bg: 'bg-purple-500/10', label: 'API' },
+};
+
+const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
+  approved: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: '已上架' },
+  pending:  { color: 'text-amber-400',   bg: 'bg-amber-500/10',   label: '审核中' },
+  applied:  { color: 'text-cyan-400',    bg: 'bg-cyan-500/10',    label: '已申请' },
+};
+
+/* ── Component ───────────────────────────────────────────────────────── */
+
 export default function DataSharing() {
-  const [assets, setAssets] = useState<ShareAsset[]>([]);
+  const [overview, setOverview] = useState<any>(null);
+  const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterLevel, setFilterLevel] = useState('all');
   const [filterType, setFilterType] = useState('all');
+  const [selected, setSelected] = useState<any | null>(null);
+  const [sortField, setSortField] = useState<'downloads' | 'visits' | 'rating'>('visits');
+  const [sortAsc, setSortAsc] = useState(false);
 
-  useEffect(() => {
-    setTimeout(() => { setAssets(SHARE_ASSETS); setLoading(false); }, 300);
-  }, []);
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [ov, items] = await Promise.all([
+        fetchDataSharingOverview(),
+        fetchServiceShares({
+          keyword: search || undefined,
+          level: filterLevel !== 'all' ? filterLevel : undefined,
+          type: filterType !== 'all' ? filterType : undefined,
+        }),
+      ]);
+      setOverview(ov);
+      setAssets(items);
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, [search, filterLevel, filterType]);
 
-  const filtered = assets.filter(a => {
-    if (filterLevel !== 'all' && a.level !== filterLevel) return false;
-    if (filterType !== 'all' && a.type !== filterType) return false;
-    if (search && !a.name.includes(search) && !a.description.includes(search)) return false;
-    return true;
+  useEffect(() => { load(); }, [load]);
+
+  const handleApply = async (id: string) => {
+    await applyShareAsset(id);
+    load();
+  };
+
+  const toggleSort = (field: 'downloads' | 'visits' | 'rating') => {
+    if (sortField === field) setSortAsc(!sortAsc);
+    else { setSortField(field); setSortAsc(false); }
+  };
+
+  const sorted = [...assets].sort((a, b) => {
+    const v = (a[sortField] || 0) - (b[sortField] || 0);
+    return sortAsc ? v : -v;
   });
 
+  const renderStars = (rating: number) => {
+    const full = Math.floor(rating);
+    return (
+      <span className="flex items-center gap-0.5 text-amber-400">
+        {Array.from({ length: 5 }, (_, i) => (
+          <Star key={i} className={`w-3 h-3 ${i < full ? 'fill-amber-400' : 'fill-transparent'}`} />
+        ))}
+        <span className="text-slate-400 text-xs ml-1">{rating}</span>
+      </span>
+    );
+  };
+
+  /* ── Render ───────────────────────────────────────────────────────────── */
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <Breadcrumb items={[{ label: '数据服务' }, { label: '数据共享' }]} />
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">数据共享</h1>
-        <div className="flex gap-3">
-          <button className="px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">我的申请</button>
-          <button className="px-4 py-2 rounded-lg text-sm bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:opacity-90">+ 发布数据</button>
+        <h1 className="text-xl font-bold text-white">数据共享</h1>
+        <div className="flex gap-2">
+          <button className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors">
+            <FileText className="w-4 h-4" /> 我的申请
+          </button>
+          <button className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:opacity-90 transition-opacity">
+            <Plus className="w-4 h-4" /> 发布数据
+          </button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: '共享资产', value: assets.length, icon: '🌐', color: 'from-cyan-500 to-blue-500' },
-          { label: '本周下载', value: assets.reduce((s, a) => s + a.downloads, 0), icon: '📥', color: 'from-emerald-500 to-green-500' },
-          { label: '本周访问', value: `${(assets.reduce((s, a) => s + a.visits, 0) / 1000).toFixed(1)}K`, icon: '👁', color: 'from-purple-500 to-violet-500' },
-          { label: '平均评分', value: (assets.reduce((s, a) => s + a.rating, 0) / assets.length).toFixed(1), icon: '', color: 'from-amber-500 to-orange-500' },
-        ].map((s, i) => (
-          <div key={i} className="relative overflow-hidden bg-slate-800/60 backdrop-blur border border-slate-700/50 rounded-xl p-4">
-            <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${s.color} opacity-10 rounded-bl-full`} />
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{s.icon}</span>
-              <div>
-                <div className="text-2xl font-bold text-white">{s.value}</div>
-                <div className="text-xs text-slate-400">{s.label}</div>
+      {/* ── 概览卡片 ──────────────────────────────────────────────────── */}
+      {overview && (
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            { label: '共享资产', value: overview.totalAssets, sub: `已上架 ${overview.approvedAssets}`, Icon: Share2, color: 'from-cyan-500 to-blue-500' },
+            { label: '本月申请', value: overview.appliedThisMonth, sub: `待审 ${overview.pendingAssets}`, Icon: Download, color: 'from-emerald-500 to-green-500' },
+            { label: '本周访问', value: `${(overview.weeklyVisits / 1000).toFixed(1)}K`, sub: `下载 ${overview.totalDownloads}`, Icon: Eye, color: 'from-purple-500 to-violet-500' },
+            { label: '平均评分', value: overview.avgRating.toFixed(1), sub: `热门域: ${overview.topCategory}`, Icon: Star, color: 'from-amber-500 to-orange-500' },
+          ].map((s, i) => (
+            <div key={i} className="relative overflow-hidden bg-slate-800/60 backdrop-blur border border-slate-700/50 rounded-xl p-4">
+              <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br ${s.color} opacity-10 rounded-bl-full`} />
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg bg-gradient-to-br ${s.color} bg-opacity-20`}>
+                  <s.Icon className="w-4 h-4 text-white/80" />
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-white">{s.value}</div>
+                  <div className="text-xs text-slate-400">{s.label}</div>
+                  {s.sub && <div className="text-[10px] text-slate-500">{s.sub}</div>}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 bg-slate-800/30 rounded-xl p-4 border border-slate-700/30">
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索数据资产..."
-          className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-500 w-64 focus:outline-none focus:border-cyan-500/50" />
-        <div className="flex gap-1 bg-slate-900 rounded-lg p-1">
+      {/* ── 筛选栏 ─────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 flex-wrap bg-slate-800/30 rounded-xl p-3 border border-slate-700/30">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索数据资产名称 / 描述"
+            className="pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-500 w-72 focus:outline-none focus:border-cyan-500/50" />
+        </div>
+        <div className="flex gap-0.5 bg-slate-900 rounded-lg p-0.5">
           {['all', 'public', 'internal', 'sensitive'].map(l => (
             <button key={l} onClick={() => setFilterLevel(l)}
               className={`px-3 py-1.5 text-xs rounded-md transition-colors ${filterLevel === l ? 'bg-cyan-500/20 text-cyan-400' : 'text-slate-400 hover:text-white'}`}>
@@ -98,63 +139,173 @@ export default function DataSharing() {
             </button>
           ))}
         </div>
-        <div className="flex gap-1 bg-slate-900 rounded-lg p-1">
-          {['all', '数据源', 'API'].map(t => (
+        <div className="flex gap-0.5 bg-slate-900 rounded-lg p-0.5">
+          {['all', 'dataset', 'api'].map(t => (
             <button key={t} onClick={() => setFilterType(t)}
               className={`px-3 py-1.5 text-xs rounded-md transition-colors ${filterType === t ? 'bg-purple-500/20 text-purple-400' : 'text-slate-400 hover:text-white'}`}>
-              {t === 'all' ? '全部类型' : t}
+              {t === 'all' ? '全部类型' : typeConfig[t].label}
             </button>
           ))}
         </div>
+        <div className="ml-auto text-xs text-slate-500">共 {assets.length} 个资产</div>
       </div>
 
-      {/* Cards */}
-      {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map(i => <div key={i} className="bg-slate-800/40 rounded-xl p-5 animate-pulse"><div className="h-5 bg-slate-700 rounded w-2/3 mb-4" /><div className="h-4 bg-slate-700 rounded w-full mb-3" /><div className="h-4 bg-slate-700 rounded w-1/2" /></div>)}
+      {/* ── 主体：列表 + 详情 ──────────────────────────────────────── */}
+      <div className="flex gap-0 min-h-[520px]">
+        {/* 资产列表 */}
+        <div className={`${selected ? 'w-[60%]' : 'w-full'} transition-all`}>
+          {loading ? (
+            <div className="bg-slate-800/40 rounded-xl p-5 animate-pulse h-96" />
+          ) : (
+            <div className="bg-slate-800/40 border border-slate-700/30 rounded-l-xl overflow-x-auto">
+              <table className="min-w-[800px] w-full table-fixed text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700/50 text-slate-400 text-xs">
+                    <th className="text-left px-4 py-3 font-medium w-[220px]">资产名称</th>
+                    <th className="text-left px-3 py-3 font-medium w-[65px]">类型</th>
+                    <th className="text-left px-3 py-3 font-medium w-[55px]">级别</th>
+                    <th className="text-left px-3 py-3 font-medium w-[60px]">状态</th>
+                    <th className="text-left px-3 py-3 font-medium w-[70px]">业务域</th>
+                    <th className="text-left px-3 py-3 font-medium w-[60px] cursor-pointer select-none" onClick={() => toggleSort('downloads')}>
+                      <span className="flex items-center gap-0.5">下载 <ArrowUpDown className="w-3 h-3" /></span>
+                    </th>
+                    <th className="text-left px-3 py-3 font-medium w-[60px] cursor-pointer select-none" onClick={() => toggleSort('visits')}>
+                      <span className="flex items-center gap-0.5">访问 <ArrowUpDown className="w-3 h-3" /></span>
+                    </th>
+                    <th className="text-left px-3 py-3 font-medium w-[90px] cursor-pointer select-none" onClick={() => toggleSort('rating')}>
+                      <span className="flex items-center gap-0.5">评分 <ArrowUpDown className="w-3 h-3" /></span>
+                    </th>
+                    <th className="text-left px-3 py-3 font-medium w-[90px]">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sorted.map(a => {
+                    const lc = levelConfig[a.level] || levelConfig.internal;
+                    const tc = typeConfig[a.type] || typeConfig.dataset;
+                    const sc = statusConfig[a.status] || statusConfig.approved;
+                    return (
+                      <tr key={a.id} onClick={() => setSelected(a)}
+                        className={`border-b border-slate-700/30 cursor-pointer transition-colors ${selected?.id === a.id ? 'bg-slate-700/30' : 'hover:bg-slate-800/50'}`}>
+                        <td className="px-4 py-3">
+                          <div className="text-white font-medium text-xs truncate">{a.bizName || a.name}</div>
+                          {a.bizName && <div className="text-[10px] text-slate-500 font-mono truncate">{a.name}</div>}
+                        </td>
+                        <td className="px-3 py-3"><span className={`px-2 py-0.5 text-xs rounded ${tc.bg} ${tc.color}`}>{tc.label}</span></td>
+                        <td className="px-3 py-3">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded ${lc.bg} ${lc.color}`}>
+                            <lc.Icon className="w-3 h-3" />{lc.label}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3"><span className={`px-2 py-0.5 text-xs rounded ${sc.bg} ${sc.color}`}>{sc.label}</span></td>
+                        <td className="px-3 py-3 text-slate-300 text-xs">{a.category}</td>
+                        <td className="px-3 py-3 text-white text-xs font-medium">{a.downloads}</td>
+                        <td className="px-3 py-3 text-slate-300 text-xs">{a.visits.toLocaleString()}</td>
+                        <td className="px-3 py-3">{renderStars(a.rating)}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex gap-1.5">
+                            {a.status === 'approved' && (
+                              <button onClick={e => { e.stopPropagation(); handleApply(a.id); }} className="text-cyan-400 hover:text-cyan-300 text-xs">申请使用</button>
+                            )}
+                            {a.status !== 'approved' && (
+                              <button onClick={e => { e.stopPropagation(); setSelected(a); }} className="text-slate-400 hover:text-white text-xs">查看</button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {sorted.length === 0 && (
+                    <tr><td colSpan={9} className="text-center text-slate-500 py-12">暂无符合条件的共享资产</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {filtered.map(asset => {
-            const lc = levelConfig[asset.level];
-            return (
-              <div key={asset.id} className="group bg-slate-800/40 border border-slate-700/30 rounded-xl p-5 hover:border-cyan-500/30 transition-all">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-white text-sm">{asset.bizName || asset.name}</span>
-                      <span className={`px-2 py-0.5 text-xs rounded ${lc.bg} ${lc.color}`}>{lc.label}</span>
-                      {asset.status === 'pending' && <span className="px-2 py-0.5 text-xs rounded bg-amber-500/10 text-amber-400">审核'</span>}
-                      {asset.status === 'applied' && <span className="px-2 py-0.5 text-xs rounded bg-cyan-500/10 text-cyan-400">已申'</span>}
-                    </div>
-                    {asset.bizName && <div className="text-xs text-slate-500 font-mono">{asset.name}</div>}
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-amber-400">
-                    {''.repeat(Math.floor(asset.rating))}{''.repeat(5 - Math.floor(asset.rating))}
-                    <span className="text-slate-400 ml-1">{asset.rating}</span>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 mb-3 line-clamp-2">{asset.description}</p>
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {asset.tags.map(t => <span key={t} className="px-1.5 py-0.5 text-xs bg-slate-700 text-slate-400 rounded">{t}</span>)}
-                </div>
-                <div className="grid grid-cols-4 gap-2 text-center text-xs mb-3">
-                  <div className="p-1.5 bg-slate-900/50 rounded"><div className="text-slate-500">类型</div><div className="text-slate-300">{asset.type}</div></div>
-                  <div className="p-1.5 bg-slate-900/50 rounded"><div className="text-slate-500">下载</div><div className="text-white">{asset.downloads}</div></div>
-                  <div className="p-1.5 bg-slate-900/50 rounded"><div className="text-slate-500">访问</div><div className="text-white">{asset.visits}</div></div>
-                  <div className="p-1.5 bg-slate-900/50 rounded"><div className="text-slate-500">提供'</div><div className="text-slate-300">{asset.provider}</div></div>
-                </div>
-                <div className="pt-3 border-t border-slate-700/30 flex justify-between items-center">
-                  <span className="text-xs text-slate-500">{asset.providerDept} · {asset.updatedAt}</span>
-                  <button className="px-3 py-1.5 text-xs rounded bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 font-medium">
-                    {asset.status === 'approved' ? '申请使用' : '查看详情'}
-                  </button>
+
+        {/* 详情面板 */}
+        {selected && (
+          <div className="w-[40%] bg-slate-800/60 border border-slate-700/30 border-l-0 rounded-r-xl overflow-y-auto max-h-[600px]">
+            <div className="sticky top-0 bg-slate-800/90 backdrop-blur border-b border-slate-700/30 px-5 py-3 flex items-center justify-between">
+              <span className="font-medium text-white text-sm">{selected.bizName || selected.name}</span>
+              <button onClick={() => setSelected(null)} className="text-slate-500 hover:text-white text-xs">关闭</button>
+            </div>
+            <div className="p-5 space-y-4 text-sm">
+              {/* 名称 + 标签 */}
+              <div className="space-y-2">
+                {selected.bizName && <div className="text-xs text-slate-500 font-mono">{selected.name}</div>}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {(() => { const lc = levelConfig[selected.level]; return <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded ${lc.bg} ${lc.color}`}><lc.Icon className="w-3 h-3" />{lc.label}</span>; })()}
+                  {(() => { const tc = typeConfig[selected.type]; return <span className={`px-2 py-0.5 text-xs rounded ${tc.bg} ${tc.color}`}>{tc.label}</span>; })()}
+                  {(() => { const sc = statusConfig[selected.status]; return <span className={`px-2 py-0.5 text-xs rounded ${sc.bg} ${sc.color}`}>{sc.label}</span>; })()}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              {/* 描述 */}
+              <div className="text-xs text-slate-300 bg-slate-900/50 rounded-lg p-3 leading-relaxed">{selected.description}</div>
+
+              {/* 运行数据 */}
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { Icon: Download, label: '下载次数', val: selected.downloads },
+                  { Icon: Eye, label: '访问次数', val: selected.visits.toLocaleString() },
+                  { Icon: Columns, label: '字段数', val: selected.schema || '-' },
+                  { Icon: HardDrive, label: '数据量', val: selected.size },
+                  { Icon: Clock, label: '更新频率', val: selected.updateFreq },
+                  { Icon: Tag, label: '业务域', val: selected.category },
+                ].map((item, i) => (
+                  <div key={i} className="bg-slate-900/40 rounded-lg p-2.5">
+                    <div className="flex items-center gap-1 text-[10px] text-slate-500 mb-0.5"><item.Icon className="w-3 h-3" />{item.label}</div>
+                    <div className="text-xs text-white font-medium">{item.val}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* 评分 */}
+              <div className="bg-slate-900/40 rounded-lg p-3 flex items-center justify-between">
+                <span className="text-xs text-slate-400">用户评分</span>
+                {renderStars(selected.rating)}
+              </div>
+
+              {/* 提供方 */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500 flex items-center gap-1"><User className="w-3 h-3" />提供人</span>
+                  <span className="text-slate-300">{selected.provider}（{selected.providerDept}）</span>
+                </div>
+              </div>
+
+              {/* 标签 */}
+              {selected.tags?.length > 0 && (
+                <div>
+                  <div className="text-xs text-slate-400 mb-1">标签</div>
+                  <div className="flex flex-wrap gap-1">
+                    {selected.tags.map((t: string) => <span key={t} className="px-2 py-0.5 text-xs bg-cyan-500/10 text-cyan-400 rounded">{t}</span>)}
+                  </div>
+                </div>
+              )}
+
+              {/* 操作 */}
+              <div className="pt-3 border-t border-slate-700/30 flex gap-2">
+                {selected.status === 'approved' && (
+                  <button onClick={() => handleApply(selected.id)}
+                    className="flex items-center gap-1 px-4 py-2 text-xs rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:opacity-90 transition-opacity">
+                    <ExternalLink className="w-3.5 h-3.5" /> 申请使用
+                  </button>
+                )}
+                <button className="flex items-center gap-1 px-3 py-2 text-xs rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors">
+                  <Database className="w-3.5 h-3.5" /> 预览数据
+                </button>
+              </div>
+
+              {/* 时间 */}
+              <div className="text-xs text-slate-500 pt-2 border-t border-slate-700/30">
+                最近更新: {selected.updatedAt}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

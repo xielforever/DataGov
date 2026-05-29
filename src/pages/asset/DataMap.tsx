@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { BarChart3, Building2, CreditCard, Download, Flame, Folder, Globe2, Layers, Map, Megaphone, Package, RefreshCw, Shield, Truck, User } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -629,7 +629,7 @@ export default function DataMap() {
               </div>
               <div className="p-6">
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="min-w-[600px] w-full table-fixed">
                     <thead>
                       <tr>
                         <th className="text-left text-xs text-slate-400 font-normal pb-3 pr-4">业务域 / 分层</th>

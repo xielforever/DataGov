@@ -4,15 +4,18 @@ import {
   mockDashboardRecentTables,
   mockDashboardQualityTrends,
   mockDashboardTasks,
+  mockHomeGovernanceOverview,
   mockAssetCoreMetrics,
   mockAssetLayerDistribution,
-  mockAssetBusinessDomains,
+  mockBusinessDomains,
   mockAssetDataSources,
   mockAssetGrowthTrend,
   mockAssetHealthMetrics,
   mockAssetHotAssets,
   mockAssetPendingItems,
   mockAssetCatalog,
+  mockAssetCatalogDetails,
+  buildAssetCatalogDetail,
   mockAssetRegisterOptions,
   mockMapData,
   mockAllDataSources,
@@ -110,12 +113,61 @@ import {
   mockSystemConfigIntegrations,
   mockSystemRuntimeSwitches,
   mockSystemEnvironmentPolicies,
-  mockSystemConfigChanges
+  mockSystemConfigChanges,
+  mockMetricOverview,
+  mockMetrics,
+  mockMetricCategories,
+  mockServiceApiOverview,
+  mockServiceApis,
+  mockDataSharingOverview,
+  mockShareAssets,
 } from './data';
+
+const businessDomainColors = [
+  'bg-cyan-500',
+  'bg-purple-500',
+  'bg-emerald-500',
+  'bg-amber-500',
+  'bg-rose-500',
+  'bg-blue-500',
+  'bg-indigo-500',
+  'bg-teal-500',
+];
+
+const formatTimestamp = () => new Date().toISOString().replace('T', ' ').substring(0, 16);
+
+const getDataSourceCategory = (type: string) => {
+  if (['MySQL', 'PostgreSQL', 'Oracle'].includes(type)) return '关系型';
+  if (type === 'Hive') return '大数据';
+  if (type === 'Kafka') return '消息队列';
+  if (['MongoDB', 'Redis'].includes(type)) return 'NoSQL';
+  if (type === 'Elasticsearch') return '搜索引擎';
+  return 'OLAP';
+};
+
+const getAssetBusinessDomainSummary = () => {
+  const visibleDomains = mockBusinessDomains.filter((domain) => domain.status !== 'retired' && !domain.parentId);
+  const totalAssets = visibleDomains.reduce((sum, domain) => sum + domain.assetCount, 0) || 1;
+  return visibleDomains.map((domain) => ({
+    name: domain.name,
+    count: domain.assetCount,
+    percent: Number(((domain.assetCount / totalAssets) * 100).toFixed(1)),
+    growth: domain.growth,
+    color: domain.colorClass,
+  }));
+};
 
 export const handlers = [
   // Health check
   http.get('/api/v1/health', () => HttpResponse.json({ status: 'ok' })),
+
+  // Home endpoints
+  http.get('/api/v1/home/governance-overview', () => {
+    return HttpResponse.json({
+      code: 0,
+      data: mockHomeGovernanceOverview
+    });
+  }),
 
   // Dashboard endpoints
   http.get('/api/v1/dashboard/stats', () => {
@@ -1224,6 +1276,140 @@ export const handlers = [
     return HttpResponse.json({ code: 404, message: 'System config change not found' }, { status: 404 });
   }),
 
+  // Business domain master data endpoints
+  http.get('/api/v1/business-domains', ({ request }) => {
+    const url = new URL(request.url);
+    const status = url.searchParams.get('status') || 'all';
+    const keyword = (url.searchParams.get('keyword') || '').trim().toLowerCase();
+
+    let data = [...mockBusinessDomains];
+    if (status !== 'all') {
+      data = data.filter((domain) => domain.status === status);
+    }
+    if (keyword) {
+      data = data.filter((domain) => {
+        const text = `${domain.name} ${domain.code} ${domain.owner} ${domain.ownerUsername} ${domain.org} ${domain.description}`.toLowerCase();
+        return text.includes(keyword);
+      });
+    }
+
+    return HttpResponse.json({ code: 0, data });
+  }),
+
+  http.get('/api/v1/business-domains/options', () => {
+    return HttpResponse.json({
+      code: 0,
+      data: mockBusinessDomains
+        .filter((domain) => domain.status === 'active')
+        .map((domain) => ({
+          id: domain.id,
+          code: domain.code,
+          name: domain.name,
+          parentId: domain.parentId,
+          level: domain.level,
+          status: domain.status,
+        })),
+    });
+  }),
+
+  http.post('/api/v1/business-domains', async ({ request }) => {
+    const data = await request.json() as any;
+    const domainStore = mockBusinessDomains as any[];
+    const parent = data.parentId ? domainStore.find((domain) => domain.id === data.parentId) : null;
+    if (data.parentId && !parent) {
+      return HttpResponse.json({ code: 400, message: 'Parent business domain not found' }, { status: 400 });
+    }
+    if (parent && parent.level >= 5) {
+      return HttpResponse.json({ code: 400, message: 'Business domain level cannot exceed 5' }, { status: 400 });
+    }
+    const newDomain = {
+      id: data.id || `bd-${Date.now()}`,
+      code: (data.code || `BD_${Date.now()}`).toString().trim().toUpperCase(),
+      name: data.name || '未命名业务域',
+      parentId: data.parentId ?? null,
+      level: parent ? parent.level + 1 : 1,
+      status: data.status || 'active',
+      owner: data.owner || '待分配',
+      ownerUsername: data.ownerUsername || '',
+      org: data.org || '未分配组织',
+      assetCount: 0,
+      qualityScore: 0,
+      standardCoverage: 0,
+      sensitiveAssets: 0,
+      defaultSecurityLevel: data.defaultSecurityLevel || 'L2 内部',
+      qualityGate: data.qualityGate || '发布前完成标准映射、质量校验和安全分级确认',
+      standardRequired: data.standardRequired ?? true,
+      colorClass: data.colorClass || businessDomainColors[domainStore.length % businessDomainColors.length],
+      growth: data.growth || '+0.0%',
+      updatedAt: formatTimestamp(),
+      description: data.description || '业务域说明待补充。',
+      childDomains: Array.isArray(data.childDomains) ? data.childDomains : [],
+      references: data.references || {
+        assets: 0,
+        standards: 0,
+        qualityRules: 0,
+        models: 0,
+        permissions: 0,
+      },
+    };
+    domainStore.unshift(newDomain);
+    return HttpResponse.json({ code: 0, data: newDomain });
+  }),
+
+  http.put('/api/v1/business-domains/:id', async ({ request, params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const data = await request.json() as any;
+    const domainStore = mockBusinessDomains as any[];
+    const index = domainStore.findIndex((domain) => domain.id === id);
+    if (index > -1) {
+      const parentId = data.parentId ?? null;
+      const parent = parentId ? domainStore.find((domain) => domain.id === parentId) : null;
+      if (parentId && !parent) {
+        return HttpResponse.json({ code: 400, message: 'Parent business domain not found' }, { status: 400 });
+      }
+      if (parentId === id) {
+        return HttpResponse.json({ code: 400, message: 'Business domain cannot be its own parent' }, { status: 400 });
+      }
+      if (parent && parent.level >= 5) {
+        return HttpResponse.json({ code: 400, message: 'Business domain level cannot exceed 5' }, { status: 400 });
+      }
+      domainStore[index] = {
+        ...domainStore[index],
+        code: data.code ? data.code.toString().trim().toUpperCase() : domainStore[index].code,
+        name: data.name ?? domainStore[index].name,
+        parentId,
+        level: parent ? parent.level + 1 : 1,
+        status: data.status ?? domainStore[index].status,
+        owner: data.owner ?? domainStore[index].owner,
+        ownerUsername: data.ownerUsername ?? domainStore[index].ownerUsername,
+        org: data.org ?? domainStore[index].org,
+        defaultSecurityLevel: data.defaultSecurityLevel ?? domainStore[index].defaultSecurityLevel,
+        qualityGate: data.qualityGate ?? domainStore[index].qualityGate,
+        standardRequired: data.standardRequired ?? domainStore[index].standardRequired,
+        description: data.description ?? domainStore[index].description,
+        updatedAt: formatTimestamp(),
+      };
+      return HttpResponse.json({ code: 0, data: domainStore[index] });
+    }
+    return HttpResponse.json({ code: 404, message: 'Business domain not found' }, { status: 404 });
+  }),
+
+  http.post('/api/v1/business-domains/:id/status', async ({ request, params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const { status } = await request.json() as any;
+    const domainStore = mockBusinessDomains as any[];
+    const index = domainStore.findIndex((domain) => domain.id === id);
+    if (index > -1) {
+      domainStore[index] = {
+        ...domainStore[index],
+        status,
+        updatedAt: formatTimestamp(),
+      };
+      return HttpResponse.json({ code: 0, data: domainStore[index] });
+    }
+    return HttpResponse.json({ code: 404, message: 'Business domain not found' }, { status: 404 });
+  }),
+
   // Asset Overview endpoints
   http.get('/api/v1/assets/core-metrics', () => {
     return HttpResponse.json({
@@ -1242,7 +1428,7 @@ export const handlers = [
   http.get('/api/v1/assets/business-domains', () => {
     return HttpResponse.json({
       code: 0,
-      data: mockAssetBusinessDomains
+      data: getAssetBusinessDomainSummary()
     });
   }),
 
@@ -1288,11 +1474,85 @@ export const handlers = [
     });
   }),
 
+  http.get('/api/v1/assets/catalog/:id/detail', ({ params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const detail = mockAssetCatalogDetails.find((item) => item.assetId === id);
+    if (!detail) {
+      return HttpResponse.json({ code: 404, message: 'Asset catalog detail not found' }, { status: 404 });
+    }
+    return HttpResponse.json({
+      code: 0,
+      data: detail
+    });
+  }),
+
   http.get('/api/v1/assets/register-options', () => {
     return HttpResponse.json({
       code: 0,
       data: mockAssetRegisterOptions
     });
+  }),
+
+  http.post('/api/v1/assets/register', async ({ request }) => {
+    const data = await request.json() as any;
+    const tableIds = Array.isArray(data.tableIds) ? data.tableIds : [];
+    const tables = mockAssetRegisterOptions.tables.filter((table) => tableIds.includes(table.id));
+    const dataSource = mockAssetRegisterOptions.dataSources.find((source) => source.id === data.dataSourceId);
+    const layer = String(data.dataLayer || 'dwd').toUpperCase();
+    const sensitivityMap: Record<string, string> = {
+      public: '公开',
+      normal: '内部',
+      sensitive: '敏感',
+      confidential: '机密',
+    };
+    const registeredAssets = tables.map((table, index) => {
+      const existingIndex = mockAssetCatalog.findIndex((asset) => asset.name === table.name);
+      const asset = {
+        id: existingIndex >= 0 ? mockAssetCatalog[existingIndex].id : `asset-${Date.now()}-${index}`,
+        name: table.name,
+        cnName: data.assetName && tables.length === 1 ? data.assetName : `${table.name} 数据表`,
+        description: data.description || `${table.name} 通过资产注册流程纳入目录，等待后续治理任务完善。`,
+        database: table.database,
+        source: dataSource?.name || 'unknown-source',
+        sourceType: String(dataSource?.type || 'unknown').toLowerCase(),
+        layer,
+        domain: data.businessDomain || '公共域',
+        owner: data.owner || '待分配',
+        ownerAvatar: '',
+        department: data.department || dataSource?.name || '未分配组织',
+        sensitivity: sensitivityMap[data.sensitivity] || '内部',
+        qualityScore: 0,
+        rowCount: table.rowCount,
+        size: table.size,
+        fieldCount: 0,
+        visitCount: 0,
+        updateTime: formatTimestamp(),
+        tags: Array.from(new Set([...(data.tags || []), '新注册', '待质量评估'])),
+        certified: false,
+        favorite: false,
+      } as any;
+
+      if (existingIndex >= 0) {
+        mockAssetCatalog[existingIndex] = {
+          ...mockAssetCatalog[existingIndex],
+          ...asset,
+          id: mockAssetCatalog[existingIndex].id,
+          fieldCount: mockAssetCatalog[existingIndex].fieldCount,
+          qualityScore: mockAssetCatalog[existingIndex].qualityScore,
+          visitCount: mockAssetCatalog[existingIndex].visitCount,
+          certified: mockAssetCatalog[existingIndex].certified,
+        };
+        const detailIndex = mockAssetCatalogDetails.findIndex((detail) => detail.assetId === mockAssetCatalog[existingIndex].id);
+        if (detailIndex >= 0) mockAssetCatalogDetails[detailIndex] = buildAssetCatalogDetail(mockAssetCatalog[existingIndex]);
+        return mockAssetCatalog[existingIndex];
+      }
+
+      mockAssetCatalog.unshift(asset);
+      mockAssetCatalogDetails.unshift(buildAssetCatalogDetail(asset));
+      return asset;
+    });
+
+    return HttpResponse.json({ code: 0, data: registeredAssets });
   }),
 
   http.get('/api/v1/assets/lineage', ({ request }) => {
@@ -1335,6 +1595,63 @@ export const handlers = [
       code: 0,
       data: mockAllDataSources
     });
+  }),
+  http.post('/api/v1/metadata/data-sources', async ({ request }) => {
+    const data = await request.json() as any;
+    const sourceStore = mockAllDataSources as any[];
+    const newSource = {
+      id: data.id || `ds-${Date.now()}`,
+      name: data.name || `${String(data.type || 'MySQL').toLowerCase()}_source`,
+      type: data.type || 'MySQL',
+      category: getDataSourceCategory(data.type || 'MySQL'),
+      status: 'syncing',
+      host: data.host || '127.0.0.1',
+      port: Number(data.port || 3306),
+      database: data.database || 'default',
+      version: data.version || '待检测',
+      owner: data.owner || '待分配',
+      department: data.department || '未分配组织',
+      env: data.env || '开发',
+      tableCount: 0,
+      storageGB: 0,
+      qps: 0,
+      latencyMs: 0,
+      lastSyncTime: formatTimestamp(),
+      createTime: formatTimestamp(),
+      description: data.description || '新接入数据源，等待元数据采集完成。',
+      tags: data.tags || ['新接入'],
+    };
+    sourceStore.unshift(newSource);
+    return HttpResponse.json({ code: 0, data: newSource });
+  }),
+  http.post('/api/v1/metadata/data-sources/:id/sync', ({ params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const sourceStore = mockAllDataSources as any[];
+    const index = sourceStore.findIndex((source) => source.id === id);
+    if (index === -1) {
+      return HttpResponse.json({ code: 404, message: 'Data source not found' }, { status: 404 });
+    }
+    sourceStore[index] = {
+      ...sourceStore[index],
+      status: 'syncing',
+      lastSyncTime: formatTimestamp(),
+    };
+    return HttpResponse.json({ code: 0, data: sourceStore[index] });
+  }),
+  http.post('/api/v1/metadata/data-sources/:id/status', async ({ request, params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const { status } = await request.json() as any;
+    const sourceStore = mockAllDataSources as any[];
+    const index = sourceStore.findIndex((source) => source.id === id);
+    if (index === -1) {
+      return HttpResponse.json({ code: 404, message: 'Data source not found' }, { status: 404 });
+    }
+    sourceStore[index] = {
+      ...sourceStore[index],
+      status,
+      lastSyncTime: formatTimestamp(),
+    };
+    return HttpResponse.json({ code: 0, data: sourceStore[index] });
   }),
   http.get('/api/v1/metadata/query', () => {
     return HttpResponse.json({
@@ -1749,5 +2066,129 @@ export const handlers = [
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const versions = mockScriptVersions.filter(v => v.scriptId === id);
     return HttpResponse.json({ code: 0, data: versions });
+  }),
+
+  // ─── 指标管理 ────────────────────────────────────────────────────────────────
+  http.get('/api/v1/service/metric-overview', () => {
+    return HttpResponse.json({ code: 0, data: mockMetricOverview });
+  }),
+  http.get('/api/v1/service/metrics', ({ request }) => {
+    const url = new URL(request.url);
+    const keyword = url.searchParams.get('keyword')?.toLowerCase() ?? '';
+    const type = url.searchParams.get('type') ?? 'all';
+    const category = url.searchParams.get('category') ?? 'all';
+    const status = url.searchParams.get('status') ?? 'all';
+    const result = mockMetrics.filter(m => {
+      if (type !== 'all' && m.type !== type) return false;
+      if (category !== 'all' && m.category !== category) return false;
+      if (status !== 'all' && m.status !== status) return false;
+      if (keyword && !m.name.includes(keyword) && !m.bizName.includes(keyword) && !m.definition.includes(keyword)) return false;
+      return true;
+    });
+    return HttpResponse.json({ code: 0, data: result });
+  }),
+  http.post('/api/v1/service/metrics', async ({ request }) => {
+    const data = await request.json() as any;
+    const newMetric = {
+      ...data,
+      id: `m-${Date.now()}`,
+      status: 'draft',
+      certified: false,
+      usedBy: 0,
+      version: 'v0.1',
+      createdAt: new Date().toISOString().slice(0, 10),
+      updatedAt: new Date().toISOString().slice(0, 10),
+    };
+    mockMetrics.unshift(newMetric as any);
+    return HttpResponse.json({ code: 0, data: newMetric });
+  }),
+  http.post('/api/v1/service/metrics/:id/status', async ({ request, params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const { status } = await request.json() as any;
+    const index = mockMetrics.findIndex(m => m.id === id);
+    if (index > -1) {
+      (mockMetrics[index] as any).status = status;
+      return HttpResponse.json({ code: 0, data: mockMetrics[index] });
+    }
+    return HttpResponse.json({ code: 404, message: 'Metric not found' }, { status: 404 });
+  }),
+  http.get('/api/v1/service/metric-categories', () => {
+    return HttpResponse.json({ code: 0, data: mockMetricCategories });
+  }),
+
+  // ─── 数据服务 API ─────────────────────────────────────────────────────────────
+  http.get('/api/v1/service/api-overview', () => {
+    return HttpResponse.json({ code: 0, data: mockServiceApiOverview });
+  }),
+  http.get('/api/v1/service/apis', ({ request }) => {
+    const url = new URL(request.url);
+    const keyword = url.searchParams.get('keyword')?.toLowerCase() ?? '';
+    const status = url.searchParams.get('status') ?? 'all';
+    const category = url.searchParams.get('category') ?? 'all';
+    const result = mockServiceApis.filter(a => {
+      if (status !== 'all' && a.status !== status) return false;
+      if (category !== 'all' && a.category !== category) return false;
+      if (keyword && !a.name.includes(keyword) && !a.path.includes(keyword) && !a.enName.includes(keyword)) return false;
+      return true;
+    });
+    return HttpResponse.json({ code: 0, data: result });
+  }),
+  http.post('/api/v1/service/apis', async ({ request }) => {
+    const data = await request.json() as any;
+    const newApi = {
+      ...data,
+      id: `api-${Date.now()}`,
+      status: 'maintaining',
+      qps: 0,
+      avgLatency: '-',
+      p99Latency: '-',
+      errorRate: '-',
+      totalCalls: '0',
+      callerCount: 0,
+      version: 'v1.0',
+      createdAt: new Date().toISOString().slice(0, 10),
+      updatedAt: new Date().toISOString().slice(0, 10),
+    };
+    mockServiceApis.unshift(newApi as any);
+    return HttpResponse.json({ code: 0, data: newApi });
+  }),
+  http.post('/api/v1/service/apis/:id/status', async ({ request, params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const { status } = await request.json() as any;
+    const index = mockServiceApis.findIndex(a => a.id === id);
+    if (index > -1) {
+      (mockServiceApis[index] as any).status = status;
+      return HttpResponse.json({ code: 0, data: mockServiceApis[index] });
+    }
+    return HttpResponse.json({ code: 404, message: 'API not found' }, { status: 404 });
+  }),
+
+  // ─── 数据共享 ─────────────────────────────────────────────────────────────────
+  http.get('/api/v1/service/sharing-overview', () => {
+    return HttpResponse.json({ code: 0, data: mockDataSharingOverview });
+  }),
+  http.get('/api/v1/service/shares', ({ request }) => {
+    const url = new URL(request.url);
+    const keyword = url.searchParams.get('keyword')?.toLowerCase() ?? '';
+    const level = url.searchParams.get('level') ?? 'all';
+    const type = url.searchParams.get('type') ?? 'all';
+    const category = url.searchParams.get('category') ?? 'all';
+    const result = mockShareAssets.filter(a => {
+      if (level !== 'all' && a.level !== level) return false;
+      if (type !== 'all' && a.type !== type) return false;
+      if (category !== 'all' && a.category !== category) return false;
+      if (keyword && !a.name.includes(keyword) && !a.bizName.includes(keyword) && !a.description.includes(keyword)) return false;
+      return true;
+    });
+    return HttpResponse.json({ code: 0, data: result });
+  }),
+  http.post('/api/v1/service/shares/:id/apply', ({ params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const index = mockShareAssets.findIndex(a => a.id === id);
+    if (index > -1) {
+      (mockShareAssets[index] as any).status = 'applied';
+      return HttpResponse.json({ code: 0, data: { success: true, message: '申请已提交，等待审批' } });
+    }
+    return HttpResponse.json({ code: 404, message: 'Asset not found' }, { status: 404 });
   }),
 ];

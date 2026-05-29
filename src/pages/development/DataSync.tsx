@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import Breadcrumb from '../../components/common/Breadcrumb';
 
 interface SyncTask {
@@ -157,7 +157,7 @@ export default function DataSync() {
                     {task.syncType === 'realtime' ? '实时同步' : '批量同步'}
                   </span>
                   <span>{task.tables} 张表</span>
-                  <span>{task.records} '</span>
+                  <span>{task.records} 条</span>
                   {task.delay && <span>延迟 {task.delay}</span>}
                   {task.qps && <span>QPS {task.qps}</span>}
                 </div>
@@ -175,7 +175,7 @@ export default function DataSync() {
                 )}
 
                 <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>最近同' {task.lastSync}</span>
+                  <span>最近同步 {task.lastSync}</span>
                   <span>负责人' {task.owner}</span>
                 </div>
 
@@ -191,18 +191,18 @@ export default function DataSync() {
           })}
         </div>
       ) : (
-        <div className="bg-slate-800/40 border border-slate-700/30 rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-slate-800/40 border border-slate-700/30 rounded-xl overflow-x-auto">
+          <table className="min-w-[930px] w-full table-fixed text-left text-sm">
             <thead>
               <tr className="border-b border-slate-700/50 text-slate-400 text-xs">
-                <th className="text-left px-4 py-3 font-medium">任务名称</th>
-                <th className="text-left px-4 py-3 font-medium">源→目标</th>
-                <th className="text-left px-4 py-3 font-medium">类型</th>
-                <th className="text-left px-4 py-3 font-medium">状态'</th>
-                <th className="text-left px-4 py-3 font-medium">表数</th>
-                <th className="text-left px-4 py-3 font-medium">记录'</th>
-                <th className="text-left px-4 py-3 font-medium">最近同'</th>
-                <th className="text-left px-4 py-3 font-medium">操作</th>
+                <th className="text-left px-4 py-3 font-medium w-[180px]">任务名称</th>
+                <th className="text-left px-4 py-3 font-medium w-[200px]">源→目标</th>
+                <th className="text-left px-4 py-3 font-medium w-[80px]">类型</th>
+                <th className="text-left px-4 py-3 font-medium w-[80px]">状态</th>
+                <th className="text-left px-4 py-3 font-medium w-[70px]">表数</th>
+                <th className="text-left px-4 py-3 font-medium w-[80px]">记录数</th>
+                <th className="text-left px-4 py-3 font-medium w-[140px]">最近同步</th>
+                <th className="text-left px-4 py-3 font-medium w-[100px]">操作</th>
               </tr>
             </thead>
             <tbody>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { fetchStandardMappings, updateStandardMappingStatus, rescanStandardMappings, createManualMapping } from "../../services/api";
 import Breadcrumb from "../../components/common/Breadcrumb";
 
@@ -245,16 +245,16 @@ export default function StandardMap() {
       </div>
 
       {/* 数据表 */}
-      <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm">
-        <table className="w-full">
+<div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm">
+<table className="min-w-[800px] w-full table-fixed">
           <thead>
             <tr className="border-b border-slate-800 bg-slate-900/60 text-left text-xs text-slate-400">
-              <th className="px-4 py-3 font-medium">数据标准 (定义)</th>
-              <th className="px-4 py-3 font-medium text-center">映射匹配度</th>
-              <th className="px-4 py-3 font-medium">物理字段 (实际)</th>
-              <th className="px-4 py-3 font-medium">状态</th>
-              <th className="px-4 py-3 font-medium">更新时间</th>
-              <th className="px-4 py-3 font-medium text-right">操作</th>
+              <th className="px-4 py-3 font-medium w-[200px]">数据标准 (定义)</th>
+              <th className="px-4 py-3 font-medium w-[100px] text-center">映射匹配度</th>
+              <th className="px-4 py-3 font-medium w-[200px]">物理字段 (实际)</th>
+              <th className="px-4 py-3 font-medium w-[80px]">状态</th>
+              <th className="px-4 py-3 font-medium w-[120px]">更新时间</th>
+              <th className="px-4 py-3 font-medium w-[100px] text-right">操作</th>
             </tr>
           </thead>
           <tbody>

@@ -14,6 +14,7 @@ import {
 import GovernanceHome from "../pages/home/GovernanceHome";
 import Dashboard from "../pages/dashboard/Dashboard";
 import AssetOverview from "../pages/asset/AssetOverview";
+import BusinessDomainManage from "../pages/asset/BusinessDomainManage";
 import AssetRegister from "../pages/asset/AssetRegister";
 import DataCatalog from "../pages/asset/DataCatalog";
 import DataMap from "../pages/asset/DataMap";
@@ -81,6 +82,7 @@ export const menuItems: MenuItem[] = [
     icon: <Database className="h-5 w-5" />,
     children: [
       { id: "asset-overview", label: "资产总览" },
+      { id: "business-domain", label: "业务域管理" },
       { id: "asset-register", label: "资产注册" },
       { id: "data-catalog", label: "数据目录" },
       { id: "data-map", label: "数据地图" },
@@ -189,6 +191,7 @@ export const routeViews: Record<string, ReactNode> = {
   home: <GovernanceHome />,
   dashboard: <Dashboard />,
   "asset-overview": <AssetOverview />,
+  "business-domain": <BusinessDomainManage />,
   "asset-register": <AssetRegister />,
   "data-catalog": <DataCatalog />,
   "data-map": <DataMap />,

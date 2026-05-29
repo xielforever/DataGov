@@ -104,6 +104,22 @@ const AssetOverview: React.FC = () => {
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
+  const navigateToAsset = (view: string, assetName: string) => {
+    const param = view === 'data-lineage' ? `center=${assetName}` : `asset=${assetName}`;
+    window.history.replaceState(null, '', `?view=${view}&${param}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
+  const handlePendingClick = (type: string) => {
+    const targetMap: Record<string, string> = {
+      待审: 'approvals-todos',
+      待认: 'data-catalog',
+      待补充元数据: 'metadata-manage',
+      待分配负责人: 'business-domain',
+    };
+    navigateTo(targetMap[type] || 'data-catalog');
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -362,7 +378,7 @@ const AssetOverview: React.FC = () => {
               ))}
             </div>
 
-            {/* 柱状态'*/}
+                            {/* 柱状态 */}
             <div className="absolute inset-x-4 top-4 bottom-4 pl-12 flex items-end justify-between gap-3">
               {growthTrend.map((item, i) => {
                 const height = (item.value / maxGrowth) * 100;
@@ -653,7 +669,11 @@ const AssetOverview: React.FC = () => {
                 };
                 const PendingIcon = pendingIconMap[item.color] ?? ClipboardList;
                 return (
-                  <div key={i} className={`flex items-center justify-between p-4 bg-gradient-to-r ${colorClasses[item.color]} border rounded-lg transition-all cursor-pointer group`}>
+                  <div
+                    key={i}
+                    onClick={() => handlePendingClick(item.type)}
+                    className={`flex items-center justify-between p-4 bg-gradient-to-r ${colorClasses[item.color]} border rounded-lg transition-all cursor-pointer group`}
+                  >
                     <div className="flex items-center gap-3">
                       <PendingIcon className={`h-5 w-5 ${textColor[item.color]}`} />
                       <div>
@@ -679,7 +699,7 @@ const AssetOverview: React.FC = () => {
                   当前 {sourceHealthSummary.warning} 个异常接入源影响资产同步，优先关注 {unhealthyDataSources.slice(0, 2).map((source) => source.name).join('、') || '核心接入源'}。
                 </div>
               </div>
-              <button className="shrink-0 rounded-lg border border-cyan-500/20 bg-slate-950/40 px-3 py-2 text-xs text-cyan-300 hover:border-cyan-400/40 hover:text-cyan-200 transition-colors">
+              <button onClick={() => navigateTo('data-source')} className="shrink-0 rounded-lg border border-cyan-500/20 bg-slate-950/40 px-3 py-2 text-xs text-cyan-300 hover:border-cyan-400/40 hover:text-cyan-200 transition-colors">
                 查看接入源
               </button>
             </div>
@@ -695,7 +715,7 @@ const AssetOverview: React.FC = () => {
             <h3 className="text-base font-semibold text-white">热门资产排行</h3>
             <span className="text-xs text-slate-500">最近 30 天访问量</span>
           </div>
-          <button className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+          <button onClick={() => navigateTo('data-catalog')} className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
             查看完整排行
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -704,16 +724,16 @@ const AssetOverview: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px]">
+          <table className="min-w-[700px] w-full table-fixed">
             <thead>
               <tr className="border-b border-slate-700/50 text-xs text-slate-400">
                 <th className="text-left py-3 px-2 font-medium w-16">排名</th>
-                <th className="text-left py-3 px-2 font-medium">资产名称</th>
-                <th className="text-left py-3 px-2 font-medium">分层</th>
-                <th className="text-left py-3 px-2 font-medium">业务域</th>
-                <th className="text-left py-3 px-2 font-medium">负责人</th>
-                <th className="text-right py-3 px-2 font-medium">访问次数</th>
-                <th className="text-right py-3 px-2 font-medium">操作</th>
+                <th className="text-left py-3 px-2 font-medium w-[180px]">资产名称</th>
+                <th className="text-left py-3 px-2 font-medium w-[80px]">分层</th>
+                <th className="text-left py-3 px-2 font-medium w-[100px]">业务域</th>
+                <th className="text-left py-3 px-2 font-medium w-[90px]">负责人</th>
+                <th className="text-right py-3 px-2 font-medium w-[80px]">访问次数</th>
+                <th className="text-right py-3 px-2 font-medium w-[100px]">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -756,18 +776,18 @@ const AssetOverview: React.FC = () => {
                   </td>
                   <td className="py-3 px-2 text-right">
                     <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-1.5 text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50 rounded transition-colors" title="查看详情">
+                      <button onClick={() => navigateToAsset('data-catalog', asset.name)} className="p-1.5 text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50 rounded transition-colors" title="查看详情">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                       </button>
-                      <button className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-700/50 rounded transition-colors" title="血缘分">
+                      <button onClick={() => navigateToAsset('data-lineage', asset.name)} className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-700/50 rounded transition-colors" title="血缘分析">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                       </button>
-                      <button className="p-1.5 text-slate-400 hover:text-purple-400 hover:bg-slate-700/50 rounded transition-colors" title="收藏">
+                      <button onClick={() => toast.success('已加入资产收藏')} className="p-1.5 text-slate-400 hover:text-purple-400 hover:bg-slate-700/50 rounded transition-colors" title="收藏">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                         </svg>

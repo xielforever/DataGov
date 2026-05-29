@@ -44,7 +44,7 @@ export default function DataLineage() {
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
   const [allNodes, setAllNodes] = useState<LineageNode[]>([]);
   const [allEdges, setAllEdges] = useState<LineageEdge[]>([]);
-  const [fieldLineage, setFieldLineage] = useState<{ from: string; to: string; transform: string }[]>([]);
+  const [fieldLineage, setFieldLineage] = useState<{ from: string; to: string; transform?: string; logic?: string; status?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'graph' | 'field' | 'impact'>('graph');
   const [zoom, setZoom] = useState(1);
@@ -81,7 +81,10 @@ export default function DataLineage() {
   };
 
   useEffect(() => {
-    loadLineageData('dwd_order_detail', 2, 2);
+    const params = new URLSearchParams(window.location.search);
+    const initialCenter = params.get('center') || 'dwd_order_detail';
+    setSearchQuery(initialCenter);
+    loadLineageData(initialCenter, 2, 2);
   }, []);
 
   const centerNode = allNodes.find(node => node.id === centerNodeId) ?? allNodes[0] ?? { name: '', layer: 'ODS', cnName: '', rows: 0, owner: '', qualityScore: 0 };
@@ -182,6 +185,33 @@ export default function DataLineage() {
   // 影响分析数据
   const impactNodes = nodesWithPos.filter(n => n.level > 0);
   const dependsOnNodes = nodesWithPos.filter(n => n.level < 0);
+  const fieldMappings = fieldLineage.map((item) => ({
+    from: item.from,
+    to: item.to,
+    transform: item.transform || item.logic || '直接映射',
+    status: item.status || 'normal',
+  }));
+  const upstreamFieldGroups = fieldMappings.reduce<Record<string, string[]>>((groups, item) => {
+    const [table, field] = item.from.split('.');
+    const groupName = table || '未知上游';
+    groups[groupName] = groups[groupName] || [];
+    if (field) groups[groupName].push(field);
+    return groups;
+  }, {});
+  const currentFields = fieldMappings.map((item) => {
+    const [, field] = item.to.split('.');
+    return {
+      name: field || item.to,
+      type: item.status === 'warning' ? '需确认' : '已映射',
+      tag: item.transform === '直接映射' ? '直连' : '转换',
+    };
+  });
+  const generatedFieldSql = fieldMappings.length
+    ? `SELECT\n${fieldMappings.map((item) => {
+        const [, targetField] = item.to.split('.');
+        return `  ${item.from} AS ${targetField || item.to}`;
+      }).join(',\n')}\nFROM ${Object.keys(upstreamFieldGroups)[0] || 'upstream_table'};`
+    : '-- 暂无字段映射样本';
 
   return (
     <div className="space-y-6">
@@ -657,12 +687,16 @@ export default function DataLineage() {
               <p className="text-sm text-slate-400 mt-1">追踪每个字段的来源与转换逻辑，支持精确的影响分析</p>
             </div>
             <div className="flex items-center gap-2">
-              <select className="bg-slate-950/50 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-cyan-500/50">
-                <option>dwd_order_detail</option>
-                <option>dws_order_user_1d</option>
-                <option>ads_sales_report</option>
+              <select
+                value={centerNodeId}
+                onChange={(event) => handleCenterNodeChange(event.target.value)}
+                className="bg-slate-950/50 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-cyan-500/50"
+              >
+                {allNodes.map((node) => (
+                  <option key={node.id} value={node.id}>{node.name}</option>
+                ))}
               </select>
-              <button onClick={() => toast.success('字段血缘视图已切换')} className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
+              <button onClick={() => toast.success('字段血缘 SQL 导出任务已提交')} className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
                 导出 SQL
               </button>
             </div>
@@ -676,18 +710,14 @@ export default function DataLineage() {
                 上游字段
               </div>
               <div className="space-y-2">
-                {[
-                  { table: 'ods_order', fields: ['order_id', 'user_id', 'amount', 'create_time'], color: 'blue' },
-                  { table: 'ods_user', fields: ['user_name', 'user_level'], color: 'blue' },
-                  { table: 'dwd_user_event', fields: ['last_visit'], color: 'cyan' },
-                ].map(t => (
-                  <div key={t.table} className="bg-slate-950/50 border border-white/10 rounded-lg p-3">
+                {Object.entries(upstreamFieldGroups).map(([table, fields]) => (
+                  <div key={table} className="bg-slate-950/50 border border-white/10 rounded-lg p-3">
                     <div className="text-xs font-medium text-slate-300 mb-2 flex items-center gap-1.5">
                       <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" /></svg>
-                      {t.table}
+                      {table}
                     </div>
                     <div className="space-y-1">
-                      {t.fields.map(f => (
+                      {fields.map(f => (
                         <div key={f} className="text-xs font-mono text-slate-400 hover:text-cyan-400 hover:bg-white/5 px-2 py-1 rounded cursor-pointer transition-colors">
                           {f}
                         </div>
@@ -728,23 +758,15 @@ export default function DataLineage() {
             <div className="col-span-4">
               <div className="text-xs font-medium text-purple-400 mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-                当前表字段（dwd_order_detail）
+                当前表字段（{centerNode.name || centerNodeId}）
               </div>
               <div className="bg-slate-950/50 border border-cyan-500/30 rounded-lg p-3">
                 <div className="text-xs font-medium text-cyan-300 mb-2 flex items-center gap-1.5">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                  共 32 个字段（显示主要字段）
+                  共 {currentFields.length} 个字段（显示已解析映射）
                 </div>
                 <div className="space-y-1">
-                  {[
-                    { name: 'order_id', type: 'BIGINT', tag: '主键' },
-                    { name: 'user_id', type: 'BIGINT', tag: '索引' },
-                    { name: 'order_amount', type: 'DECIMAL(18,2)' },
-                    { name: 'order_time', type: 'TIMESTAMP' },
-                    { name: 'user_name', type: 'VARCHAR(50)' },
-                    { name: 'user_level', type: 'TINYINT' },
-                    { name: 'last_active', type: 'TIMESTAMP' },
-                  ].map(f => (
+                  {currentFields.map(f => (
                     <div key={f.name} className="flex items-center justify-between text-xs px-2 py-1.5 hover:bg-white/5 rounded cursor-pointer">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-slate-300">{f.name}</span>
@@ -768,19 +790,7 @@ export default function DataLineage() {
               <button className="text-xs text-slate-400 hover:text-white">复制</button>
             </div>
             <pre className="p-4 text-xs font-mono text-slate-300 overflow-x-auto">
-{`INSERT INTO dwd_order_detail
-SELECT
-  o.order_id,                               -- 直接映射 ods_order.order_id
-  o.user_id,                                -- 直接映射 ods_order.user_id
-  CAST(o.amount AS DECIMAL(18,2)) AS order_amount,  -- 类型转换
-  CONVERT_TZ(o.create_time, '+00:00', '+08:00') AS order_time,  -- 时区转换
-  u.user_name,                              -- JOIN ods_user
-  u.user_level,                             -- JOIN ods_user
-  MAX(e.last_visit) AS last_active          -- MAX 聚合 dwd_user_event
-FROM ods_order o
-LEFT JOIN ods_user u ON o.user_id = u.user_id
-LEFT JOIN dwd_user_event e ON o.user_id = e.user_id
-GROUP BY o.order_id, o.user_id, o.amount, o.create_time, u.user_name, u.user_level;`}
+{generatedFieldSql}
             </pre>
           </div>
         </div>
@@ -796,7 +806,7 @@ GROUP BY o.order_id, o.user_id, o.amount, o.create_time, u.user_name, u.user_lev
             <div className="flex-1">
               <div className="text-sm font-medium text-amber-300 mb-1">变更影响评估</div>
               <div className="text-xs text-amber-200/70">
-                若对 <span className="font-mono font-semibold text-amber-100">dwd_order_detail</span> 进行结构变更或下线，将影响 <span className="font-bold text-amber-100">{impactNodes.length}</span> 个下游表、<span className="font-bold text-amber-100">3</span> 个核心报表、<span className="font-bold text-amber-100">12</span> 个数据应用。
+                若对 <span className="font-mono font-semibold text-amber-100">{centerNode.name || centerNodeId}</span> 进行结构变更或下线，将影响 <span className="font-bold text-amber-100">{impactNodes.length}</span> 个下游表、<span className="font-bold text-amber-100">{Math.max(1, Math.ceil(impactNodes.length / 2))}</span> 个核心报表、<span className="font-bold text-amber-100">{Math.max(1, impactNodes.length * 3)}</span> 个数据应用。
                 请仔细评估后再操作，建议提前通知相关负责人。
               </div>
             </div>
@@ -967,13 +977,16 @@ GROUP BY o.order_id, o.user_id, o.amount, o.create_time, u.user_name, u.user_lev
             >
               设为中心节点
             </button>
-              <button onClick={() => toast.success('影响分析视图已切换')} className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
+              <button onClick={() => setViewMode('field')} className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
               查看字段血缘
             </button>
-              <button onClick={() => toast('资产详情将在目录详情中打开')} className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
+              <button onClick={() => setViewMode('impact')} className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
               影响分析
             </button>
-            <button className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors">
+            <button
+              onClick={() => { window.history.replaceState(null, "", `?view=data-catalog&asset=${selectedNode.id}`); window.dispatchEvent(new PopStateEvent("popstate")); }}
+              className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors"
+            >
               查看详情
             </button>
           </div>

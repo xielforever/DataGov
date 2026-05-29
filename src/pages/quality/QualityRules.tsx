@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useState } from "react";
+﻿import { ReactNode, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -348,17 +348,17 @@ export default function QualityRules() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-lg border border-slate-800 bg-slate-900/60">
+            <table className="min-w-[790px] w-full table-fixed text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-950/50 text-left text-xs text-slate-400">
-                  <th className="px-4 py-3 font-medium">规则名称 / 编码</th>
-                  <th className="px-4 py-3 font-medium">分类</th>
-                  <th className="px-4 py-3 font-medium">数据对象</th>
-                  <th className="px-4 py-3 font-medium">阈值</th>
-                  <th className="px-4 py-3 font-medium">最近通过率</th>
-                  <th className="px-4 py-3 font-medium">状态</th>
-                  <th className="px-4 py-3 font-medium text-right">操作</th>
+                  <th className="px-4 py-3 font-medium w-[200px]">规则名称 / 编码</th>
+                  <th className="px-4 py-3 font-medium w-[90px]">分类</th>
+                  <th className="px-4 py-3 font-medium w-[140px]">数据对象</th>
+                  <th className="px-4 py-3 font-medium w-[80px]">阈值</th>
+                  <th className="px-4 py-3 font-medium w-[100px]">最近通过率</th>
+                  <th className="px-4 py-3 font-medium w-[80px]">状态</th>
+                  <th className="px-4 py-3 font-medium w-[100px] text-right">操作</th>
                 </tr>
               </thead>
               <tbody>

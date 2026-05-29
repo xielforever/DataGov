@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import Breadcrumb from '../../components/common/Breadcrumb';
+import { fetchBusinessDomainOptions } from "../../services/api";
 
 type Position = { x: number; y: number };
 type PositionMap = Record<string, Position>;
@@ -102,7 +103,7 @@ const MODELS: MetadataModel[] = [
         type: "conceptual",
         domain: "交易域",
         layer: "DWD",
-        description: "订单中的商品牌",
+        description: "订单中的商品明细",
         owner: "张明",
         version: "2.1",
         updatedAt: "2024-01-15",
@@ -272,7 +273,7 @@ const MODELS: MetadataModel[] = [
         name: "t_product_spu",
         cnName: "商品SPU表",
         type: "physical",
-        domain: "商品牌",
+        domain: "商品域",
         layer: "ODS",
         description: "商品标准化产品单",
         owner: "林峰",
@@ -293,7 +294,7 @@ const MODELS: MetadataModel[] = [
         name: "t_product_sku",
         cnName: "商品SKU表",
         type: "physical",
-        domain: "商品牌",
+        domain: "商品域",
         layer: "ODS",
         description: "商品库存单元，对应实际售卖单",
         owner: "林峰",
@@ -314,7 +315,7 @@ const MODELS: MetadataModel[] = [
         name: "t_category",
         cnName: "商品类目表",
         type: "physical",
-        domain: "商品牌",
+        domain: "商品域",
         layer: "DIM",
         description: "商品类目维度",
         owner: "林峰",
@@ -333,7 +334,7 @@ const MODELS: MetadataModel[] = [
         name: "t_brand",
         cnName: "品牌表",
         type: "physical",
-        domain: "商品牌",
+        domain: "商品域",
         layer: "DIM",
         description: "商品品牌维度",
         owner: "林峰",
@@ -378,6 +379,7 @@ export default function MetadataModel() {
   const [newModelType, setNewModelType] = useState<"conceptual" | "logical" | "physical">("logical");
   const [newModelDesc, setNewModelDesc] = useState("");
   const [newModelDomain, setNewModelDomain] = useState("交易域");
+  const [businessDomainOptions, setBusinessDomainOptions] = useState<string[]>(["交易域", "用户域", "商品域", "营销域", "财务域", "风控域"]);
   const [newModelOwner, setNewModelOwner] = useState("数据治理团队");
   const [newModelVersion, setNewModelVersion] = useState("v1.0");
   const [newModelTags, setNewModelTags] = useState<string[]>([]);
@@ -422,6 +424,18 @@ export default function MetadataModel() {
     from: "", to: "", type: "1:N", label: ""
   });
 
+  const defaultBusinessDomain = businessDomainOptions[0] || "交易域";
+
+  useEffect(() => {
+    fetchBusinessDomainOptions().then((res) => {
+      const names = (res as Array<{ name: string }>).map((domain) => domain.name);
+      if (!names.length) return;
+      setBusinessDomainOptions(names);
+      setNewModelDomain((current) => names.includes(current) ? current : names[0]);
+      setFormEntity((current) => ({ ...current, domain: current.domain || names[0] }));
+    });
+  }, []);
+
   const updateModelData = (updatedEntities: Entity[], updatedRels: Relationship[]) => {
     const updated = {
       ...selectedModel,
@@ -449,7 +463,7 @@ export default function MetadataModel() {
         name: formEntity.name,
         cnName: formEntity.cnName || formEntity.name,
         type: (formEntity.type as any) || newModelType || "logical",
-        domain: formEntity.domain || newModelDomain || "交易域",
+        domain: formEntity.domain || newModelDomain || defaultBusinessDomain,
         layer: (formEntity.layer as any) || "DWD",
         fields: formEntity.fields || [],
         description: formEntity.description || "",
@@ -905,7 +919,7 @@ export default function MetadataModel() {
     setCreateStep(1);
     setNewModelName("");
     setNewModelDesc("");
-    setNewModelDomain("交易域");
+    setNewModelDomain(defaultBusinessDomain);
     setNewModelOwner("数据治理团队");
     setNewModelVersion("v1.0");
     setNewModelTags([]);
@@ -1217,7 +1231,7 @@ CREATE TABLE \`t_user\` (
                       <button
                         onClick={() => {
                           setShowCanvasAddMenu(false);
-                          setFormEntity({ name: "", cnName: "", type: selectedModel.type, domain: "交易域", layer: "DWD", description: "", owner: "数据治理团队", version: "1.0", fields: [] });
+                          setFormEntity({ name: "", cnName: "", type: selectedModel.type, domain: defaultBusinessDomain, layer: "DWD", description: "", owner: "数据治理团队", version: "1.0", fields: [] });
                           setManageDialog({ type: "entity", mode: "create" });
                         }}
                         className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-slate-800/80 text-left transition-colors group"
@@ -1469,7 +1483,7 @@ CREATE TABLE \`t_user\` (
                     <p className="text-xs text-slate-600 mt-1">点击工具栏' 添加」按钮开始构建模'</p>
                     <button
                       onClick={() => {
-                        setFormEntity({ name: "", cnName: "", type: selectedModel.type, domain: "交易域", layer: "DWD", description: "", owner: "数据治理团队", version: "1.0", fields: [] });
+                        setFormEntity({ name: "", cnName: "", type: selectedModel.type, domain: defaultBusinessDomain, layer: "DWD", description: "", owner: "数据治理团队", version: "1.0", fields: [] });
                         setManageDialog({ type: "entity", mode: "create" });
                       }}
                       className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-medium transition-colors"
@@ -1940,7 +1954,7 @@ CREATE TABLE \`t_user\` (
                     <div>
                       <label className="text-sm font-medium text-slate-200 mb-2.5 block">业务'</label>
                       <div className="grid grid-cols-2 gap-2">
-                        {["交易域", "用户域", "商品域", "营销域", "财务域", "风控域"].map(d => (
+                        {businessDomainOptions.map(d => (
                           <button key={d} onClick={() => setNewModelDomain(d)} className={`px-3 py-2.5 rounded-lg border text-sm transition-all ${newModelDomain === d ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-300" : "border-slate-700/50 bg-slate-800/40 text-slate-300 hover:bg-slate-800"}`}>{d}</button>
                         ))}
                       </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { fetchDictCategories, fetchDictItems, createDictCategory, createDictItem, updateDictItem, deleteDictItem } from "../../services/api";
 import Breadcrumb from "../../components/common/Breadcrumb";
 
@@ -225,15 +225,15 @@ export default function DataDict() {
                     <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
                   </div>
                 ) : (
-                  <table className="w-full text-left text-sm">
+<table className="min-w-[680px] w-full table-fixed text-left text-sm">
                     <thead className="bg-slate-950/50 text-xs text-slate-400 sticky top-0 z-10 backdrop-blur-sm border-b border-slate-800">
                       <tr>
-                        <th className="px-5 py-3 font-medium">排序</th>
-                        <th className="px-5 py-3 font-medium">字典值 (Value)</th>
-                        <th className="px-5 py-3 font-medium">字典标签 (Label)</th>
-                        <th className="px-5 py-3 font-medium">状态</th>
-                        <th className="px-5 py-3 font-medium">描述备注</th>
-                        <th className="px-5 py-3 font-medium text-right">操作</th>
+                        <th className="px-5 py-3 font-medium w-[60px]">排序</th>
+                        <th className="px-5 py-3 font-medium w-[160px]">字典值 (Value)</th>
+                        <th className="px-5 py-3 font-medium w-[160px]">字典标签 (Label)</th>
+                        <th className="px-5 py-3 font-medium w-[80px]">状态</th>
+                        <th className="px-5 py-3 font-medium w-[120px]">描述备注</th>
+                        <th className="px-5 py-3 font-medium w-[100px] text-right">操作</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">

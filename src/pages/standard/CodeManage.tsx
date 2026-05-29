@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { fetchCodeSets, fetchCodeValues, createCodeSet, updateCodeSet, deleteCodeSet, cloneCodeSet, importCodeSets, createCodeValue, updateCodeValue, deleteCodeValue } from "../../services/api";
 import Breadcrumb from "../../components/common/Breadcrumb";
 
@@ -219,17 +219,17 @@ export default function CodeManage() {
       </div>
 
       {/* 数据表 */}
-      <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm">
-        <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm">
+        <table className="min-w-[780px] w-full table-fixed text-left text-sm">
           <thead>
             <tr className="border-b border-slate-800 bg-slate-900/60 text-xs text-slate-400">
-              <th className="px-5 py-3 font-medium">码表名称 / 编码</th>
-              <th className="px-5 py-3 font-medium">来源类型</th>
-              <th className="px-5 py-3 font-medium">参考依据</th>
-              <th className="px-5 py-3 font-medium text-center">码值数量</th>
-              <th className="px-5 py-3 font-medium">状态</th>
-              <th className="px-5 py-3 font-medium">维护人</th>
-              <th className="px-5 py-3 font-medium">更新时间</th>
+              <th className="px-5 py-3 font-medium w-[200px]">码表名称 / 编码</th>
+              <th className="px-5 py-3 font-medium w-[100px]">来源类型</th>
+              <th className="px-5 py-3 font-medium w-[120px]">参考依据</th>
+              <th className="px-5 py-3 font-medium w-[80px] text-center">码值数量</th>
+              <th className="px-5 py-3 font-medium w-[80px]">状态</th>
+              <th className="px-5 py-3 font-medium w-[90px]">维护人</th>
+              <th className="px-5 py-3 font-medium w-[110px]">更新时间</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/50">

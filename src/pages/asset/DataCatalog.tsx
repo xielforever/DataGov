@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { BarChart3, Building2, CircleDot, Copy, Database, Eye, HardDrive, Lock, MessageSquare, Plug, Search, Server, Table2, Tag, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -491,15 +491,15 @@ export default function DataCatalog() {
               <table className="min-w-[920px] w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/10 bg-white/5">
-                    <th className="text-left text-xs font-medium text-slate-400 px-4 py-3">资产名称</th>
-                    <th className="text-left text-xs font-medium text-slate-400 px-4 py-3">分层</th>
-                    <th className="text-left text-xs font-medium text-slate-400 px-4 py-3">业务域</th>
-                    <th className="text-left text-xs font-medium text-slate-400 px-4 py-3">敏感级别</th>
-                    <th className="text-left text-xs font-medium text-slate-400 px-4 py-3">负责人</th>
-                    <th className="text-right text-xs font-medium text-slate-400 px-4 py-3">数据量</th>
-                    <th className="text-right text-xs font-medium text-slate-400 px-4 py-3">质量</th>
-                    <th className="text-left text-xs font-medium text-slate-400 px-4 py-3">更新时间</th>
-                    <th className="text-right text-xs font-medium text-slate-400 px-4 py-3">操作</th>
+                    <th className="text-left text-xs font-medium text-slate-400 px-4 py-3 w-[200px]">资产名称</th>
+                    <th className="text-left text-xs font-medium text-slate-400 px-4 py-3 w-[80px]">分层</th>
+                    <th className="text-left text-xs font-medium text-slate-400 px-4 py-3 w-[100px]">业务域</th>
+                    <th className="text-left text-xs font-medium text-slate-400 px-4 py-3 w-[80px]">敏感级别</th>
+                    <th className="text-left text-xs font-medium text-slate-400 px-4 py-3 w-[80px]">负责人</th>
+                    <th className="text-right text-xs font-medium text-slate-400 px-4 py-3 w-[80px]">数据量</th>
+                    <th className="text-right text-xs font-medium text-slate-400 px-4 py-3 w-[60px]">质量</th>
+                    <th className="text-left text-xs font-medium text-slate-400 px-4 py-3 w-[120px]">更新时间</th>
+                    <th className="text-right text-xs font-medium text-slate-400 px-4 py-3 w-[80px]">操作</th>
                   </tr>
                 </thead>
                 <tbody>

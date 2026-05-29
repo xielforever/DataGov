@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Archive,
@@ -14,9 +15,28 @@ import {
   RotateCcw,
   ShieldCheck,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { fetchHomeGovernanceOverview } from "../../services/api";
 
 type LifecycleDomain = "规划准入" | "治理资产" | "加工供给" | "运营闭环";
+type ControlState = "正常" | "关注" | "阻断";
+type Severity = "P1" | "P2" | "P3";
+type Tone = "cyan" | "sky" | "teal" | "amber" | "rose" | "violet" | "lime";
+
+const iconMap = {
+  alert: AlertTriangle,
+  archive: Archive,
+  boxes: Boxes,
+  branch: GitBranch,
+  clipboard: ClipboardCheck,
+  code: Code2,
+  database: Database,
+  network: Network,
+  rotate: RotateCcw,
+  search: FileSearch,
+  shield: ShieldCheck,
+};
+
+type IconKey = keyof typeof iconMap;
 
 type LifecycleStage = {
   phase: string;
@@ -25,209 +45,40 @@ type LifecycleStage = {
   flow: string;
   gate: string;
   view: string;
-  icon: LucideIcon;
-  tone: string;
+  iconKey: IconKey;
+  tone: Tone;
   domain: LifecycleDomain;
 };
 
 type ControlItem = {
   name: string;
   desc: string;
-  state: "正常" | "关注" | "阻断";
+  state: ControlState;
   view: string;
+};
+
+type LifecycleSignal = {
+  label: string;
+  value: string;
+  desc: string;
 };
 
 type WorkItem = {
   title: string;
   desc: string;
   owner: string;
-  severity: "P1" | "P2" | "P3";
+  severity: Severity;
   view: string;
 };
 
-const lifecycleStages: LifecycleStage[] = [
-  {
-    phase: "01",
-    title: "数据规划",
-    module: "审批中心 / 组织管理",
-    flow: "业务目标、用数需求 -> 数据责任、范围、申请单",
-    gate: "无责任边界不启动",
-    view: "approvals-todos",
-    icon: ClipboardCheck,
-    tone: "amber",
-    domain: "规划准入",
-  },
-  {
-    phase: "02",
-    title: "来源登记",
-    module: "数据源管理",
-    flow: "系统、接口、文件、Topic -> 可管控数据源",
-    gate: "源未登记不采集",
-    view: "data-source",
-    icon: Database,
-    tone: "cyan",
-    domain: "规划准入",
-  },
-  {
-    phase: "03",
-    title: "采集入湖",
-    module: "数据同步 / 实时计算",
-    flow: "批流数据、接口数据 -> ODS / 明细原始数据",
-    gate: "链路、频率、失败重试可追溯",
-    view: "data-sync",
-    icon: RotateCcw,
-    tone: "sky",
-    domain: "规划准入",
-  },
-  {
-    phase: "04",
-    title: "元数据血缘",
-    module: "元数据管理 / 数据血缘",
-    flow: "表、字段、作业、依赖 -> 技术元数据与影响关系",
-    gate: "关键链路无血缘预警",
-    view: "metadata-query",
-    icon: FileSearch,
-    tone: "teal",
-    domain: "治理资产",
-  },
-  {
-    phase: "05",
-    title: "资产编目",
-    module: "数据目录 / 数据地图",
-    flow: "元数据、责任边界 -> 可发现、可运营资产",
-    gate: "无 Owner 不发布",
-    view: "data-catalog",
-    icon: Boxes,
-    tone: "teal",
-    domain: "治理资产",
-  },
-  {
-    phase: "06",
-    title: "标准口径",
-    module: "标准定义 / 字典 / 码值",
-    flow: "字段、术语、指标 -> 统一口径、码值和映射",
-    gate: "核心字段必须映射",
-    view: "standard-map",
-    icon: ClipboardCheck,
-    tone: "amber",
-    domain: "治理资产",
-  },
-  {
-    phase: "07",
-    title: "可信合规",
-    module: "质量核查 / 安全分级",
-    flow: "资产、规则、敏感特征 -> 质量评分、安全标签、脱敏策略",
-    gate: "低分或未分级阻断",
-    view: "quality-check",
-    icon: ShieldCheck,
-    tone: "rose",
-    domain: "加工供给",
-  },
-  {
-    phase: "08",
-    title: "建模加工",
-    module: "数据建模 / 脚本开发",
-    flow: "合规资产、加工需求 -> DWD / DWS / ADS、任务脚本",
-    gate: "开发规范与环境校验",
-    view: "data-modeling",
-    icon: Code2,
-    tone: "violet",
-    domain: "加工供给",
-  },
-  {
-    phase: "09",
-    title: "编排调度",
-    module: "任务编排 / 任务调度",
-    flow: "模型、脚本、同步任务 -> DAG、周期、依赖、告警",
-    gate: "依赖闭环后上线",
-    view: "task-orchestration",
-    icon: GitBranch,
-    tone: "cyan",
-    domain: "加工供给",
-  },
-  {
-    phase: "10",
-    title: "服务共享",
-    module: "指标管理 / 数据服务 / 数据共享",
-    flow: "数据产品、指标、服务申请 -> API、指标、共享数据集",
-    gate: "审批授权后消费",
-    view: "data-service-api",
-    icon: Network,
-    tone: "lime",
-    domain: "运营闭环",
-  },
-  {
-    phase: "11",
-    title: "消费运营",
-    module: "任务运维 / 运维监控 / 审计日志",
-    flow: "访问、调用、任务、审计日志 -> SLA、热度、成本、问题单",
-    gate: "异常闭环后归档",
-    view: "task-ops",
-    icon: AlertTriangle,
-    tone: "sky",
-    domain: "运营闭环",
-  },
-  {
-    phase: "12",
-    title: "归档退役",
-    module: "数据地图 / 审计日志",
-    flow: "低价值、过期、停用资产 -> 归档记录、下线审批、影响通知",
-    gate: "血缘影响确认后退役",
-    view: "data-map",
-    icon: Archive,
-    tone: "rose",
-    domain: "运营闭环",
-  },
-];
+type HomeGovernanceOverview = {
+  lifecycleStages: LifecycleStage[];
+  controls: ControlItem[];
+  signals: LifecycleSignal[];
+  workItems: WorkItem[];
+};
 
-const controlItems: ControlItem[] = [
-  { name: "责任控制", desc: "来源、资产、服务都有 Owner 和组织边界", state: "关注", view: "org-manage" },
-  { name: "质量控制", desc: "采集后、加工后、发布前三处校验", state: "关注", view: "quality-rules" },
-  { name: "安全控制", desc: "分级分类、敏感识别、脱敏和访问策略", state: "阻断", view: "security-level" },
-  { name: "标准控制", desc: "术语、码值、指标和字段映射统一管理", state: "关注", view: "standard-def" },
-  { name: "审计控制", desc: "申请、变更、授权、消费和退役全程留痕", state: "正常", view: "audit-log" },
-];
-
-const lifecycleSignals = [
-  { label: "准入缺口", value: "6", desc: "源、Owner、申请待补齐" },
-  { label: "发布阻断", value: "1", desc: "安全分级未完成" },
-  { label: "退役待审", value: "4", desc: "低价值资产待归档" },
-];
-
-const workItems: WorkItem[] = [
-  {
-    title: "补齐来源责任",
-    desc: "6 个源系统缺少 Owner 或组织边界，影响采集准入。",
-    owner: "组织管理员",
-    severity: "P1",
-    view: "org-manage",
-  },
-  {
-    title: "安全分级阻断",
-    desc: "生产域 7 张表未绑定安全级别，禁止对外共享。",
-    owner: "安全管理员",
-    severity: "P1",
-    view: "security-level",
-  },
-  {
-    title: "血缘完整性复核",
-    desc: "关键调度链路缺少下游影响关系，退役审批需要补证据。",
-    owner: "元数据管理员",
-    severity: "P2",
-    view: "data-lineage",
-  },
-  {
-    title: "低价值资产退役",
-    desc: "4 项低访问资产待确认归档范围和通知对象。",
-    owner: "资产 Owner",
-    severity: "P3",
-    view: "data-map",
-  },
-];
-
-const domains: LifecycleDomain[] = ["规划准入", "治理资产", "加工供给", "运营闭环"];
-
-const toneClass: Record<string, string> = {
+const toneClass: Record<Tone, string> = {
   cyan: "border-cyan-400/30 bg-cyan-400/10 text-cyan-200",
   sky: "border-sky-400/30 bg-sky-400/10 text-sky-200",
   teal: "border-teal-400/30 bg-teal-400/10 text-teal-200",
@@ -275,7 +126,7 @@ function FlowArrow() {
 }
 
 function LifecycleNode({ stage }: { stage: LifecycleStage }) {
-  const Icon = stage.icon;
+  const Icon = iconMap[stage.iconKey];
 
   return (
     <button
@@ -295,8 +146,8 @@ function LifecycleNode({ stage }: { stage: LifecycleStage }) {
       </div>
 
       <div className="mt-2 space-y-1 border-t border-slate-800 pt-1.5 text-[11px]">
-        <div className="truncate text-cyan-100">{stage.flow}</div>
-        <div className="truncate text-slate-500">
+        <div className="line-clamp-2 text-cyan-100">{stage.flow}</div>
+        <div className="line-clamp-2 text-slate-500">
           {stage.module} / 门禁：{stage.gate}
         </div>
       </div>
@@ -304,7 +155,7 @@ function LifecycleNode({ stage }: { stage: LifecycleStage }) {
   );
 }
 
-function DomainProgress() {
+function DomainProgress({ domains }: { domains: LifecycleDomain[] }) {
   return (
     <div className="rounded-md border border-slate-800 bg-slate-950/65 p-3">
       <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)_28px_minmax(0,1fr)_28px_minmax(0,1fr)]">
@@ -344,7 +195,7 @@ function LifecycleDomainRow({ domain, stages }: { domain: LifecycleDomain; stage
   );
 }
 
-function GovernanceControlStrip() {
+function GovernanceControlStrip({ controls }: { controls: ControlItem[] }) {
   return (
     <div className="rounded-md border border-cyan-400/20 bg-slate-950/70 p-3">
       <div className="mb-2 flex items-center gap-2 text-xs font-medium text-cyan-200">
@@ -352,7 +203,7 @@ function GovernanceControlStrip() {
         横向治理控制贯穿全生命周期
       </div>
       <div className="grid gap-2 md:grid-cols-5">
-        {controlItems.map((control) => (
+        {controls.map((control) => (
           <button
             key={control.name}
             type="button"
@@ -371,7 +222,7 @@ function GovernanceControlStrip() {
   );
 }
 
-function LifecycleMap() {
+function LifecycleMap({ data, domains }: { data: HomeGovernanceOverview; domains: LifecycleDomain[] }) {
   return (
     <section className="relative overflow-hidden rounded-lg border border-slate-700/70 bg-slate-950 shadow-xl shadow-slate-950/30">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.055)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.055)_1px,transparent_1px)] bg-[size:32px_32px]" />
@@ -389,10 +240,10 @@ function LifecycleMap() {
       </div>
 
       <div className="relative z-10 space-y-3 p-4">
-        <DomainProgress />
-        <GovernanceControlStrip />
+        <DomainProgress domains={domains} />
+        <GovernanceControlStrip controls={data.controls} />
         {domains.map((domain) => (
-          <LifecycleDomainRow key={domain} domain={domain} stages={lifecycleStages.filter((stage) => stage.domain === domain)} />
+          <LifecycleDomainRow key={domain} domain={domain} stages={data.lifecycleStages.filter((stage) => stage.domain === domain)} />
         ))}
       </div>
 
@@ -409,7 +260,7 @@ function LifecycleMap() {
   );
 }
 
-function GovernanceControlPanel() {
+function GovernanceControlPanel({ signals, workItems }: { signals: LifecycleSignal[]; workItems: WorkItem[] }) {
   return (
     <aside className="flex flex-col gap-4">
       <section className="rounded-lg border border-slate-700/70 bg-slate-900/85">
@@ -451,7 +302,7 @@ function GovernanceControlPanel() {
           <p className="mt-1 text-xs text-slate-500">只保留影响流转的风险，不重复主图环节和控制项</p>
         </div>
         <div className="grid grid-cols-3 divide-x divide-slate-800">
-          {lifecycleSignals.map((signal) => (
+          {signals.map((signal) => (
             <div key={signal.label} className="px-3 py-4 text-center">
               <div className="text-2xl font-semibold text-white">{signal.value}</div>
               <div className="mt-1 text-xs text-slate-300">{signal.label}</div>
@@ -472,6 +323,52 @@ function GovernanceControlPanel() {
 }
 
 function GovernanceHome() {
+  const [data, setData] = useState<HomeGovernanceOverview | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const overview = await fetchHomeGovernanceOverview() as HomeGovernanceOverview;
+        setData(overview);
+      } catch (loadError) {
+        console.error("Failed to load home governance overview:", loadError);
+        setError("首页治理总览数据加载失败，请刷新重试。");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const domains = useMemo(() => {
+    if (!data) return [];
+    return Array.from(new Set(data.lifecycleStages.map((stage) => stage.domain)));
+  }, [data]);
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
+          <p className="mt-3 text-sm text-slate-400">加载首页治理总览...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="rounded-lg border border-rose-400/25 bg-rose-400/10 p-4 text-sm text-rose-100">
+        {error || "首页治理总览数据为空。"}
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-4">
       <header className="flex flex-col gap-2">
@@ -484,9 +381,9 @@ function GovernanceHome() {
         </div>
       </header>
 
-      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_360px]">
-        <LifecycleMap />
-        <GovernanceControlPanel />
+      <div className="grid gap-4 min-[1800px]:grid-cols-[minmax(0,1fr)_360px]">
+        <LifecycleMap data={data} domains={domains} />
+        <GovernanceControlPanel signals={data.signals} workItems={data.workItems} />
       </div>
     </div>
   );

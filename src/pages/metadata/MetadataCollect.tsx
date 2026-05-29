@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import Breadcrumb from '../../components/common/Breadcrumb';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -546,11 +546,11 @@ export default function MetadataCollect() {
               <span className="text-xs text-slate-500">最近 {MOCK_RECORDS.length} 条</span>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="min-w-[850px] w-full table-fixed text-sm">
                 <thead>
                   <tr className="border-b border-slate-700/50 text-xs text-slate-500">
-                    {['任务名称','数据源...触发方式','开始时间','耗时','表数/字段数','新增/更新','状态',].map(h => (
-                      <th key={h} className="px-4 py-3 text-left font-medium">{h}</th>
+                    {([["任务名称","w-[180px]"],["数据源","w-[140px]"],["触发方式","w-[90px]"],["开始时间","w-[140px]"],["耗时","w-[80px]"],["表数/字段数","w-[120px]"],["新增/更新","w-[110px]"],["状态","w-[90px]"]] as const).map(([h,w]) => (
+                      <th key={h} className={`px-4 py-3 text-left font-medium ${w}`}>{h}</th>
                     ))}
                   </tr>
                 </thead>

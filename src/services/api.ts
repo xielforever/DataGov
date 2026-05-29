@@ -13,6 +13,9 @@ async function fetchJson(url: string, options?: RequestInit) {
   return json.data;
 }
 
+// Home
+export const fetchHomeGovernanceOverview = () => fetchJson('/home/governance-overview');
+
 // Dashboard
 export const fetchDashboardStats = () => fetchJson('/dashboard/stats').catch(() => []);
 export const fetchDashboardRecentTables = () => fetchJson('/dashboard/recent-tables').catch(() => []);
@@ -138,6 +141,31 @@ export const createAuditLogExport = (data: any) => fetchJson('/security/audit-ex
 });
 export const fetchAuditLogRetentionPolicies = () => fetchJson('/security/audit-retention-policies');
 
+// Business Domain
+export const fetchBusinessDomains = (params?: { status?: string; keyword?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.status) search.set('status', params.status);
+  if (params?.keyword) search.set('keyword', params.keyword);
+  const query = search.toString();
+  return fetchJson(query ? `/business-domains?${query}` : '/business-domains');
+};
+export const fetchBusinessDomainOptions = () => fetchJson('/business-domains/options');
+export const createBusinessDomain = (data: any) => fetchJson('/business-domains', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const updateBusinessDomain = (id: string, data: any) => fetchJson(`/business-domains/${id}`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const updateBusinessDomainStatus = (id: string, status: string) => fetchJson(`/business-domains/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+
 // Asset Overview
 export const fetchAssetCoreMetrics = () => fetchJson('/assets/core-metrics');
 export const fetchAssetLayerDistribution = () => fetchJson('/assets/layer-distribution');
@@ -148,18 +176,92 @@ export const fetchAssetHealthMetrics = () => fetchJson('/assets/health-metrics')
 export const fetchAssetHotAssets = () => fetchJson('/assets/hot-assets');
 export const fetchAssetPendingItems = () => fetchJson('/assets/pending-items');
 export const fetchAssetCatalog = () => fetchJson('/assets/catalog');
+export const fetchAssetCatalogDetail = (id: string) => fetchJson(`/assets/catalog/${id}/detail`);
 export const fetchAssetRegisterOptions = () => fetchJson('/assets/register-options');
+export const registerAssetTables = (data: any) => fetchJson('/assets/register', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
 export const fetchLineageData = (center?: string) => fetchJson(center ? `/assets/lineage?center=${center}` : '/assets/lineage');
 export const fetchMapData = () => fetchJson('/assets/map');
 
 // Metadata
 export const fetchMetadataDataSources = () => fetchJson('/metadata/data-sources');
+export const createMetadataDataSource = (data: any) => fetchJson('/metadata/data-sources', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const syncMetadataDataSource = (id: string) => fetchJson(`/metadata/data-sources/${id}/sync`, {
+  method: 'POST'
+});
+export const updateMetadataDataSourceStatus = (id: string, status: string) => fetchJson(`/metadata/data-sources/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
 export const fetchMetadataQueryData = () => fetchJson('/metadata/query');
 export const fetchMetadataMaintainData = () => fetchJson('/metadata/maintain');
 
-// Data Service
-export const fetchServiceApis = () => fetchJson('/service/apis');
-export const fetchServiceShares = () => fetchJson('/service/shares');
+// Data Service — Metric Manage
+export const fetchMetricOverview = () => fetchJson('/service/metric-overview');
+export const fetchMetrics = (params?: { keyword?: string; type?: string; category?: string; status?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.type) search.set('type', params.type);
+  if (params?.category) search.set('category', params.category);
+  if (params?.status) search.set('status', params.status);
+  const query = search.toString();
+  return fetchJson(query ? `/service/metrics?${query}` : '/service/metrics');
+};
+export const createMetric = (data: any) => fetchJson('/service/metrics', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const updateMetricStatus = (id: string, status: string) => fetchJson(`/service/metrics/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchMetricCategories = () => fetchJson('/service/metric-categories');
+
+// Data Service — API Management
+export const fetchServiceApiOverview = () => fetchJson('/service/api-overview');
+export const fetchServiceApis = (params?: { keyword?: string; status?: string; category?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.status) search.set('status', params.status);
+  if (params?.category) search.set('category', params.category);
+  const query = search.toString();
+  return fetchJson(query ? `/service/apis?${query}` : '/service/apis');
+};
+export const createServiceApi = (data: any) => fetchJson('/service/apis', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const updateServiceApiStatus = (id: string, status: string) => fetchJson(`/service/apis/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+
+// Data Service — Data Sharing
+export const fetchDataSharingOverview = () => fetchJson('/service/sharing-overview');
+export const fetchServiceShares = (params?: { keyword?: string; level?: string; type?: string; category?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.level) search.set('level', params.level);
+  if (params?.type) search.set('type', params.type);
+  if (params?.category) search.set('category', params.category);
+  const query = search.toString();
+  return fetchJson(query ? `/service/shares?${query}` : '/service/shares');
+};
+export const applyShareAsset = (id: string) => fetchJson(`/service/shares/${id}/apply`, {
+  method: 'POST'
+});
 
 // Data Standard
 export const fetchStandardDefinitions = () => fetchJson('/standard/definitions');

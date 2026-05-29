@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import { CheckCircle, ClipboardList, Database, Link, Lock, Pencil, Plug, Shield, Table2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Breadcrumb from '../../components/common/Breadcrumb';
-import { fetchAssetRegisterOptions } from '../../services/api';
+import { fetchAssetRegisterOptions, registerAssetTables } from '../../services/api';
 
 interface DataSource {
   id: string;
@@ -55,6 +55,7 @@ const AssetRegister: React.FC = () => {
   const [registerProgress, setRegisterProgress] = useState(0);
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerComplete, setRegisterComplete] = useState(false);
+  const [registeredCount, setRegisteredCount] = useState(0);
 
   // 表单数据
   const [formData, setFormData] = useState({
@@ -65,7 +66,6 @@ const AssetRegister: React.FC = () => {
     department: '',
     description: '',
     sensitivity: 'normal',
-    qualityLevel: 'high',
     tags: [] as string[],
   });
 
@@ -136,22 +136,34 @@ const AssetRegister: React.FC = () => {
     }
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     setIsRegistering(true);
     setRegisterProgress(0);
-    
-    const interval = setInterval(() => {
-      setRegisterProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setRegisterComplete(true);
-          }, 300);
-          return 100;
-        }
-        return prev + Math.random() * 15;
-      });
-    }, 200);
+
+    const interval = window.setInterval(() => {
+      setRegisterProgress(prev => Math.min(92, prev + 12));
+    }, 180);
+
+    try {
+      await new Promise(resolve => window.setTimeout(resolve, 900));
+      const registered = await registerAssetTables({
+        dataSourceId: selectedDataSource,
+        databaseId: selectedDatabase,
+        tableIds: selectedTables,
+        ...formData,
+      }) as unknown[];
+      window.clearInterval(interval);
+      setRegisterProgress(100);
+      setRegisteredCount(registered.length);
+      setTimeout(() => {
+        setRegisterComplete(true);
+        setIsRegistering(false);
+      }, 300);
+    } catch {
+      window.clearInterval(interval);
+      setIsRegistering(false);
+      toast.error('资产注册失败，请检查数据源和表选择');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -218,7 +230,7 @@ const AssetRegister: React.FC = () => {
           <h3 className="text-lg font-semibold text-white">选择数据源</h3>
           <p className="text-sm text-slate-400 mt-1">选择要注册资产的数据源，系统将自动扫描可用的数据库和数据表</p>
         </div>
-        <button onClick={() => toast('请先在数据源管理中完成数据源接入')} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-slate-300 transition-colors border border-slate-700">
+        <button onClick={() => { window.history.replaceState(null, "", "?view=data-source"); window.dispatchEvent(new PopStateEvent("popstate")); }} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-slate-300 transition-colors border border-slate-700">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
@@ -383,6 +395,7 @@ const AssetRegister: React.FC = () => {
                     <input
                       type="checkbox"
                       checked={selectedTables.includes(table.id)}
+                      onClick={(e) => e.stopPropagation()}
                       onChange={() => toggleTableSelection(table.id)}
                       className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-0"
                     />
@@ -446,7 +459,7 @@ const AssetRegister: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 左侧：基本信'*/}
+        {/* 左侧：基本信息 */}
         <div className="space-y-4">
           <h4 className="text-sm font-medium text-slate-300 flex items-center gap-2">
             <span className="w-1 h-4 bg-cyan-500 rounded-full"></span>
@@ -554,26 +567,10 @@ const AssetRegister: React.FC = () => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm text-slate-400 mb-1.5">质量等级</label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { value: 'high', label: '', color: 'from-emerald-500 to-emerald-600' },
-                  { value: 'medium', label: '', color: 'from-yellow-500 to-yellow-600' },
-                  { value: 'low', label: '', color: 'from-red-500 to-red-600' },
-                ].map(level => (
-                  <button
-                    key={level.value}
-                    onClick={() => setFormData({ ...formData, qualityLevel: level.value })}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                      formData.qualityLevel === level.value
-                        ? `bg-gradient-to-r ${level.color} text-white shadow-lg`
-                        : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700'
-                    }`}
-                  >
-                    {level.label}
-                  </button>
-                ))}
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 p-3">
+              <div className="text-sm font-medium text-cyan-200">质量评估自动生成</div>
+              <div className="mt-1 text-xs leading-5 text-cyan-100/70">
+                质量分、标准覆盖率、敏感识别结果由注册后的采集和评估任务产出，不在人工注册时录入。
               </div>
             </div>
 
@@ -666,7 +663,7 @@ const AssetRegister: React.FC = () => {
           </div>
           <h3 className="text-2xl font-bold text-white mb-2">资产注册成功</h3>
           <p className="text-slate-400 mb-6">
-            已成功注册 {selectedTables.length} 张数据表到数据资产目录
+            已成功注册 {registeredCount || selectedTables.length} 张数据表到数据资产目录
           </p>
           <div className="flex justify-center gap-4">
             <button
@@ -683,12 +680,12 @@ const AssetRegister: React.FC = () => {
                   department: '',
                   description: '',
                   sensitivity: 'normal',
-                  qualityLevel: 'high',
                   tags: [],
                 });
                 setRegisterComplete(false);
                 setRegisterProgress(0);
                 setIsRegistering(false);
+                setRegisteredCount(0);
               }}
               className="px-6 py-2.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
             >
@@ -821,7 +818,7 @@ const AssetRegister: React.FC = () => {
             </div>
           </div>
 
-          {/* 注册后操'*/}
+          {/* 注册后操作 */}
           <div className="space-y-4">
             <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-5">
               <h4 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
@@ -902,7 +899,7 @@ const AssetRegister: React.FC = () => {
         <div className="rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-400">正在加载可注册资产范围...</div>
       )}
 
-      {/* 步骤指示'*/}
+      {/* 步骤指示 */}
       {renderStepIndicator()}
 
       {/* 步骤内容 */}

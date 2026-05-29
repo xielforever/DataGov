@@ -308,16 +308,16 @@ export default function StandardEval() {
         </div>
         
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="min-w-[810px] w-full table-fixed text-left text-sm">
             <thead className="bg-slate-900/60 text-xs text-slate-400">
               <tr>
-                <th className="px-4 py-3 font-medium">问题描述</th>
-                <th className="px-4 py-3 font-medium">异常类型</th>
-                <th className="px-4 py-3 font-medium">涉及表 / 字段</th>
-                <th className="px-4 py-3 font-medium">严重级</th>
-                <th className="px-4 py-3 font-medium">责任人</th>
-                <th className="px-4 py-3 font-medium">状态</th>
-                <th className="px-4 py-3 font-medium text-right">操作</th>
+                <th className="px-4 py-3 font-medium w-[200px]">问题描述</th>
+                <th className="px-4 py-3 font-medium w-[100px]">异常类型</th>
+                <th className="px-4 py-3 font-medium w-[160px]">涉及表 / 字段</th>
+                <th className="px-4 py-3 font-medium w-[80px]">严重级</th>
+                <th className="px-4 py-3 font-medium w-[90px]">责任人</th>
+                <th className="px-4 py-3 font-medium w-[80px]">状态</th>
+                <th className="px-4 py-3 font-medium w-[100px] text-right">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">

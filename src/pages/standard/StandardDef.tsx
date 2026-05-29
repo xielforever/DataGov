@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { fetchStandardDefinitions, createStandardDefinition, updateStandardDefinition, offlineStandardDefinition, importStandardDefinitions } from "../../services/api";
 import Breadcrumb from "../../components/common/Breadcrumb";
 
@@ -220,18 +220,18 @@ export default function StandardDef() {
       </div>
 
       {/* 数据表 */}
-      <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm">
-        <table className="w-full">
+      <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm">
+        <table className="min-w-[970px] w-full table-fixed text-left text-sm">
           <thead>
             <tr className="border-b border-slate-800 bg-slate-900/60 text-left text-xs text-slate-400">
-              <th className="px-4 py-3 font-medium">标准名称 / 编码</th>
-              <th className="px-4 py-3 font-medium">业务域</th>
-              <th className="px-4 py-3 font-medium">数据类型</th>
-              <th className="px-4 py-3 font-medium">描述</th>
-              <th className="px-4 py-3 font-medium">状态</th>
-              <th className="px-4 py-3 font-medium">负责人</th>
-              <th className="px-4 py-3 font-medium">更新时间</th>
-              <th className="px-4 py-3 font-medium text-right">操作</th>
+              <th className="px-4 py-3 font-medium w-[200px]">标准名称 / 编码</th>
+              <th className="px-4 py-3 font-medium w-[100px]">业务域</th>
+              <th className="px-4 py-3 font-medium w-[90px]">数据类型</th>
+              <th className="px-4 py-3 font-medium w-[200px]">描述</th>
+              <th className="px-4 py-3 font-medium w-[80px]">状态</th>
+              <th className="px-4 py-3 font-medium w-[90px]">负责人</th>
+              <th className="px-4 py-3 font-medium w-[110px]">更新时间</th>
+              <th className="px-4 py-3 font-medium w-[100px] text-right">操作</th>
             </tr>
           </thead>
           <tbody>
