@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { BarChart3, Atom, GitBranch, Layers, BadgeCheck, Search, Plus, ChevronDown, ChevronRight, ExternalLink, Star, TrendingUp, Clock, User, Tag, Info, FileCode2, ArrowUpDown } from 'lucide-react';
 import Breadcrumb from '../../components/common/Breadcrumb';
 import { fetchMetricOverview, fetchMetrics, fetchMetricCategories, updateMetricStatus } from '../../services/api';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
+import ErrorFallback from '../../components/common/ErrorFallback';
 
 /* ── UI constants ────────────────────────────────────────────────────────── */
 
@@ -25,8 +30,16 @@ export default function MetricManage() {
   const [metrics, setMetrics] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const [search, setSearch] = useState('');
+  useKeyboardShortcut({
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedsearch = useDebounce(search, 300);
   const [filterType, setFilterType] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -39,13 +52,14 @@ export default function MetricManage() {
     try {
       const [ov, ms, cats] = await Promise.all([
         fetchMetricOverview(),
-        fetchMetrics({ keyword: search || undefined, type: filterType !== 'all' ? filterType : undefined, category: filterCategory !== 'all' ? filterCategory : undefined, status: filterStatus !== 'all' ? filterStatus : undefined }),
+        fetchMetrics({ keyword: debouncedSearch || undefined, type: filterType !== 'all' ? filterType : undefined, category: filterCategory !== 'all' ? filterCategory : undefined, status: filterStatus !== 'all' ? filterStatus : undefined }),
         fetchMetricCategories(),
       ]);
       setOverview(ov);
       setMetrics(ms);
       setCategories(cats);
     } catch { /* ignore */ }
+      setError(true);
     setLoading(false);
   }, [search, filterType, filterCategory, filterStatus]);
 
@@ -170,7 +184,7 @@ export default function MetricManage() {
         {/* 指标列表 */}
         <div className={`${selected ? 'w-[62%]' : 'w-full'} transition-all`}>
           {loading ? (
-            <div className="bg-slate-800/40 rounded-xl p-5 animate-pulse h-96" />
+            <TableSkeleton rows={8} cols={6} />
           ) : (
             <div className="bg-slate-800/40 border border-slate-700/30 rounded-l-xl overflow-x-auto">
               <table className="min-w-[920px] w-full table-fixed text-sm">
@@ -244,6 +258,14 @@ export default function MetricManage() {
                   )}
                 </tbody>
               </table>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredMetrics.length / pageSize)}
+              pageSize={pageSize}
+              total={filteredMetrics.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+            />
             </div>
           )}
         </div>

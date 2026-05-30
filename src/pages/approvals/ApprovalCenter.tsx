@@ -3,6 +3,11 @@ import { fetchApprovals, processApproval } from "../../services/api";
 import Breadcrumb from "../../components/common/Breadcrumb";
 import { CheckCircle, XCircle, Clock, Search, X, Filter } from "lucide-react";
 import toast from 'react-hot-toast';
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 interface Approval {
   id: string;
@@ -31,7 +36,15 @@ interface ApprovalCenterProps {
 export default function ApprovalCenter({ viewType }: ApprovalCenterProps) {
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [searchQuery, setSearchQuery] = useState('');
+  useKeyboardShortcut({
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedsearchQuery = useDebounce(searchQuery, 300);
   const [selectedModule, setSelectedModule] = useState<string>('all');
   const [selectedApproval, setSelectedApproval] = useState<Approval | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -42,6 +55,7 @@ export default function ApprovalCenter({ viewType }: ApprovalCenterProps) {
       const res = await fetchApprovals();
       setApprovals(res.data || res);
     } catch (error) {
+      setError(true);
       toast.error("获取审批列表失败");
     } finally {
       setLoading(false);
@@ -159,7 +173,7 @@ export default function ApprovalCenter({ viewType }: ApprovalCenterProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50">
-                  {filteredApprovals.map(approval => (
+                  {paginatedFilteredApprovals.map(approval => (
                     <tr key={approval.id} className="hover:bg-slate-800/30 transition-colors group">
                       <td className="px-4 py-3 font-mono text-xs text-slate-400">{approval.id}</td>
                       <td className="px-4 py-3">
@@ -199,6 +213,14 @@ export default function ApprovalCenter({ viewType }: ApprovalCenterProps) {
                   ))}
                 </tbody>
               </table>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredApprovals.length / pageSize)}
+              pageSize={pageSize}
+              total={filteredApprovals.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+            />
             </div>
           )}
         </div>

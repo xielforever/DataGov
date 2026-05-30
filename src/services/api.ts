@@ -1,3 +1,17 @@
+import type {
+  CreateQualityRuleData, CreateCheckBatchData, CreateReportData,
+  CreateSensitiveScanTaskData, CreateAuditLogExportData,
+  CreateBusinessDomainData, UpdateBusinessDomainData, RegisterAssetTablesData,
+  CreateMetadataDataSourceData,
+  CreateMetricData, UpdateMetricData, CreateServiceApiData,
+  CreateStandardDefinitionData, UpdateStandardDefinitionData, CreateStandardMappingData,
+  CreateSyncTaskData, ProcessApprovalData,
+  CreateUserData, UpdateUserData, CreateRoleData, UpdateRoleData,
+  CreateOrgData, UpdateOrgData, CreateNotificationData, UpdateSystemConfigData,
+  CreateDictCategoryData, CreateDictItemData, UpdateDictItemData,
+  CreateModelData, UpdateModelData,
+} from '../types/api';
+
 // Use relative path so MSW can correctly intercept regardless of the preview environment or port
 const BASE_URL = '/api/v1';
 
@@ -24,7 +38,7 @@ export const fetchDashboardTasks = () => fetchJson('/dashboard/tasks').catch(() 
 
 // Data Quality
 export const fetchQualityRules = () => fetchJson('/quality/rules');
-export const createQualityRule = (data: any) => fetchJson('/quality/rules', {
+export const createQualityRule = (data: CreateQualityRuleData) => fetchJson('/quality/rules', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -37,7 +51,7 @@ export const updateQualityRuleStatus = (id: string, status: string) => fetchJson
 export const fetchQualityRuleTemplates = () => fetchJson('/quality/rule-templates');
 export const fetchQualityCheckBatches = () => fetchJson('/quality/check-batches');
 export const fetchQualityCheckIssues = (batchId?: string) => fetchJson(batchId ? `/quality/check-issues?batchId=${batchId}` : '/quality/check-issues');
-export const createQualityCheckBatch = (data: any) => fetchJson('/quality/check-batches', {
+export const createQualityCheckBatch = (data: CreateCheckBatchData) => fetchJson('/quality/check-batches', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -62,7 +76,7 @@ export const fetchQualityReportDomains = () => fetchJson('/quality/report-domain
 export const fetchQualityReportIssues = () => fetchJson('/quality/report-issues');
 export const fetchQualityReportRemediation = () => fetchJson('/quality/report-remediation');
 export const fetchQualityReportReports = () => fetchJson('/quality/reports');
-export const createQualityReport = (data: any) => fetchJson('/quality/reports', {
+export const createQualityReport = (data: CreateReportData) => fetchJson('/quality/reports', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -86,7 +100,7 @@ export const fetchSensitiveScanOverview = () => fetchJson('/security/sensitive-s
 export const fetchSensitiveScanTasks = () => fetchJson('/security/sensitive-scan-tasks');
 export const fetchSensitiveScanRules = () => fetchJson('/security/sensitive-scan-rules');
 export const fetchSensitiveScanFindings = () => fetchJson('/security/sensitive-scan-findings');
-export const createSensitiveScanTask = (data: any) => fetchJson('/security/sensitive-scan-tasks', {
+export const createSensitiveScanTask = (data: CreateSensitiveScanTaskData) => fetchJson('/security/sensitive-scan-tasks', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -134,7 +148,7 @@ export const updateAuditLogRiskStatus = (id: string, status: string) => fetchJso
   body: JSON.stringify({ status })
 });
 export const fetchAuditLogExports = () => fetchJson('/security/audit-exports');
-export const createAuditLogExport = (data: any) => fetchJson('/security/audit-exports', {
+export const createAuditLogExport = (data: CreateAuditLogExportData) => fetchJson('/security/audit-exports', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -150,12 +164,12 @@ export const fetchBusinessDomains = (params?: { status?: string; keyword?: strin
   return fetchJson(query ? `/business-domains?${query}` : '/business-domains');
 };
 export const fetchBusinessDomainOptions = () => fetchJson('/business-domains/options');
-export const createBusinessDomain = (data: any) => fetchJson('/business-domains', {
+export const createBusinessDomain = (data: CreateBusinessDomainData) => fetchJson('/business-domains', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
 });
-export const updateBusinessDomain = (id: string, data: any) => fetchJson(`/business-domains/${id}`, {
+export const updateBusinessDomain = (id: string, data: UpdateBusinessDomainData) => fetchJson(`/business-domains/${id}`, {
   method: 'PUT',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -178,7 +192,7 @@ export const fetchAssetPendingItems = () => fetchJson('/assets/pending-items');
 export const fetchAssetCatalog = () => fetchJson('/assets/catalog');
 export const fetchAssetCatalogDetail = (id: string) => fetchJson(`/assets/catalog/${id}/detail`);
 export const fetchAssetRegisterOptions = () => fetchJson('/assets/register-options');
-export const registerAssetTables = (data: any) => fetchJson('/assets/register', {
+export const registerAssetTables = (data: RegisterAssetTablesData) => fetchJson('/assets/register', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -188,7 +202,7 @@ export const fetchMapData = () => fetchJson('/assets/map');
 
 // Metadata
 export const fetchMetadataDataSources = () => fetchJson('/metadata/data-sources');
-export const createMetadataDataSource = (data: any) => fetchJson('/metadata/data-sources', {
+export const createMetadataDataSource = (data: CreateMetadataDataSourceData) => fetchJson('/metadata/data-sources', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -215,7 +229,7 @@ export const fetchMetrics = (params?: { keyword?: string; type?: string; categor
   const query = search.toString();
   return fetchJson(query ? `/service/metrics?${query}` : '/service/metrics');
 };
-export const createMetric = (data: any) => fetchJson('/service/metrics', {
+export const createMetric = (data: CreateMetricData) => fetchJson('/service/metrics', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -237,7 +251,7 @@ export const fetchServiceApis = (params?: { keyword?: string; status?: string; c
   const query = search.toString();
   return fetchJson(query ? `/service/apis?${query}` : '/service/apis');
 };
-export const createServiceApi = (data: any) => fetchJson('/service/apis', {
+export const createServiceApi = (data: CreateServiceApiData) => fetchJson('/service/apis', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -265,12 +279,12 @@ export const applyShareAsset = (id: string) => fetchJson(`/service/shares/${id}/
 
 // Data Standard
 export const fetchStandardDefinitions = () => fetchJson('/standard/definitions');
-export const createStandardDefinition = (data: any) => fetchJson('/standard/definitions', {
+export const createStandardDefinition = (data: CreateStandardDefinitionData) => fetchJson('/standard/definitions', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
 });
-export const updateStandardDefinition = (id: string, data: any) => fetchJson(`/standard/definitions/${id}`, {
+export const updateStandardDefinition = (id: string, data: UpdateStandardDefinitionData) => fetchJson(`/standard/definitions/${id}`, {
   method: 'PUT',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -308,13 +322,13 @@ export const exportStandardEvalReport = () => fetchJson('/standard/evaluations/e
   method: 'POST'
 });
 export const fetchDictCategories = () => fetchJson('/standard/dictionaries/categories');
-export const createDictCategory = (data: any) => fetchJson('/standard/dictionaries/categories', {
+export const createDictCategory = (data: CreateDictCategoryData) => fetchJson('/standard/dictionaries/categories', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
 });
 export const fetchDictItems = (code: string) => fetchJson(`/standard/dictionaries/${code}/items`);
-export const createDictItem = (code: string, data: any) => fetchJson(`/standard/dictionaries/${code}/items`, {
+export const createDictItem = (code: string, data: CreateDictItemData) => fetchJson(`/standard/dictionaries/${code}/items`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -371,12 +385,12 @@ export const deleteCodeValue = (code: string, id: string) => fetchJson(`/standar
 
 // Data Development
 export const fetchModels = () => fetchJson('/development/models');
-export const createModel = (data: any) => fetchJson('/development/models', {
+export const createModel = (data: CreateModelData) => fetchJson('/development/models', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
 });
-export const updateModel = (id: string, data: any) => fetchJson(`/development/models/${id}`, {
+export const updateModel = (id: string, data: UpdateModelData) => fetchJson(`/development/models/${id}`, {
   method: 'PUT',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data)
@@ -612,3 +626,97 @@ export const publishScript = (id: string) => fetchJson(`/development/scripts/${i
   method: 'POST'
 });
 export const fetchScriptVersions = (id: string) => fetchJson(`/development/scripts/${id}/versions`);
+
+// Data Sync
+export const fetchSyncOverview = () => fetchJson('/development/sync-overview');
+export const fetchSyncTasks = (params?: { keyword?: string; status?: string; syncType?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.status) search.set('status', params.status);
+  if (params?.syncType) search.set('syncType', params.syncType);
+  const query = search.toString();
+  return fetchJson(query ? `/development/sync-tasks?${query}` : '/development/sync-tasks');
+};
+export const updateSyncTaskStatus = (id: string, status: string) => fetchJson(`/development/sync-tasks/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const fetchSyncLogs = (taskId?: string) => fetchJson(taskId ? `/development/sync-logs?taskId=${taskId}` : '/development/sync-logs');
+
+// Realtime Compute (Flink)
+export const fetchFlinkOverview = () => fetchJson('/development/flink-overview');
+export const fetchFlinkTasks = (params?: { keyword?: string; status?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.status) search.set('status', params.status);
+  const query = search.toString();
+  return fetchJson(query ? `/development/flink-tasks?${query}` : '/development/flink-tasks');
+};
+export const updateFlinkTaskStatus = (id: string, status: string) => fetchJson(`/development/flink-tasks/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+
+// Task Orchestration
+export const fetchOrchestrations = () => fetchJson('/development/orchestrations');
+export const fetchDagNodes = (orchestrationId?: string) => fetchJson(orchestrationId ? `/development/dag-nodes?orchestrationId=${orchestrationId}` : '/development/dag-nodes');
+export const fetchDagRunHistory = (orchestrationId?: string) => fetchJson(orchestrationId ? `/development/dag-run-history?orchestrationId=${orchestrationId}` : '/development/dag-run-history');
+export const updateOrchestrationStatus = (id: string, status: string) => fetchJson(`/development/orchestrations/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+export const runOrchestration = (id: string) => fetchJson(`/development/orchestrations/${id}/run`, {
+  method: 'POST'
+});
+
+// Metadata Collect
+export const fetchCollectTasks = (params?: { keyword?: string; status?: string }) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  if (params?.status) search.set('status', params.status);
+  const query = search.toString();
+  return fetchJson(query ? `/metadata/collect-tasks?${query}` : '/metadata/collect-tasks');
+};
+export const fetchCollectRecords = (taskId?: string) => fetchJson(taskId ? `/metadata/collect-records?taskId=${taskId}` : '/metadata/collect-records');
+export const fetchCollectRules = () => fetchJson('/metadata/collect-rules');
+export const createCollectTask = (data: any) => fetchJson('/metadata/collect-tasks', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+export const updateCollectTaskStatus = (id: string, status: string) => fetchJson(`/metadata/collect-tasks/${id}/status`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status })
+});
+
+// Operations Monitor
+export const fetchOpsServices = () => fetchJson('/ops/services');
+export const fetchOpsAlerts = (resolved?: boolean) => {
+  const params = resolved !== undefined ? `?resolved=${resolved}` : '';
+  return fetchJson(`/ops/alerts${params}`);
+};
+export const resolveOpsAlert = (id: string) => fetchJson(`/ops/alerts/${id}/resolve`, {
+  method: 'POST'
+});
+
+// Metadata Models
+export const fetchMetadataModels = () => fetchJson('/metadata/models');
+export const updateMetadataModel = (id: string, data: UpdateModelData) => fetchJson(`/metadata/models/${id}`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+
+// Filter Options
+export const fetchDataLayers = () => fetchJson('/filter-options/data-layers');
+export const fetchSensitivities = () => fetchJson('/filter-options/sensitivities');
+export const fetchTagOptions = () => fetchJson('/filter-options/tag-options');
+export const fetchSourceTypes = () => fetchJson('/filter-options/source-types');
+export const fetchDataSourceCategories = () => fetchJson('/filter-options/data-source-categories');
+export const fetchQualityDomains = () => fetchJson('/filter-options/quality-domains');
+export const fetchStandardDomains = () => fetchJson('/filter-options/standard-domains');
+export const fetchStandardDatabases = () => fetchJson('/filter-options/standard-databases');

@@ -1,6 +1,11 @@
 ﻿import { useState, useEffect, useMemo } from "react";
 import { fetchCodeSets, fetchCodeValues, createCodeSet, updateCodeSet, deleteCodeSet, cloneCodeSet, importCodeSets, createCodeValue, updateCodeValue, deleteCodeValue } from "../../services/api";
 import Breadcrumb from "../../components/common/Breadcrumb";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 interface CodeSet {
   id: string;
@@ -37,7 +42,17 @@ const STATUS_CONFIG: Record<string, { label: string, color: string, bg: string, 
 export default function CodeManage() {
   const [codeSets, setCodeSets] = useState<CodeSet[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [searchKeyword, setSearchKeyword] = useState("");
+  useKeyboardShortcut({
+    'ctrl+n': () => setIsCodeSetModalOpen(true),
+    'escape': () => setIsCodeSetModalOpen(false),
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedsearchKeyword = useDebounce(searchKeyword, 300);
   const [selectedType, setSelectedType] = useState<"all" | "national" | "industry" | "enterprise">("all");
 
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
@@ -154,10 +169,13 @@ export default function CodeManage() {
     });
   }, [codeSets, searchKeyword, selectedType]);
 
+  if (error) {
+    return <ErrorFallback onRetry={loadData} />;
+  }
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
+      <div className="space-y-6">
+        <TableSkeleton rows={5} cols={6} />
       </div>
     );
   }
@@ -315,6 +333,14 @@ export default function CodeManage() {
             )}
           </tbody>
         </table>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredSets.length / pageSize)}
+              pageSize={pageSize}
+              total={filteredSets.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+            />
       </div>
 
       {/* 码值明细抽屉 */}

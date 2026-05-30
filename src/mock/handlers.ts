@@ -121,6 +121,20 @@ import {
   mockServiceApis,
   mockDataSharingOverview,
   mockShareAssets,
+  mockSyncOverview,
+  mockSyncTasks,
+  mockSyncLogs,
+  mockFlinkOverview,
+  mockFlinkTasks,
+  mockOrchestrations,
+  mockDagNodes,
+  mockDagRunHistory,
+  mockCollectTasks,
+  mockCollectRecords,
+  mockCollectRules,
+  mockOpsServices,
+  mockOpsAlerts,
+  mockMetadataModels,
 } from './data';
 
 const businessDomainColors = [
@@ -2190,5 +2204,199 @@ export const handlers = [
       return HttpResponse.json({ code: 0, data: { success: true, message: '申请已提交，等待审批' } });
     }
     return HttpResponse.json({ code: 404, message: 'Asset not found' }, { status: 404 });
+  }),
+
+  // ─── 数据同步 ──────────────────────────────────────────────────────────
+  http.get('/api/v1/development/sync-overview', () => {
+    return HttpResponse.json({ code: 0, data: mockSyncOverview });
+  }),
+  http.get('/api/v1/development/sync-tasks', ({ request }) => {
+    const url = new URL(request.url);
+    const keyword = url.searchParams.get('keyword') ?? '';
+    const status = url.searchParams.get('status') ?? 'all';
+    const syncType = url.searchParams.get('syncType') ?? 'all';
+    const result = mockSyncTasks.filter(t => {
+      if (status !== 'all' && t.status !== status) return false;
+      if (syncType !== 'all' && t.syncType !== syncType) return false;
+      if (keyword && !t.name.includes(keyword) && !t.sourceName.includes(keyword) && !t.targetName.includes(keyword)) return false;
+      return true;
+    });
+    return HttpResponse.json({ code: 0, data: result });
+  }),
+  http.post('/api/v1/development/sync-tasks/:id/status', async ({ request, params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const body = await request.json() as { status: string };
+    const index = mockSyncTasks.findIndex(t => t.id === id);
+    if (index > -1) {
+      (mockSyncTasks[index] as any).status = body.status;
+      return HttpResponse.json({ code: 0, data: mockSyncTasks[index] });
+    }
+    return HttpResponse.json({ code: 404, message: 'Task not found' }, { status: 404 });
+  }),
+  http.get('/api/v1/development/sync-logs', ({ request }) => {
+    const url = new URL(request.url);
+    const taskId = url.searchParams.get('taskId');
+    const result = taskId ? mockSyncLogs.filter(l => l.taskId === taskId) : mockSyncLogs;
+    return HttpResponse.json({ code: 0, data: result });
+  }),
+
+  // ─── 实时计算 ──────────────────────────────────────────────────────────
+  http.get('/api/v1/development/flink-overview', () => {
+    return HttpResponse.json({ code: 0, data: mockFlinkOverview });
+  }),
+  http.get('/api/v1/development/flink-tasks', ({ request }) => {
+    const url = new URL(request.url);
+    const keyword = url.searchParams.get('keyword') ?? '';
+    const status = url.searchParams.get('status') ?? 'all';
+    const result = mockFlinkTasks.filter(t => {
+      if (status !== 'all' && t.status !== status) return false;
+      if (keyword && !t.name.includes(keyword) && !t.description.includes(keyword)) return false;
+      return true;
+    });
+    return HttpResponse.json({ code: 0, data: result });
+  }),
+  http.post('/api/v1/development/flink-tasks/:id/status', async ({ request, params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const body = await request.json() as { status: string };
+    const index = mockFlinkTasks.findIndex(t => t.id === id);
+    if (index > -1) {
+      (mockFlinkTasks[index] as any).status = body.status;
+      return HttpResponse.json({ code: 0, data: mockFlinkTasks[index] });
+    }
+    return HttpResponse.json({ code: 404, message: 'Task not found' }, { status: 404 });
+  }),
+
+  // ─── 任务编排 ──────────────────────────────────────────────────────────
+  http.get('/api/v1/development/orchestrations', () => {
+    return HttpResponse.json({ code: 0, data: mockOrchestrations });
+  }),
+  http.get('/api/v1/development/dag-nodes', ({ request }) => {
+    const url = new URL(request.url);
+    const orchId = url.searchParams.get('orchestrationId');
+    const result = orchId ? mockDagNodes.filter(n => n.orchestrationId === orchId) : mockDagNodes;
+    return HttpResponse.json({ code: 0, data: result });
+  }),
+  http.get('/api/v1/development/dag-run-history', ({ request }) => {
+    const url = new URL(request.url);
+    const orchId = url.searchParams.get('orchestrationId');
+    const result = orchId ? mockDagRunHistory.filter(r => r.orchestrationId === orchId) : mockDagRunHistory;
+    return HttpResponse.json({ code: 0, data: result });
+  }),
+  http.post('/api/v1/development/orchestrations/:id/status', async ({ request, params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const body = await request.json() as { status: string };
+    const index = mockOrchestrations.findIndex(o => o.id === id);
+    if (index > -1) {
+      (mockOrchestrations[index] as any).status = body.status;
+      return HttpResponse.json({ code: 0, data: mockOrchestrations[index] });
+    }
+    return HttpResponse.json({ code: 404, message: 'Orchestration not found' }, { status: 404 });
+  }),
+  http.post('/api/v1/development/orchestrations/:id/run', ({ params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const orch = mockOrchestrations.find(o => o.id === id);
+    if (orch) {
+      return HttpResponse.json({ code: 0, data: { success: true, message: `编排「${orch.name}」已触发手动运行` } });
+    }
+    return HttpResponse.json({ code: 404, message: 'Orchestration not found' }, { status: 404 });
+  }),
+
+  // ─── 元数据采集 ──────────────────────────────────────────────────────────
+  http.get('/api/v1/metadata/collect-tasks', ({ request }) => {
+    const url = new URL(request.url);
+    const keyword = url.searchParams.get('keyword') ?? '';
+    const status = url.searchParams.get('status') ?? 'all';
+    const result = mockCollectTasks.filter(t => {
+      if (status !== 'all' && t.status !== status) return false;
+      if (keyword && !t.name.includes(keyword) && !t.dataSource.includes(keyword)) return false;
+      return true;
+    });
+    return HttpResponse.json({ code: 0, data: result });
+  }),
+  http.get('/api/v1/metadata/collect-records', ({ request }) => {
+    const url = new URL(request.url);
+    const taskId = url.searchParams.get('taskId');
+    const result = taskId ? mockCollectRecords.filter(r => r.taskId === taskId) : mockCollectRecords;
+    return HttpResponse.json({ code: 0, data: result });
+  }),
+  http.get('/api/v1/metadata/collect-rules', () => {
+    return HttpResponse.json({ code: 0, data: mockCollectRules });
+  }),
+  http.post('/api/v1/metadata/collect-tasks', async ({ request }) => {
+    const body = await request.json();
+    const newTask = { ...body as any, id: 't' + Date.now(), status: 'waiting', lastRun: '-', nextRun: '-', duration: '-', tableCount: 0, fieldCount: 0, createdAt: new Date().toISOString().substring(0, 10) };
+    mockCollectTasks.push(newTask);
+    return HttpResponse.json({ code: 0, data: newTask });
+  }),
+  http.post('/api/v1/metadata/collect-tasks/:id/status', async ({ request, params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const body = await request.json() as { status: string };
+    const index = mockCollectTasks.findIndex(t => t.id === id);
+    if (index > -1) {
+      (mockCollectTasks[index] as any).status = body.status;
+      return HttpResponse.json({ code: 0, data: mockCollectTasks[index] });
+    }
+    return HttpResponse.json({ code: 404, message: 'Task not found' }, { status: 404 });
+  }),
+
+  // ─── 运维监控 ──────────────────────────────────────────────────────────
+  http.get('/api/v1/ops/services', () => {
+    return HttpResponse.json({ code: 0, data: mockOpsServices });
+  }),
+  http.get('/api/v1/ops/alerts', ({ request }) => {
+    const url = new URL(request.url);
+    const resolved = url.searchParams.get('resolved');
+    const result = resolved === null ? mockOpsAlerts : mockOpsAlerts.filter(a => a.resolved === (resolved === 'true'));
+    return HttpResponse.json({ code: 0, data: result });
+  }),
+  http.post('/api/v1/ops/alerts/:id/resolve', ({ params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const index = mockOpsAlerts.findIndex(a => a.id === id);
+    if (index > -1) {
+      (mockOpsAlerts[index] as any).resolved = true;
+      return HttpResponse.json({ code: 0, data: mockOpsAlerts[index] });
+    }
+    return HttpResponse.json({ code: 404, message: 'Alert not found' }, { status: 404 });
+  }),
+
+  // ─── 元数据模型 ──────────────────────────────────────────────────────────
+  http.get('/api/v1/metadata/models', () => {
+    return HttpResponse.json({ code: 0, data: mockMetadataModels });
+  }),
+  http.put('/api/v1/metadata/models/:id', async ({ request, params }) => {
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const body = await request.json();
+    const index = mockMetadataModels.findIndex((m: any) => m.id === id);
+    if (index > -1) {
+      mockMetadataModels[index] = { ...mockMetadataModels[index], ...body as any };
+      return HttpResponse.json({ code: 0, data: mockMetadataModels[index] });
+    }
+    return HttpResponse.json({ code: 404, message: 'Model not found' }, { status: 404 });
+  }),
+
+  // ─── 筛选选项 ──────────────────────────────────────────────────────────────
+  http.get('/api/v1/filter-options/data-layers', () => {
+    return HttpResponse.json({ code: 0, data: mockDataLayers });
+  }),
+  http.get('/api/v1/filter-options/sensitivities', () => {
+    return HttpResponse.json({ code: 0, data: mockSensitivities });
+  }),
+  http.get('/api/v1/filter-options/tag-options', () => {
+    return HttpResponse.json({ code: 0, data: mockTagOptions });
+  }),
+  http.get('/api/v1/filter-options/source-types', () => {
+    return HttpResponse.json({ code: 0, data: mockSourceTypeOptions });
+  }),
+  http.get('/api/v1/filter-options/data-source-categories', () => {
+    return HttpResponse.json({ code: 0, data: mockDataSourceCategories });
+  }),
+  http.get('/api/v1/filter-options/quality-domains', () => {
+    return HttpResponse.json({ code: 0, data: mockQualityDomains });
+  }),
+  http.get('/api/v1/filter-options/standard-domains', () => {
+    return HttpResponse.json({ code: 0, data: mockStandardDomains });
+  }),
+  http.get('/api/v1/filter-options/standard-databases', () => {
+    return HttpResponse.json({ code: 0, data: mockStandardDatabases });
   }),
 ];

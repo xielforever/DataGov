@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Breadcrumb from '../../components/common/Breadcrumb';
 import { fetchMetadataMaintainData } from '../../services/api';
+import { StatsSkeleton, CardSkeleton } from '../../components/common/Skeleton';
+import ErrorFallback from '../../components/common/ErrorFallback';
 
 type MaintainStatus = 'pending' | 'in-progress' | 'review' | 'completed';
 type WorkOrderStatus = 'todo' | 'processing' | 'review' | 'done';
@@ -112,6 +114,7 @@ function scoreClass(score: number) {
 
 export default function MetadataManage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [tab, setTab] = useState<'assets' | 'orders' | 'snapshots'>('assets');
   const [stats, setStats] = useState<StatItem[]>([]);
   const [assets, setAssets] = useState<MaintainAsset[]>([]);
@@ -259,13 +262,7 @@ export default function MetadataManage() {
   };
 
   // 移除了全屏loading，改用内容区域skeleton/placeholder
-  const renderStatsSkeleton = () => (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-5 animate-pulse">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="h-24 rounded-xl border border-slate-700/50 bg-slate-800/60 p-4" />
-      ))}
-    </div>
-  );
+  const renderStatsSkeleton = () => <StatsSkeleton count={5} />;
 
   return (
     <div className="space-y-6">
@@ -367,9 +364,7 @@ export default function MetadataManage() {
 
             <div className="space-y-3">
               {loading && assets.length === 0 ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-40 animate-pulse rounded-xl border border-slate-700/50 bg-slate-800/60 p-4" />
-                ))
+                Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)
               ) : filteredAssets.map((asset) => (
                 <div
                   key={asset.id}

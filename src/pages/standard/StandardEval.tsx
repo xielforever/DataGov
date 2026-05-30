@@ -13,6 +13,11 @@ import {
   Bar,
   Cell
 } from "recharts";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 interface EvalData {
   overview: {
@@ -59,6 +64,9 @@ const STATUS_CONFIG: Record<string, { label: string, color: string }> = {
 export default function StandardEval() {
   const [data, setData] = useState<EvalData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "processing">("all");
   
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -72,13 +80,13 @@ export default function StandardEval() {
     });
   }, []);
 
+  if (error) {
+    return <ErrorFallback onRetry={loadData} />;
+  }
   if (loading || !data) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
-          <p className="mt-3 text-sm text-slate-400">正在评估数据标准落标情况...</p>
-        </div>
+      <div className="space-y-6">
+        <TableSkeleton rows={5} cols={5} />
       </div>
     );
   }
@@ -376,6 +384,14 @@ export default function StandardEval() {
               )}
             </tbody>
           </table>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filtered.length / pageSize)}
+              pageSize={pageSize}
+              total={filtered.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+            />
         </div>
       </div>
     </div>

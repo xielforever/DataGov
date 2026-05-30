@@ -14,6 +14,11 @@ import {
 } from "lucide-react";
 import Breadcrumb from "../../components/common/Breadcrumb";
 import { createQualityCheckBatch, fetchQualityCheckBatches, fetchQualityCheckIssues, fetchQualityRules, updateQualityIssueStatus } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type BatchStatus = "success" | "running" | "warning" | "failed";
 type IssueStatus = "pending" | "processing" | "resolved" | "ignored";
@@ -92,6 +97,9 @@ export default function QualityCheck() {
   const [selectedScope, setSelectedScope] = useState("全部");
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [runModalOpen, setRunModalOpen] = useState(false);
   const [runDraft, setRunDraft] = useState({
     name: "",
@@ -109,6 +117,7 @@ export default function QualityCheck() {
         setRules(ruleData);
         setSelectedBatchId(batchData[0]?.id ?? "");
       })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -134,6 +143,10 @@ export default function QualityCheck() {
       return true;
     });
   }, [issues, selectedBatch?.id, selectedIssueStatus]);
+
+  // Reset page when filters change
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, selectedSeverity]);
+
 
   const stats = useMemo(() => {
     const running = batches.filter((batch) => batch.status === "running").length;
@@ -179,13 +192,13 @@ export default function QualityCheck() {
     setIssues((prev) => prev.map((item) => (item.id === issue.id ? updated : item)));
   };
 
+  if (error) {
+    return <ErrorFallback onRetry={() => window.location.reload()} />;
+  }
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
-          <p className="mt-3 text-sm text-slate-400">加载质量核查...</p>
-        </div>
+      <div className="space-y-6">
+        <TableSkeleton rows={5} cols={7} />
       </div>
     );
   }
@@ -291,7 +304,7 @@ export default function QualityCheck() {
             </div>
           </div>
           <div className="max-h-[620px] space-y-2 overflow-y-auto p-3">
-            {filteredBatches.map((batch) => {
+            {paginatedFilteredBatches.map((batch) => {
               const status = batchStatusConfig[batch.status];
               const active = selectedBatch?.id === batch.id;
               return (

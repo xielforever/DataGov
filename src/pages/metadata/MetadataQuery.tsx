@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Breadcrumb from '../../components/common/Breadcrumb';
 import { fetchMetadataQueryData } from '../../services/api';
+import { Skeleton, StatsSkeleton } from '../../components/common/Skeleton';
+import ErrorFallback from '../../components/common/ErrorFallback';
 
 type QueryResultType = 'table' | 'field' | 'source' | 'model' | 'metric';
 type SortKey = 'relevance' | 'updated' | 'quality' | 'name';
@@ -88,7 +90,7 @@ const layerMeta: Record<string, string> = {
   SOURCE: 'border-slate-500/30 bg-slate-500/10 text-slate-300',
 };
 
-const sourceTypeOptions = ['全部', 'Hive', 'ClickHouse', 'Field', 'Model', 'Metric', 'PostgreSQL', 'Kafka'];
+const [sourceTypeOptions, setSourceTypeOptions] = useState<string[]>(["全部"]);
 const updatedOptions: Array<{ key: Filters['updatedRange']; label: string }> = [
   { key: 'all', label: '全部时间' },
   { key: '24h', label: '24小时' },
@@ -143,15 +145,15 @@ function ResultsSkeleton() {
   return (
     <div className="space-y-4">
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="animate-pulse rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="h-6 w-48 rounded bg-slate-800" />
-            <div className="h-5 w-20 rounded bg-slate-800" />
+        <div key={index} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-5 w-20" />
           </div>
-          <div className="mb-4 h-4 w-3/4 rounded bg-slate-800" />
+          <Skeleton className="h-4 w-3/4" />
           <div className="grid grid-cols-2 gap-3">
-            <div className="h-14 rounded-xl bg-slate-800" />
-            <div className="h-14 rounded-xl bg-slate-800" />
+            <Skeleton className="h-14 rounded-xl" />
+            <Skeleton className="h-14 rounded-xl" />
           </div>
         </div>
       ))}
@@ -162,6 +164,7 @@ function ResultsSkeleton() {
 export default function MetadataQuery() {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [searching, setSearching] = useState(false);
   const [stats, setStats] = useState<QueryStat[]>([]);
   const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([]);
@@ -178,6 +181,10 @@ export default function MetadataQuery() {
   const [detailTab, setDetailTab] = useState<DetailTab>('overview');
   const [toast, setToast] = useState<{ type: 'success' | 'info'; message: string } | null>(null);
 
+
+  useEffect(() => {
+    fetchSourceTypes().then((res) => setSourceTypeOptions(["全部", ...(res as string[])])).catch(() => {});
+  }, []);
   useEffect(() => {
     const stored = window.localStorage.getItem('metadata-query-history');
     if (stored) {
@@ -369,9 +376,7 @@ export default function MetadataQuery() {
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {loading
-          ? Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="h-28 animate-pulse rounded-2xl border border-slate-800 bg-slate-950/60" />
-            ))
+          ? <StatsSkeleton count={4} />
           : stats.map((stat) => (
               <div key={stat.id} className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
                 <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${stat.color}`} />
@@ -579,7 +584,7 @@ export default function MetadataQuery() {
             </div>
             <div className="space-y-3">
               {loading
-                ? Array.from({ length: 3 }).map((_, index) => <div key={index} className="h-20 animate-pulse rounded-2xl bg-slate-950/50" />)
+                ? Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-20 rounded-2xl" />)
                 : savedQueries.map((query) => (
                     <button
                       key={query.id}
@@ -604,7 +609,7 @@ export default function MetadataQuery() {
             </div>
             <div className="space-y-2">
               {loading
-                ? Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-10 animate-pulse rounded-xl bg-slate-950/50" />)
+                ? Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-10 rounded-xl" />)
                 : hotKeywords.map((item, index) => (
                     <button
                       key={item.id}

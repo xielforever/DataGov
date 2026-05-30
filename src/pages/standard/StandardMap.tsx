@@ -1,6 +1,11 @@
 ﻿import { useState, useEffect, useMemo } from "react";
 import { fetchStandardMappings, updateStandardMappingStatus, rescanStandardMappings, createManualMapping } from "../../services/api";
 import Breadcrumb from "../../components/common/Breadcrumb";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type MappingStatus = "mapped" | "suggested" | "rejected";
 
@@ -27,12 +32,22 @@ const STATUS_CONFIG = {
   rejected: { label: "已忽略", color: "text-slate-400", bg: "bg-slate-500/15", border: "border-slate-500/30", dot: "bg-slate-400" },
 };
 
-const DATABASES = ["全部", "ecommerce_user", "ecommerce_order", "ecommerce_product", "risk_control", "other"];
+const [DATABASES, setDATABASES] = useState<string[]>(["全部"]);
 
 export default function StandardMap() {
   const [data, setData] = useState<StandardMappingData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [searchKeyword, setSearchKeyword] = useState("");
+  useKeyboardShortcut({
+    'ctrl+n': () => setIsModalOpen(true),
+    'escape': () => setIsModalOpen(false),
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedsearchKeyword = useDebounce(searchKeyword, 300);
   const [selectedDb, setSelectedDb] = useState("全部");
   const [selectedStatus, setSelectedStatus] = useState<"all" | MappingStatus>("all");
   
@@ -50,6 +65,10 @@ export default function StandardMap() {
     });
   };
 
+
+  useEffect(() => {
+    fetchStandardDatabases().then((res) => setDATABASES(["全部", ...(res as string[])])).catch(() => {});
+  }, []);
   useEffect(() => {
     loadData();
   }, []);
@@ -101,13 +120,13 @@ export default function StandardMap() {
     rejected: data.filter((d) => d.status === "rejected").length,
   }), [data]);
 
+  if (error) {
+    return <ErrorFallback onRetry={loadData} />;
+  }
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
-          <p className="mt-3 text-sm text-slate-400">加载映射数据...</p>
-        </div>
+      <div className="space-y-6">
+        <TableSkeleton rows={5} cols={6} />
       </div>
     );
   }
@@ -355,6 +374,14 @@ export default function StandardMap() {
             )}
           </tbody>
         </table>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filtered.length / pageSize)}
+              pageSize={pageSize}
+              total={filtered.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+            />
       </div>
 
       {/* 手动映射弹窗 */}

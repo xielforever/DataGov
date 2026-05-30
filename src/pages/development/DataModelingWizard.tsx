@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save, ChevronRight, Check, Plus, Trash2, Code, Link as LinkIcon } from 'lucide-react';
 import { fetchBusinessDomainOptions, fetchMetadataDataSources, fetchStandardDefinitions, createModel, updateModel } from '../../services/api';
+import ErrorFallback from '../../components/common/ErrorFallback';
 import toast from 'react-hot-toast';
 
 export interface ModelField {

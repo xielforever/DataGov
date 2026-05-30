@@ -30,6 +30,11 @@ import {
   updateTaskOpsAlertStatus,
   updateTaskOpsRecoveryPlanStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type InstanceStatus = "success" | "running" | "failed" | "waiting" | "delayed";
 type Priority = "high" | "medium" | "low";
@@ -146,6 +151,9 @@ export default function TaskOps() {
   const [selectedStatus, setSelectedStatus] = useState<"all" | InstanceStatus>("all");
   const [selectedInstance, setSelectedInstance] = useState<TaskInstance | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);
@@ -228,13 +236,13 @@ export default function TaskOps() {
     setAlerts((prev) => prev.map((item) => (item.id === alert.id ? updated : item)));
   };
 
+  if (error) {
+    return <ErrorFallback onRetry={loadData} />;
+  }
   if (loading || !overview) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
-          <p className="mt-3 text-sm text-slate-400">加载任务运维...</p>
-        </div>
+      <div className="space-y-6">
+        <TableSkeleton rows={5} cols={6} />
       </div>
     );
   }

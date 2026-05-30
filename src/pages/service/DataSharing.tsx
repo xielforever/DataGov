@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { Share2, Download, Eye, Star, Search, Plus, Database, Globe2, Lock, ShieldAlert, ArrowUpDown, ExternalLink, Tag, Clock, User, HardDrive, FileText, Columns } from 'lucide-react';
 import Breadcrumb from '../../components/common/Breadcrumb';
 import { fetchDataSharingOverview, fetchServiceShares, applyShareAsset } from '../../services/api';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
+import ErrorFallback from '../../components/common/ErrorFallback';
 
 /* ── UI constants ────────────────────────────────────────────────────────── */
 
@@ -28,7 +33,15 @@ export default function DataSharing() {
   const [overview, setOverview] = useState<any>(null);
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
+  useKeyboardShortcut({
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedsearch = useDebounce(search, 300);
   const [filterLevel, setFilterLevel] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [selected, setSelected] = useState<any | null>(null);
@@ -41,7 +54,7 @@ export default function DataSharing() {
       const [ov, items] = await Promise.all([
         fetchDataSharingOverview(),
         fetchServiceShares({
-          keyword: search || undefined,
+          keyword: debouncedSearch || undefined,
           level: filterLevel !== 'all' ? filterLevel : undefined,
           type: filterType !== 'all' ? filterType : undefined,
         }),
@@ -49,6 +62,7 @@ export default function DataSharing() {
       setOverview(ov);
       setAssets(items);
     } catch { /* ignore */ }
+      setError(true);
     setLoading(false);
   }, [search, filterLevel, filterType]);
 
@@ -155,7 +169,7 @@ export default function DataSharing() {
         {/* 资产列表 */}
         <div className={`${selected ? 'w-[60%]' : 'w-full'} transition-all`}>
           {loading ? (
-            <div className="bg-slate-800/40 rounded-xl p-5 animate-pulse h-96" />
+            <TableSkeleton rows={8} cols={7} />
           ) : (
             <div className="bg-slate-800/40 border border-slate-700/30 rounded-l-xl overflow-x-auto">
               <table className="min-w-[800px] w-full table-fixed text-sm">
@@ -219,6 +233,14 @@ export default function DataSharing() {
                   )}
                 </tbody>
               </table>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredAssets.length / pageSize)}
+              pageSize={pageSize}
+              total={filteredAssets.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+            />
             </div>
           )}
         </div>

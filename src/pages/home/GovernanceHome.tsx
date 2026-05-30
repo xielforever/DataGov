@@ -16,6 +16,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { fetchHomeGovernanceOverview } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { StatsSkeleton } from '../../components/common/Skeleton';
 
 type LifecycleDomain = "规划准入" | "治理资产" | "加工供给" | "运营闭环";
 type ControlState = "正常" | "关注" | "阻断";
@@ -107,12 +109,7 @@ const domainClass: Record<LifecycleDomain, string> = {
   运营闭环: "border-emerald-400/25 bg-emerald-400/10 text-emerald-200",
 };
 
-const navigateTo = (view: string) => {
-  const url = new URL(window.location.href);
-  url.searchParams.set("view", view);
-  window.history.replaceState(null, "", url);
-  window.dispatchEvent(new PopStateEvent("popstate"));
-};
+// navigateTo imported from utils/navigation
 
 function FlowArrow() {
   return (
@@ -335,6 +332,7 @@ function GovernanceHome() {
         const overview = await fetchHomeGovernanceOverview() as HomeGovernanceOverview;
         setData(overview);
       } catch (loadError) {
+        setError(true);
         console.error("Failed to load home governance overview:", loadError);
         setError("首页治理总览数据加载失败，请刷新重试。");
       } finally {
@@ -350,13 +348,13 @@ function GovernanceHome() {
     return Array.from(new Set(data.lifecycleStages.map((stage) => stage.domain)));
   }, [data]);
 
+  if (error) {
+    return <ErrorFallback onRetry={loadData} />;
+  }
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
-          <p className="mt-3 text-sm text-slate-400">加载首页治理总览...</p>
-        </div>
+      <div className="space-y-6">
+        <StatsSkeleton count={4} />
       </div>
     );
   }

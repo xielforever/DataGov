@@ -21,6 +21,11 @@ import {
   fetchSecurityLevelRules,
   updateSecurityLevelReviewStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type SecurityLevelCode = "L1" | "L2" | "L3" | "L4";
 type ReviewStatus = "pending" | "approved" | "rejected";
@@ -99,7 +104,15 @@ export default function SecurityLevel() {
   const [selectedLevel, setSelectedLevel] = useState<"all" | SecurityLevelCode>("all");
   const [selectedDomain, setSelectedDomain] = useState("全部");
   const [keyword, setKeyword] = useState("");
+  useKeyboardShortcut({
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedkeyword = useDebounce(keyword, 300);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);
@@ -289,7 +302,7 @@ export default function SecurityLevel() {
           </div>
         </div>
         <div className="grid gap-3 p-4 xl:grid-cols-2">
-          {filteredAssets.map((asset) => {
+          {paginatedFilteredAssets.map((asset) => {
             const level = levelConfig[asset.level];
             const review = reviewStatusConfig[asset.reviewStatus];
             return (

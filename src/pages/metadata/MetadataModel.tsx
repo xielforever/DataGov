@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import Breadcrumb from '../../components/common/Breadcrumb';
-import { fetchBusinessDomainOptions } from "../../services/api";
+import { fetchBusinessDomainOptions, fetchMetadataModels } from "../../services/api";
+import ErrorFallback from "../../components/common/ErrorFallback";
+import { CardSkeleton } from "../../components/common/Skeleton";
 
 type Position = { x: number; y: number };
 type PositionMap = Record<string, Position>;
@@ -47,320 +49,11 @@ interface MetadataModel {
   description: string;
 }
 
-const MODELS: MetadataModel[] = [
-  {
-    id: "m1",
-    name: "订单域概念模型",
-    version: "v2.1",
-    type: "conceptual",
-    description: "电商订单核心业务对象抽象",
-    entities: [
-      {
-        id: "e1",
-        name: "Order",
-        cnName: "订单",
-        type: "conceptual",
-        domain: "交易域",
-        layer: "DWD",
-        description: "用户下单后产生的业务单据",
-        owner: "张明",
-        version: "2.1",
-        updatedAt: "2024-01-15",
-        x: 200,
-        y: 150,
-        fields: [
-          { name: "order_id", type: "string", comment: "订单ID", nullable: false, primaryKey: true },
-          { name: "user_id", type: "string", comment: "用户ID", nullable: false, foreignKey: "User.user_id" },
-          { name: "order_time", type: "datetime", comment: "下单时间", nullable: false },
-          { name: "total_amount", type: "decimal", comment: "订单总额", nullable: false },
-          { name: "status", type: "string", comment: "订单状态", nullable: false },
-        ],
-      },
-      {
-        id: "e2",
-        name: "User",
-        cnName: "用户",
-        type: "conceptual",
-        domain: "交易域",
-        layer: "DWD",
-        description: "平台注册用户",
-        owner: "赵敏",
-        version: "1.5",
-        updatedAt: "2024-01-10",
-        x: 50,
-        y: 300,
-        fields: [
-          { name: "user_id", type: "string", comment: "用户ID", nullable: false, primaryKey: true },
-          { name: "user_name", type: "string", comment: "用户域", nullable: false },
-          { name: "register_time", type: "datetime", comment: "注册时间", nullable: false },
-          { name: "level", type: "int", comment: "会员等级", nullable: true },
-        ],
-      },
-      {
-        id: "e3",
-        name: "OrderItem",
-        cnName: "订单明细",
-        type: "conceptual",
-        domain: "交易域",
-        layer: "DWD",
-        description: "订单中的商品明细",
-        owner: "张明",
-        version: "2.1",
-        updatedAt: "2024-01-15",
-        x: 400,
-        y: 300,
-        fields: [
-          { name: "item_id", type: "string", comment: "明细ID", nullable: false, primaryKey: true },
-          { name: "order_id", type: "string", comment: "订单ID", nullable: false, foreignKey: "Order.order_id" },
-          { name: "sku_id", type: "string", comment: "商品SKU", nullable: false, foreignKey: "Product.sku_id" },
-          { name: "quantity", type: "int", comment: "数量", nullable: false },
-          { name: "price", type: "decimal", comment: "单价", nullable: false },
-        ],
-      },
-      {
-        id: "e4",
-        name: "Product",
-        cnName: "商品",
-        type: "conceptual",
-        domain: "交易域",
-        layer: "DIM",
-        description: "商品主数据",
-        owner: "林峰",
-        version: "3.0",
-        updatedAt: "2024-01-08",
-        x: 550,
-        y: 150,
-        fields: [
-          { name: "sku_id", type: "string", comment: "SKU ID", nullable: false, primaryKey: true },
-          { name: "product_name", type: "string", comment: "商品名称", nullable: false },
-          { name: "category", type: "string", comment: "类目", nullable: false },
-          { name: "brand", type: "string", comment: "品牌", nullable: true },
-        ],
-      },
-      {
-        id: "e5",
-        name: "Payment",
-        cnName: "支付",
-        type: "conceptual",
-        domain: "交易域",
-        layer: "DWD",
-        description: "订单支付记录",
-        owner: "张明",
-        version: "1.2",
-        updatedAt: "2024-01-12",
-        x: 200,
-        y: 450,
-        fields: [
-          { name: "pay_id", type: "string", comment: "支付ID", nullable: false, primaryKey: true },
-          { name: "order_id", type: "string", comment: "订单ID", nullable: false, foreignKey: "Order.order_id" },
-          { name: "pay_amount", type: "decimal", comment: "支付金额", nullable: false },
-          { name: "pay_time", type: "datetime", comment: "支付时间", nullable: false },
-          { name: "pay_channel", type: "string", comment: "支付渠道", nullable: false },
-        ],
-      },
-    ],
-    relationships: [
-      { from: "e2", to: "e1", type: "1:N", label: "下单" },
-      { from: "e1", to: "e3", type: "1:N", label: "包含" },
-      { from: "e4", to: "e3", type: "1:N", label: "被购买" },
-      { from: "e1", to: "e5", type: "1:1", label: "支付" },
-    ],
-  },
-  {
-    id: "m2",
-    name: "用户域逻辑模型",
-    version: "v1.8",
-    type: "logical",
-    description: "用户画像与行为分析模型，包含用户主体、行为日志、标签体系",
-    entities: [
-      {
-        id: "u1",
-        name: "DimUser",
-        cnName: "用户维度",
-        type: "logical",
-        domain: "用户域",
-        layer: "DIM",
-        description: "用户维度主表，整合用户基础属性",
-        owner: "赵敏",
-        version: "1.8",
-        updatedAt: "2024-01-18",
-        x: 100, y: 120,
-        fields: [
-          { name: "user_key", type: "bigint", comment: "用户代理键", nullable: false, primaryKey: true },
-          { name: "user_id", type: "string", comment: "业务用户ID", nullable: false },
-          { name: "user_name", type: "string", comment: "用户域", nullable: false },
-          { name: "gender", type: "string", comment: "性别", nullable: true },
-          { name: "age_range", type: "string", comment: "年龄段", nullable: true },
-          { name: "city", type: "string", comment: "所在城市", nullable: true },
-        ],
-      },
-      {
-        id: "u2",
-        name: "FactUserBehavior",
-        cnName: "用户行为事实",
-        type: "logical",
-        domain: "用户域",
-        layer: "DWD",
-        description: "用户行为事实表，记录浏览、点击、加购等行为",
-        owner: "赵敏",
-        version: "1.8",
-        updatedAt: "2024-01-18",
-        x: 400, y: 120,
-        fields: [
-          { name: "event_id", type: "string", comment: "事件ID", nullable: false, primaryKey: true },
-          { name: "user_key", type: "bigint", comment: "用户代理键", nullable: false, foreignKey: "DimUser.user_key" },
-          { name: "event_type", type: "string", comment: "事件类型", nullable: false },
-          { name: "event_time", type: "datetime", comment: "事件时间", nullable: false },
-          { name: "page_id", type: "string", comment: "页面ID", nullable: true },
-          { name: "duration", type: "int", comment: "停留时长(秒)'", nullable: true },
-        ],
-      },
-      {
-        id: "u3",
-        name: "DimUserTag",
-        cnName: "用户标签维度",
-        type: "logical",
-        domain: "用户域",
-        layer: "DIM",
-        description: "用户标签维度，存储画像标签体系",
-        owner: "孙琳",
-        version: "1.5",
-        updatedAt: "2024-01-16",
-        x: 100, y: 380,
-        fields: [
-          { name: "tag_id", type: "string", comment: "标签ID", nullable: false, primaryKey: true },
-          { name: "tag_name", type: "string", comment: "标签名称", nullable: false },
-          { name: "tag_category", type: "string", comment: "标签分类", nullable: false },
-          { name: "tag_level", type: "int", comment: "标签层级", nullable: false },
-        ],
-      },
-      {
-        id: "u4",
-        name: "FactUserTag",
-        cnName: "用户标签事实",
-        type: "logical",
-        domain: "用户域",
-        layer: "DWS",
-        description: "用户与标签的关联事实",
-        owner: "孙琳",
-        version: "1.5",
-        updatedAt: "2024-01-16",
-        x: 400, y: 380,
-        fields: [
-          { name: "id", type: "bigint", comment: "主键", nullable: false, primaryKey: true },
-          { name: "user_key", type: "bigint", comment: "用户代理键", nullable: false, foreignKey: "DimUser.user_key" },
-          { name: "tag_id", type: "string", comment: "标签ID", nullable: false, foreignKey: "DimUserTag.tag_id" },
-          { name: "tag_score", type: "decimal", comment: "标签得分", nullable: false },
-          { name: "update_time", type: "datetime", comment: "更新时间", nullable: false },
-        ],
-      },
-    ],
-    relationships: [
-      { from: "u1", to: "u2", type: "1:N", label: "产生行为" },
-      { from: "u1", to: "u4", type: "1:N", label: "拥有标签" },
-      { from: "u3", to: "u4", type: "1:N", label: "标签关联" },
-    ],
-  },
-  {
-    id: "m3",
-    name: "商品域物理模型",
-    version: "v3.2",
-    type: "physical",
-    description: "商品中心MySQL物理表结构，包含SPU、SKU、类目、品牌",
-    entities: [
-      {
-        id: "p1",
-        name: "t_product_spu",
-        cnName: "商品SPU表",
-        type: "physical",
-        domain: "商品域",
-        layer: "ODS",
-        description: "商品标准化产品单",
-        owner: "林峰",
-        version: "3.2",
-        updatedAt: "2024-01-20",
-        x: 100, y: 100,
-        fields: [
-          { name: "spu_id", type: "bigint", comment: "SPU ID", nullable: false, primaryKey: true },
-          { name: "spu_name", type: "varchar", comment: "SPU名称", nullable: false },
-          { name: "category_id", type: "bigint", comment: "类目ID", nullable: false, foreignKey: "t_category.category_id" },
-          { name: "brand_id", type: "bigint", comment: "品牌ID", nullable: true, foreignKey: "t_brand.brand_id" },
-          { name: "status", type: "tinyint", comment: "状态", nullable: false },
-          { name: "create_time", type: "datetime", comment: "创建时间", nullable: false },
-        ],
-      },
-      {
-        id: "p2",
-        name: "t_product_sku",
-        cnName: "商品SKU表",
-        type: "physical",
-        domain: "商品域",
-        layer: "ODS",
-        description: "商品库存单元，对应实际售卖单",
-        owner: "林峰",
-        version: "3.2",
-        updatedAt: "2024-01-20",
-        x: 400, y: 100,
-        fields: [
-          { name: "sku_id", type: "bigint", comment: "SKU ID", nullable: false, primaryKey: true },
-          { name: "spu_id", type: "bigint", comment: "SPU ID", nullable: false, foreignKey: "t_product_spu.spu_id" },
-          { name: "sku_code", type: "varchar", comment: "SKU编码", nullable: false },
-          { name: "price", type: "decimal", comment: "售价", nullable: false },
-          { name: "stock", type: "int", comment: "库存", nullable: false },
-          { name: "spec", type: "varchar", comment: "规格", nullable: true },
-        ],
-      },
-      {
-        id: "p3",
-        name: "t_category",
-        cnName: "商品类目表",
-        type: "physical",
-        domain: "商品域",
-        layer: "DIM",
-        description: "商品类目维度",
-        owner: "林峰",
-        version: "3.0",
-        updatedAt: "2024-01-15",
-        x: 100, y: 360,
-        fields: [
-          { name: "category_id", type: "bigint", comment: "类目ID", nullable: false, primaryKey: true },
-          { name: "category_name", type: "varchar", comment: "类目名称", nullable: false },
-          { name: "parent_id", type: "bigint", comment: "父类目ID", nullable: true },
-          { name: "level", type: "tinyint", comment: "类目层级", nullable: false },
-        ],
-      },
-      {
-        id: "p4",
-        name: "t_brand",
-        cnName: "品牌表",
-        type: "physical",
-        domain: "商品域",
-        layer: "DIM",
-        description: "商品品牌维度",
-        owner: "林峰",
-        version: "3.0",
-        updatedAt: "2024-01-15",
-        x: 400, y: 360,
-        fields: [
-          { name: "brand_id", type: "bigint", comment: "品牌ID", nullable: false, primaryKey: true },
-          { name: "brand_name", type: "varchar", comment: "品牌名称", nullable: false },
-          { name: "logo_url", type: "varchar", comment: "品牌LOGO", nullable: true },
-          { name: "country", type: "varchar", comment: "所属国家", nullable: true },
-        ],
-      },
-    ],
-    relationships: [
-      { from: "p1", to: "p2", type: "1:N", label: "包含SKU" },
-      { from: "p3", to: "p1", type: "1:N", label: "归属类目" },
-      { from: "p4", to: "p1", type: "1:N", label: "所属品牌" },
-    ],
-  },
-];
 
 export default function MetadataModel() {
-  const [models, setModels] = useState<MetadataModel[]>(MODELS);
-  const [selectedModel, setSelectedModel] = useState<MetadataModel>(MODELS[0]);
-  const [selectedEntity, setSelectedEntity] = useState<Entity | null>(MODELS[0].entities[0]);
+  const [models, setModels] = useState<MetadataModel[]>([]);
+  const [selectedModel, setSelectedModel] = useState<MetadataModel>({} as MetadataModel);
+  const [selectedEntity, setSelectedEntity] = useState<Entity>({} as Entity);
   const [modelType, setModelType] = useState<"all" | "conceptual" | "logical" | "physical">("all");
   const [showGrid, setShowGrid] = useState(true);
   const [zoom, setZoom] = useState(100);
@@ -436,6 +129,17 @@ export default function MetadataModel() {
     });
   }, []);
 
+
+  useEffect(() => {
+    fetchMetadataModels().then((data) => {
+      const loaded = data as MetadataModel[];
+      if (loaded.length > 0) {
+        setModels(loaded);
+        setSelectedModel(loaded[0]);
+        if (loaded[0].entities.length > 0) setSelectedEntity(loaded[0].entities[0]);
+      }
+    }).catch(() => setError(true)).finally(() => setLoading(false));
+  }, []);
   const updateModelData = (updatedEntities: Entity[], updatedRels: Relationship[]) => {
     const updated = {
       ...selectedModel,

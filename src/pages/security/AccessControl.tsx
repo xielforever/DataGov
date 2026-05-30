@@ -23,6 +23,11 @@ import {
   processAccessApplication,
   revokeAccessGrant,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type ApplicationStatus = "pending" | "approved" | "rejected";
 type RiskLevel = "high" | "medium" | "low";
@@ -116,7 +121,15 @@ export default function AccessControl() {
   const [risks, setRisks] = useState<AccessRisk[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<"all" | ApplicationStatus>("all");
   const [keyword, setKeyword] = useState("");
+  useKeyboardShortcut({
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedkeyword = useDebounce(keyword, 300);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);
@@ -233,7 +246,7 @@ export default function AccessControl() {
             </div>
           </div>
           <div className="space-y-3 p-4">
-            {filteredApplications.map((application) => {
+            {paginatedFilteredApplications.map((application) => {
               const level = levelConfig[application.level];
               const status = applicationStatusConfig[application.status];
               return (
@@ -271,7 +284,7 @@ export default function AccessControl() {
                 </article>
               );
             })}
-            {filteredApplications.length === 0 && <div className="py-10 text-center text-sm text-slate-500">当前筛选条件下没有访问申请</div>}
+            {paginatedFilteredApplications.length === 0 && <div className="py-10 text-center text-sm text-slate-500">当前筛选条件下没有访问申请</div>}
           </div>
         </section>
 

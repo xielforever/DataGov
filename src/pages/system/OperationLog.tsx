@@ -25,6 +25,11 @@ import {
   fetchOperationLogOverview,
   updateOperationLogEventStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type EventResult = "success" | "failed" | "blocked";
 type RiskLevel = "high" | "medium" | "normal";
@@ -121,10 +126,18 @@ export default function OperationLog() {
   const [diffs, setDiffs] = useState<OperationDiff[]>([]);
   const [exports, setExports] = useState<OperationExport[]>([]);
   const [keyword, setKeyword] = useState("");
+  useKeyboardShortcut({
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedkeyword = useDebounce(keyword, 300);
   const [riskFilter, setRiskFilter] = useState<"all" | RiskLevel>("all");
   const [resultFilter, setResultFilter] = useState<"all" | EventResult>("all");
   const [selectedEvent, setSelectedEvent] = useState<OperationEvent | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);
@@ -286,7 +299,7 @@ export default function OperationLog() {
             </div>
           </div>
           <div className="grid gap-3 p-4 xl:grid-cols-2">
-            {filteredEvents.map((event) => {
+            {paginatedFilteredEvents.map((event) => {
               const result = resultConfig[event.result];
               const risk = riskConfig[event.risk];
               const selected = selectedEvent?.id === event.id;

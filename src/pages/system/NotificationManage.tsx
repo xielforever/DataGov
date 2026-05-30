@@ -24,6 +24,11 @@ import {
   updateNotificationMessageStatus,
   updateNotificationTemplateStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type TemplateStatus = "enabled" | "disabled";
 type Priority = "high" | "medium" | "low";
@@ -115,9 +120,19 @@ export default function NotificationManage() {
   const [channels, setChannels] = useState<NotificationChannel[]>([]);
   const [messages, setMessages] = useState<NotificationMessage[]>([]);
   const [keyword, setKeyword] = useState("");
+  useKeyboardShortcut({
+    'ctrl+n': () => setIsModalOpen(true),
+    'escape': () => setIsModalOpen(false),
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedkeyword = useDebounce(keyword, 300);
   const [selectedStatus, setSelectedStatus] = useState<"all" | TemplateStatus>("all");
   const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);

@@ -2,6 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { Globe, Zap, Clock, AlertTriangle, Search, Plus, Shield, Users, Activity, ExternalLink, FileText, Bug, Settings2, ArrowUpDown } from 'lucide-react';
 import Breadcrumb from '../../components/common/Breadcrumb';
 import { fetchServiceApiOverview, fetchServiceApis, updateServiceApiStatus } from '../../services/api';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useTableSort } from '../../hooks/useTableSort';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
+import { useTableSelection } from '../../hooks/useTableSelection';
+import ErrorFallback from '../../components/common/ErrorFallback';
 
 /* ── UI constants ────────────────────────────────────────────────────────── */
 
@@ -24,7 +31,15 @@ export default function DataServiceApi() {
   const [overview, setOverview] = useState<any>(null);
   const [apis, setApis] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
+  useKeyboardShortcut({
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedsearch = useDebounce(search, 300);
   const [filterStatus, setFilterStatus] = useState('all');
   const [selected, setSelected] = useState<any | null>(null);
   const [sortField, setSortField] = useState<'qps' | 'callerCount'>('qps');
@@ -36,13 +51,14 @@ export default function DataServiceApi() {
       const [ov, items] = await Promise.all([
         fetchServiceApiOverview(),
         fetchServiceApis({
-          keyword: search || undefined,
+          keyword: debouncedSearch || undefined,
           status: filterStatus !== 'all' ? filterStatus : undefined,
         }),
       ]);
       setOverview(ov);
       setApis(items);
     } catch { /* ignore */ }
+      setError(true);
     setLoading(false);
   }, [search, filterStatus]);
 
@@ -125,7 +141,7 @@ export default function DataServiceApi() {
         {/* API 列表 */}
         <div className={`${selected ? 'w-[60%]' : 'w-full'} transition-all`}>
           {loading ? (
-            <div className="bg-slate-800/40 rounded-xl p-5 animate-pulse h-96" />
+            <TableSkeleton rows={8} cols={7} />
           ) : (
             <div className="bg-slate-800/40 border border-slate-700/30 rounded-l-xl overflow-x-auto">
               <table className="min-w-[920px] w-full table-fixed text-sm">
@@ -193,6 +209,22 @@ export default function DataServiceApi() {
                   )}
                 </tbody>
               </table>
+            {selection.selectedCount > 0 && (
+              <div className="flex items-center gap-3 px-4 py-2 bg-cyan-500/10 border-t border-cyan-500/20 text-sm">
+                <span className="text-cyan-300">已选 {selection.selectedCount} 项</span>
+                <button onClick={() => { toast.success(`批量上线 ${selection.selectedCount} 条`); selection.clear(); }} className="px-3 py-1 rounded bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 text-xs">批量操作</button>
+                <button onClick={() => { toast.error(`批量删除 ${selection.selectedCount} 条`); selection.clear(); }} className="px-3 py-1 rounded bg-red-500/15 text-red-300 hover:bg-red-500/25 text-xs">批量删除</button>
+              </div>
+            )}
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredApis.length / pageSize)}
+              pageSize={pageSize}
+              total={filteredApis.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+            />
             </div>
           )}
         </div>

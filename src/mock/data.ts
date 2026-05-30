@@ -1693,6 +1693,7 @@ export const mockApprovals: Approval[] = [
 ];
 
 export const mockScripts = [
+  // ── 目录 ──────────────────────────────────────────────────────────
   {
     id: 'folder-1',
     name: '数据清洗',
@@ -1701,17 +1702,170 @@ export const mockScripts = [
     updateTime: '2026-04-19 10:00:00',
   },
   {
+    id: 'folder-2',
+    name: '实时指标',
+    type: 'folder',
+    parentId: null,
+    updateTime: '2026-04-20 09:00:00',
+  },
+  {
+    id: 'folder-3',
+    name: '运维脚本',
+    type: 'folder',
+    parentId: null,
+    updateTime: '2026-04-21 14:00:00',
+  },
+
+  // ── Hive SQL ──────────────────────────────────────────────────────
+  {
     id: 'script-1',
-    name: 'user_data_clean', // 不带后缀
+    name: 'user_data_clean',
     type: 'sql',
+    scriptType: 'hive-sql',
+    editorLanguage: 'sql',
+    dialect: 'hive',
     parentId: 'folder-1',
-    content: 'SELECT * FROM users;',
+    content: '-- 用户数据清洗：去重、空值填充、字段标准化\nSELECT\n  user_id,\n  COALESCE(user_name, \'未知\') AS user_name,\n  COALESCE(gender, 0) AS gender,\n  create_time\nFROM ods.ods_user_raw\nWHERE dt = \'${bizdate}\'\n  AND user_id IS NOT NULL\nGROUP BY user_id, user_name, gender, create_time;',
+    status: 'draft',
+    version: 2,
+    dataSourceId: 'ds-003',
+    dataSourceConfig: { queue: 'default' },
+    updateTime: '2026-04-22 16:30:00',
+  },
+
+  // ── MySQL SQL ─────────────────────────────────────────────────────
+  {
+    id: 'script-2',
+    name: 'order_daily_summary',
+    type: 'sql',
+    scriptType: 'mysql-sql',
+    editorLanguage: 'sql',
+    dialect: 'mysql',
+    parentId: 'folder-1',
+    content: '-- 订单日汇总：按天聚合交易核心指标\nSELECT\n  DATE(order_time) AS stat_date,\n  COUNT(*) AS order_cnt,\n  SUM(pay_amount) AS total_amount,\n  COUNT(DISTINCT user_id) AS uv\nFROM dwd_order_detail\nWHERE order_time >= CURDATE() - INTERVAL 7 DAY\nGROUP BY DATE(order_time)\nORDER BY stat_date DESC;',
+    status: 'published',
+    version: 3,
+    dataSourceId: 'ds-001',
+    dataSourceConfig: {},
+    updateTime: '2026-04-23 11:20:00',
+  },
+
+  // ── PostgreSQL SQL ────────────────────────────────────────────────
+  {
+    id: 'script-3',
+    name: 'user_profile_enrich',
+    type: 'sql',
+    scriptType: 'postgresql-sql',
+    editorLanguage: 'sql',
+    dialect: 'postgresql',
+    parentId: 'folder-2',
+    content: '-- 用户画像补全：关联会员等级与标签\nSELECT\n  u.user_id,\n  u.user_name,\n  m.level_name,\n  ARRAY_AGG(t.tag_name) AS tags\nFROM public.dim_user u\nLEFT JOIN public.dim_member m ON u.user_id = m.user_id\nLEFT JOIN public.dim_user_tag t ON u.user_id = t.user_id\nWHERE u.status = 1\nGROUP BY u.user_id, u.user_name, m.level_name;',
+    status: 'draft',
+    version: 1,
+    dataSourceId: 'ds-002',
+    dataSourceConfig: {},
+    updateTime: '2026-04-24 09:15:00',
+  },
+
+  // ── ClickHouse SQL ────────────────────────────────────────────────
+  {
+    id: 'script-4',
+    name: 'realtime_gmv_monitor',
+    type: 'sql',
+    scriptType: 'clickhouse-sql',
+    editorLanguage: 'sql',
+    dialect: 'clickhouse',
+    parentId: 'folder-2',
+    content: '-- 实时 GMV 监控：分钟级交易大盘\nSELECT\n  toStartOfMinute(event_time) AS minute,\n  count() AS order_cnt,\n  sum(pay_amount) AS gmv,\n  uniqExact(user_id) AS buyers\nFROM analytics.order_events\nWHERE event_time >= now() - INTERVAL 1 HOUR\nGROUP BY minute\nORDER BY minute DESC;',
+    status: 'draft',
+    version: 1,
+    dataSourceId: 'ds-004',
+    dataSourceConfig: {},
+    updateTime: '2026-04-24 10:00:00',
+  },
+
+  // ── Python Task ───────────────────────────────────────────────────
+  {
+    id: 'script-5',
+    name: 'etl_user_snapshot',
+    type: 'python',
+    scriptType: 'python-task',
+    editorLanguage: 'python',
+    parentId: 'folder-1',
+    content: '"""ETL - 用户快照表生成\n每日凌晨拉取 ODS 用户数据，清洗后写入 DWD 层。\n"""\n\nimport pandas as pd\nfrom sqlalchemy import create_engine\n\nSOURCE_URI = "mysql+pymysql://reader:***@10.0.1.10/ecommerce_order"\nTARGET_URI = "hive://10.0.5.100:10000/default"\n\n\ndef extract(dt: str) -> pd.DataFrame:\n    engine = create_engine(SOURCE_URI)\n    sql = f"SELECT * FROM users WHERE DATE(update_time) = \'{dt}\'"\n    return pd.read_sql(sql, engine)\n\n\ndef transform(df: pd.DataFrame) -> pd.DataFrame:\n    df = df.drop_duplicates(subset=["user_id"])\n    df["user_name"] = df["user_name"].fillna("未知")\n    df["gender"] = df["gender"].fillna(0).astype(int)\n    return df\n\n\ndef load(df: pd.DataFrame, dt: str):\n    engine = create_engine(TARGET_URI)\n    df.to_sql("dwd_user_snapshot", engine, if_exists="append", index=False)\n\n\nif __name__ == "__main__":\n    bizdate = "2026-04-20"\n    raw = extract(bizdate)\n    cleaned = transform(raw)\n    load(cleaned, bizdate)\n    print(f"Done: {len(cleaned)} rows loaded.")',
     status: 'draft',
     version: 1,
     dataSourceId: 'ds-003',
-    dataSourceConfig: { queue: 'default' },
-    updateTime: '2026-04-19 10:05:00',
-  }
+    dataSourceConfig: {},
+    updateTime: '2026-04-25 08:30:00',
+  },
+
+  // ── Shell Task ────────────────────────────────────────────────────
+  {
+    id: 'script-6',
+    name: 'daily_health_check',
+    type: 'shell',
+    scriptType: 'shell-task',
+    editorLanguage: 'shell',
+    parentId: 'folder-3',
+    content: '#!/usr/bin/env bash\nset -euo pipefail\n\n# 每日集群健康巡检\necho "[$(date)] Starting health check..."\n\n# 检查 Hive Metastore\nhive -e "SHOW DATABASES;" > /dev/null 2>&1 && echo "Hive Metastore: OK" || echo "Hive Metastore: FAIL"\n\n# 检查 ClickHouse\ncurl -sf "http://10.0.6.20:8123/?query=SELECT%201" > /dev/null 2>&1 && echo "ClickHouse: OK" || echo "ClickHouse: FAIL"\n\n# 检查 Kafka lag\nkafka-consumer-groups.sh --bootstrap-server 10.0.4.50:9092 --describe --group log-consumer 2>/dev/null | head -5\n\necho "[$(date)] Health check done."',
+    status: 'published',
+    version: 2,
+    dataSourceId: '',
+    dataSourceConfig: {},
+    updateTime: '2026-04-26 17:00:00',
+  },
+
+  // ── Kafka Consumer ────────────────────────────────────────────────
+  {
+    id: 'script-7',
+    name: 'order_event_consumer',
+    type: 'python',
+    scriptType: 'kafka-consumer',
+    editorLanguage: 'python',
+    dialect: 'kafka',
+    parentId: 'folder-2',
+    content: '"""Kafka Consumer - 订单事件实时消费\n监听订单主题，解析后写入 ClickHouse 用于实时分析。\n"""\n\nimport json\nfrom kafka import KafkaConsumer\nfrom clickhouse_driver import Client\n\nconsumer = KafkaConsumer(\n    "order_events",\n    bootstrap_servers=["10.0.4.50:9092"],\n    group_id="order-ch-writer",\n    value_deserializer=lambda m: json.loads(m.decode("utf-8")),\n    auto_offset_reset="latest",\n)\n\nch_client = Client("10.0.6.20")\n\nprint("Listening on order_events...")\nfor message in consumer:\n    event = message.value\n    ch_client.execute(\n        "INSERT INTO analytics.order_events VALUES",\n        [(event["order_id"], event["user_id"], event["pay_amount"], event["event_time"])],\n    )',
+    status: 'draft',
+    version: 1,
+    dataSourceId: 'ds-005',
+    dataSourceConfig: {},
+    updateTime: '2026-04-27 14:20:00',
+  },
+
+  // ── Redis Command ─────────────────────────────────────────────────
+  {
+    id: 'script-8',
+    name: 'risk_feature_query',
+    type: 'shell',
+    scriptType: 'redis-command',
+    editorLanguage: 'plaintext',
+    dialect: 'redis',
+    parentId: 'folder-3',
+    content: '-- 查询风控特征缓存\nGET risk:user:100001\nHGETALL risk:device:abc123\nZRANGE risk:blacklist:ip 0 -1 WITHSCORES\nTTL risk:user:100001:score',
+    status: 'draft',
+    version: 1,
+    dataSourceId: 'ds-006',
+    dataSourceConfig: {},
+    updateTime: '2026-04-28 09:00:00',
+  },
+
+  // ── Elasticsearch DSL ─────────────────────────────────────────────
+  {
+    id: 'script-9',
+    name: 'product_search_debug',
+    type: 'shell',
+    scriptType: 'elasticsearch-dsl',
+    editorLanguage: 'json',
+    dialect: 'elasticsearch',
+    parentId: 'folder-3',
+    content: '{\n  "query": {\n    "bool": {\n      "must": [\n        { "match": { "title": "运动鞋" } }\n      ],\n      "filter": [\n        { "term": { "status": "on_sale" } },\n        { "range": { "price": { "gte": 200, "lte": 800 } } }\n      ]\n    }\n  },\n  "size": 20,\n  "sort": [{ "sales_count": "desc" }]\n}',
+    status: 'draft',
+    version: 1,
+    dataSourceId: 'ds-008',
+    dataSourceConfig: {},
+    updateTime: '2026-04-28 11:00:00',
+  },
 ];
 
 export const mockScriptVersions = [
@@ -1723,7 +1877,61 @@ export const mockScriptVersions = [
     createTime: '2026-04-19 10:05:00',
     creator: 'Admin',
     comment: 'Initial version',
-  }
+  },
+  {
+    id: 'v-2',
+    scriptId: 'script-1',
+    version: 2,
+    content: '-- 用户数据清洗：去重、空值填充、字段标准化\nSELECT\n  user_id,\n  COALESCE(user_name, \'未知\') AS user_name,\n  COALESCE(gender, 0) AS gender,\n  create_time\nFROM ods.ods_user_raw\nWHERE dt = \'${bizdate}\'\n  AND user_id IS NOT NULL\nGROUP BY user_id, user_name, gender, create_time;',
+    createTime: '2026-04-22 16:30:00',
+    creator: '张无忌',
+    comment: '补充清洗逻辑和分区过滤',
+  },
+  {
+    id: 'v-3',
+    scriptId: 'script-2',
+    version: 1,
+    content: 'SELECT DATE(order_time) AS stat_date, COUNT(*) AS order_cnt FROM dwd_order_detail GROUP BY stat_date;',
+    createTime: '2026-04-20 10:00:00',
+    creator: 'Admin',
+    comment: 'Initial version',
+  },
+  {
+    id: 'v-4',
+    scriptId: 'script-2',
+    version: 2,
+    content: '-- 订单日汇总 v2\nSELECT\n  DATE(order_time) AS stat_date,\n  COUNT(*) AS order_cnt,\n  SUM(pay_amount) AS total_amount\nFROM dwd_order_detail\nWHERE order_time >= CURDATE() - INTERVAL 7 DAY\nGROUP BY DATE(order_time)\nORDER BY stat_date DESC;',
+    createTime: '2026-04-22 14:00:00',
+    creator: '赵敏',
+    comment: '增加金额聚合和近7天过滤',
+  },
+  {
+    id: 'v-5',
+    scriptId: 'script-2',
+    version: 3,
+    content: '-- 订单日汇总 v3：新增 UV 指标\nSELECT\n  DATE(order_time) AS stat_date,\n  COUNT(*) AS order_cnt,\n  SUM(pay_amount) AS total_amount,\n  COUNT(DISTINCT user_id) AS uv\nFROM dwd_order_detail\nWHERE order_time >= CURDATE() - INTERVAL 7 DAY\nGROUP BY DATE(order_time)\nORDER BY stat_date DESC;',
+    createTime: '2026-04-23 11:20:00',
+    creator: '张无忌',
+    comment: '新增 UV 指标，已发布上线',
+  },
+  {
+    id: 'v-6',
+    scriptId: 'script-6',
+    version: 1,
+    content: '#!/usr/bin/env bash\necho "health check"\nhive -e "SHOW DATABASES;"',
+    createTime: '2026-04-25 09:00:00',
+    creator: 'Admin',
+    comment: 'Initial version',
+  },
+  {
+    id: 'v-7',
+    scriptId: 'script-6',
+    version: 2,
+    content: '#!/usr/bin/env bash\nset -euo pipefail\n\n# 每日集群健康巡检\necho "[$(date)] Starting health check..."\n\n# 检查 Hive Metastore\nhive -e "SHOW DATABASES;" > /dev/null 2>&1 && echo "Hive Metastore: OK" || echo "Hive Metastore: FAIL"\n\n# 检查 ClickHouse\ncurl -sf "http://10.0.6.20:8123/?query=SELECT%201" > /dev/null 2>&1 && echo "ClickHouse: OK" || echo "ClickHouse: FAIL"\n\n# 检查 Kafka lag\nkafka-consumer-groups.sh --bootstrap-server 10.0.4.50:9092 --describe --group log-consumer 2>/dev/null | head -5\n\necho "[$(date)] Health check done."',
+    createTime: '2026-04-26 17:00:00',
+    creator: '殷离',
+    comment: '增加 ClickHouse 和 Kafka 检查',
+  },
 ];
 
 export const mockQualityRuleTemplates = [
@@ -4948,3 +5156,485 @@ export const mockShareAssets = [
   { id: 'sh9', name: 'dim_region', bizName: '地区维度表', category: '公共域', type: 'dataset', provider: '周涛', providerDept: '公共数据组', description: '国家、省、市、区四级标准行政区划编码和名称映射，与国家标准一致', level: 'public', downloads: 312, visits: 6800, rating: 4.9, tags: ['维表', '公共', '区划'], updatedAt: '2026-04-01', status: 'approved', schema: 12, size: '0.02 GB', updateFreq: '按需' },
   { id: 'sh10', name: '财务收入明细报表', bizName: '', category: '财务域', type: 'dataset', provider: '刘畅', providerDept: '财务数据组', description: '按渠道、商品、业务线拆分的收入明细，用于财务对账和管理报告', level: 'sensitive', downloads: 18, visits: 420, rating: 4.7, tags: ['财务', '敏感', '月报'], updatedAt: '2026-05-01', status: 'approved', schema: 24, size: '0.8 GB', updateFreq: '每月 5 日' },
 ];
+
+// ─── 数据同步 ────────────────────────────────────────────────────────────────
+
+export const mockSyncOverview = {
+  totalTasks: 12,
+  runningTasks: 5,
+  realtimeTasks: 4,
+  failedTasks: 2,
+  totalRecords: '46.8',
+  avgDelay: '1.3s',
+  weeklySuccessRate: 96.5,
+  topSource: 'MySQL',
+};
+
+export const mockSyncTasks = [
+  { id: 's1', name: 'MySQL→Hive 订单实时同步', description: '从 MySQL 生产库实时捕获订单变更，写入 Hive ODS 层', sourceType: 'MySQL', sourceName: 'prod-mysql-trade', sourceHost: '10.0.1.11:3306', targetType: 'Hive', targetName: 'prod-hive-warehouse', targetHost: 'hdfs://namenode:8020/warehouse', syncType: 'realtime', mode: 'CDC', status: 'running', progress: 78, tables: 45, records: '2.3 亿', delay: '1.2s', qps: '12,450', lastSync: '2026-05-30 14:32:08', nextSync: '-', owner: '张明', department: '交易数据组', createdAt: '2025-12-01', config: { concurrency: 8, batchSize: 5000, retryCount: 3, retryInterval: '30s' }, fieldMapping: { total: 128, mapped: 125, ignored: 3 } },
+  { id: 's2', name: 'Kafka→ClickHouse 事件流同步', description: '消费 Kafka 用户行为事件，实时写入 ClickHouse 做 OLAP 分析', sourceType: 'Kafka', sourceName: 'prod-kafka-event', sourceHost: '10.0.2.21:9092', targetType: 'ClickHouse', targetName: 'prod-ck-olap', targetHost: '10.0.3.31:8123', syncType: 'realtime', mode: 'Stream', status: 'running', progress: 92, tables: 12, records: '8,560 万', delay: '0.8s', qps: '45,200', lastSync: '2026-05-30 14:32:05', nextSync: '-', owner: '黄琦', department: '数据平台', createdAt: '2025-11-15', config: { concurrency: 16, batchSize: 10000, retryCount: 5, retryInterval: '10s' }, fieldMapping: { total: 86, mapped: 86, ignored: 0 } },
+  { id: 's3', name: 'Oracle→Hive 财务数据批量同步', description: '每日凌晨从 Oracle 财务库抽取增量数据写入 Hive', sourceType: 'Oracle', sourceName: 'prod-oracle-finance', sourceHost: '10.0.4.41:1521', targetType: 'Hive', targetName: 'prod-hive-warehouse', targetHost: 'hdfs://namenode:8020/warehouse', syncType: 'batch', mode: 'Incremental', status: 'waiting', tables: 28, records: '1,250 万', delay: '-', qps: '-', lastSync: '2026-05-30 06:00:00', nextSync: '2026-05-31 06:00:00', owner: '刘畅', department: '财务数据组', createdAt: '2025-10-20', config: { concurrency: 4, batchSize: 2000, retryCount: 3, retryInterval: '60s' }, fieldMapping: { total: 64, mapped: 62, ignored: 2 } },
+  { id: 's4', name: 'PG→MySQL 用户数据批量同步', description: '将 PostgreSQL 用户画像数据同步到 MySQL 供业务查询', sourceType: 'PostgreSQL', sourceName: 'prod-pg-user', sourceHost: '10.0.5.51:5432', targetType: 'MySQL', targetName: 'prod-mysql-trade', targetHost: '10.0.1.11:3306', syncType: 'batch', mode: 'Full', status: 'stopped', tables: 15, records: '3,200 万', delay: '-', qps: '-', lastSync: '2026-05-29 22:00:00', nextSync: '2026-05-30 22:00:00', owner: '赵敏', department: '用户增长组', createdAt: '2025-09-08', config: { concurrency: 4, batchSize: 3000, retryCount: 2, retryInterval: '45s' }, fieldMapping: { total: 42, mapped: 40, ignored: 2 } },
+  { id: 's5', name: 'MongoDB→Hive 内容数据批量同步', description: '同步 MongoDB CMS 内容数据到 Hive 做离线分析', sourceType: 'MongoDB', sourceName: 'prod-mongo-content', sourceHost: '10.0.6.61:27017', targetType: 'Hive', targetName: 'prod-hive-warehouse', targetHost: 'hdfs://namenode:8020/warehouse', syncType: 'batch', mode: 'Incremental', status: 'running', progress: 45, tables: 8, records: '5,600 万', delay: '-', qps: '-', lastSync: '2026-05-30 13:00:00', nextSync: '-', owner: '孙立', department: '商品数据组', createdAt: '2026-01-10', config: { concurrency: 4, batchSize: 5000, retryCount: 3, retryInterval: '30s' }, fieldMapping: { total: 35, mapped: 33, ignored: 2 } },
+  { id: 's6', name: 'MySQL Binlog→Kafka CDC 同步', description: '通过 Canal 捕获 MySQL Binlog 变更事件写入 Kafka', sourceType: 'MySQL', sourceName: 'prod-mysql-trade', sourceHost: '10.0.1.11:3306', targetType: 'Kafka', targetName: 'prod-kafka-event', targetHost: '10.0.2.21:9092', syncType: 'realtime', mode: 'CDC', status: 'failed', tables: 120, records: '15.6 亿', delay: '-', qps: '-', lastSync: '2026-05-30 12:45:30', nextSync: '-', owner: '张明', department: '交易数据组', createdAt: '2025-08-20', config: { concurrency: 12, batchSize: 8000, retryCount: 5, retryInterval: '15s' }, fieldMapping: { total: 320, mapped: 312, ignored: 8 }, errorMsg: 'Canal 连接超时，Binlog 位点已过期' },
+  { id: 's7', name: 'Hive→Doris 实时分析同步', description: '将 Hive DWD 层数据实时同步到 Doris 供即席查询', sourceType: 'Hive', sourceName: 'prod-hive-warehouse', sourceHost: 'hdfs://namenode:8020/warehouse', targetType: 'Doris', targetName: 'prod-doris-realtime', targetHost: '10.0.7.71:8030', syncType: 'realtime', mode: 'Stream', status: 'running', progress: 88, tables: 35, records: '4,800 万', delay: '2.5s', qps: '8,900', lastSync: '2026-05-30 14:31:55', nextSync: '-', owner: '黄琦', department: '数据平台', createdAt: '2026-02-15', config: { concurrency: 8, batchSize: 6000, retryCount: 3, retryInterval: '20s' }, fieldMapping: { total: 210, mapped: 205, ignored: 5 } },
+  { id: 's8', name: 'Redis→MySQL 缓存回写批量同步', description: '将 Redis 缓存中的热数据定期回写到 MySQL 持久化', sourceType: 'Redis', sourceName: 'prod-redis-cache', sourceHost: '10.0.8.81:6379', targetType: 'MySQL', targetName: 'prod-mysql-trade', targetHost: '10.0.1.11:3306', syncType: 'batch', mode: 'Full', status: 'waiting', tables: 5, records: '120 万', delay: '-', qps: '-', lastSync: '2026-05-30 12:00:00', nextSync: '2026-05-30 18:00:00', owner: '冯磊', department: '交易数据组', createdAt: '2026-03-01', config: { concurrency: 2, batchSize: 1000, retryCount: 2, retryInterval: '60s' }, fieldMapping: { total: 18, mapped: 18, ignored: 0 } },
+  { id: 's9', name: 'MySQL→ES 搜索索引同步', description: '将 MySQL 商品和订单数据同步到 Elasticsearch 供搜索服务使用', sourceType: 'MySQL', sourceName: 'prod-mysql-trade', sourceHost: '10.0.1.11:3306', targetType: 'Elasticsearch', targetName: 'prod-es-search', targetHost: '10.0.9.91:9200', syncType: 'realtime', mode: 'CDC', status: 'failed', tables: 8, records: '6,200 万', delay: '-', qps: '-', lastSync: '2026-05-30 10:22:15', nextSync: '-', owner: '林峰', department: '数据平台', createdAt: '2026-04-05', config: { concurrency: 6, batchSize: 3000, retryCount: 3, retryInterval: '30s' }, fieldMapping: { total: 56, mapped: 54, ignored: 2 }, errorMsg: 'ES 集群磁盘使用率超过 90%，写入被拒绝' },
+  { id: 's10', name: 'API→Hive 外部数据采集', description: '定时调用第三方 API 获取市场数据写入 Hive', sourceType: 'API', sourceName: 'market-data-api', sourceHost: 'https://api.market.example.com', targetType: 'Hive', targetName: 'prod-hive-warehouse', targetHost: 'hdfs://namenode:8020/warehouse', syncType: 'batch', mode: 'Full', status: 'running', progress: 62, tables: 3, records: '85 万', delay: '-', qps: '-', lastSync: '2026-05-30 14:00:00', nextSync: '2026-05-31 14:00:00', owner: '陈静', department: '营销数据组', createdAt: '2026-03-20', config: { concurrency: 2, batchSize: 500, retryCount: 5, retryInterval: '120s' }, fieldMapping: { total: 24, mapped: 24, ignored: 0 } },
+  { id: 's11', name: 'PG→ClickHouse 日志批量同步', description: '将 PostgreSQL 操作日志批量同步到 ClickHouse 做审计分析', sourceType: 'PostgreSQL', sourceName: 'prod-pg-user', sourceHost: '10.0.5.51:5432', targetType: 'ClickHouse', targetName: 'prod-ck-olap', targetHost: '10.0.3.31:8123', syncType: 'batch', mode: 'Incremental', status: 'stopped', tables: 6, records: '9,400 万', delay: '-', qps: '-', lastSync: '2026-05-28 23:00:00', nextSync: '-', owner: '郑伟', department: '风控数据组', createdAt: '2026-02-28', config: { concurrency: 4, batchSize: 8000, retryCount: 3, retryInterval: '30s' }, fieldMapping: { total: 32, mapped: 30, ignored: 2 } },
+  { id: 's12', name: 'MySQL→Doris 报表数据批量同步', description: '每日凌晨同步 MySQL 聚合数据到 Doris 供 BI 报表使用', sourceType: 'MySQL', sourceName: 'prod-mysql-trade', sourceHost: '10.0.1.11:3306', targetType: 'Doris', targetName: 'prod-doris-realtime', targetHost: '10.0.7.71:8030', syncType: 'batch', mode: 'Incremental', status: 'waiting', tables: 22, records: '1,800 万', delay: '-', qps: '-', lastSync: '2026-05-30 03:00:00', nextSync: '2026-05-31 03:00:00', owner: '陈静', department: 'BI 团队', createdAt: '2026-01-20', config: { concurrency: 6, batchSize: 5000, retryCount: 3, retryInterval: '45s' }, fieldMapping: { total: 88, mapped: 85, ignored: 3 } },
+];
+
+export const mockSyncLogs = [
+  { id: 'sl1', taskId: 's1', time: '2026-05-30 14:32:08', level: 'info', message: '增量同步完成，处理 12,450 条变更事件，耗时 1.2s' },
+  { id: 'sl2', taskId: 's1', time: '2026-05-30 14:31:55', level: 'info', message: 'CDC 位点更新：binlog.000345:789012 → binlog.000345:790123' },
+  { id: 'sl3', taskId: 's1', time: '2026-05-30 14:30:22', level: 'warn', message: '检测到慢查询导致的延迟增大，当前延迟 2.8s' },
+  { id: 'sl4', taskId: 's6', time: '2026-05-30 12:45:30', level: 'error', message: 'Canal 连接超时，Binlog 位点已过期，请手动重置位点后重试' },
+  { id: 'sl5', taskId: 's6', time: '2026-05-30 12:44:15', level: 'warn', message: 'Canal 连接池耗尽，等待释放连接...' },
+  { id: 'sl6', taskId: 's9', time: '2026-05-30 10:22:15', level: 'error', message: 'ES 集群磁盘使用率 92%，超过阈值 90%，写入被拒绝' },
+  { id: 'sl7', taskId: 's9', time: '2026-05-30 10:20:08', level: 'warn', message: 'ES 集群磁盘使用率达到 88%，即将触发阈值' },
+  { id: 'sl8', taskId: 's2', time: '2026-05-30 14:32:05', level: 'info', message: '消费 Kafka topic user-events partition 0-7，lag: 230' },
+  { id: 'sl9', taskId: 's7', time: '2026-05-30 14:31:55', level: 'info', message: 'Doris Stream Load 完成，写入 8,900 rows/s' },
+  { id: 'sl10', taskId: 's5', time: '2026-05-30 13:00:00', level: 'info', message: 'MongoDB 增量采集启动，起始 resumeToken: 8234567' },
+];
+
+// ─── 实时计算 ────────────────────────────────────────────────────────────────
+
+export const mockFlinkOverview = {
+  totalJobs: 8,
+  runningJobs: 4,
+  totalParallelism: 88,
+  totalCpu: '48 Core',
+  totalMemory: '160 GB',
+  avgDelay: '156ms',
+  weeklyCheckpointSuccess: 98.2,
+  totalRecordsIn: '108,700/s',
+};
+
+export const mockFlinkTasks = [
+  { id: 'f1', name: '实时订单流处理', description: '消费 Kafka 订单事件，实时计算 GMV、订单量等核心交易指标', status: 'running', parallelism: 16, cpu: '8 Core', memory: '32 GB', recordsIn: '45,200/s', recordsOut: '12,800/s', delay: '230ms', backpressure: 'ok', checkpoint: '正常 (间隔60s)', checkpointCount: 1248, failoverCount: 0, startTime: '2026-05-20 08:00', uptime: '10天', owner: '黄琦', department: '数据平台', jar: 'flink-order-stream-1.2.0.jar', entryClass: 'com.datagov.flink.OrderStreamJob', kafkaTopics: ['order-events', 'payment-events'], sinkTargets: ['ClickHouse', 'Redis'] },
+  { id: 'f2', name: '用户行为实时分析', description: '实时分析用户点击、浏览、搜索行为，输出用户画像标签到 Redis', status: 'running', parallelism: 8, cpu: '4 Core', memory: '16 GB', recordsIn: '28,500/s', recordsOut: '8,200/s', delay: '180ms', backpressure: 'ok', checkpoint: '正常 (间隔30s)', checkpointCount: 2456, failoverCount: 1, startTime: '2026-05-22 10:30', uptime: '8天', owner: '赵敏', department: '用户增长组', jar: 'flink-user-behavior-2.1.0.jar', entryClass: 'com.datagov.flink.UserBehaviorJob', kafkaTopics: ['user-click', 'user-browse', 'user-search'], sinkTargets: ['Redis', 'Hive'] },
+  { id: 'f3', name: '实时风控预警', description: '实时检测异常交易和欺诈行为，触发风控规则引擎并发送告警', status: 'running', parallelism: 12, cpu: '6 Core', memory: '24 GB', recordsIn: '35,000/s', recordsOut: '150/s', delay: '50ms', backpressure: 'warn', checkpoint: '正常 (间隔15s)', checkpointCount: 5672, failoverCount: 3, startTime: '2026-05-18 14:00', uptime: '12天', owner: '郑伟', department: '风控数据组', jar: 'flink-risk-engine-3.0.1.jar', entryClass: 'com.datagov.flink.RiskAlertJob', kafkaTopics: ['order-events', 'payment-events', 'user-login'], sinkTargets: ['Kafka(alerts)', 'MySQL'] },
+  { id: 'f4', name: '实时推荐特征计算', description: '基于用户实时行为计算推荐特征向量，写入特征存储供推荐服务使用', status: 'failed', parallelism: 24, cpu: '12 Core', memory: '48 GB', recordsIn: '-', recordsOut: '-', delay: '-', backpressure: 'high', checkpoint: '失败 (超时)', checkpointCount: 890, failoverCount: 5, startTime: '2026-05-28 09:00', uptime: '-', owner: '林峰', department: '数据平台', jar: 'flink-rec-feature-1.5.0.jar', entryClass: 'com.datagov.flink.RecFeatureJob', kafkaTopics: ['user-click', 'user-browse'], sinkTargets: ['Redis', 'HBase'], errorMsg: 'TaskManager 内存不足，GC 超时导致 Checkpoint 失败' },
+  { id: 'f5', name: '实时库存同步', description: '监听库存变更事件，实时同步到各端缓存和搜索索引', status: 'stopped', parallelism: 4, cpu: '2 Core', memory: '8 GB', recordsIn: '-', recordsOut: '-', delay: '-', backpressure: 'ok', checkpoint: '-', checkpointCount: 0, failoverCount: 0, startTime: '2026-05-15 16:00', uptime: '-', owner: '孙立', department: '商品数据组', jar: 'flink-inventory-sync-1.0.0.jar', entryClass: 'com.datagov.flink.InventorySyncJob', kafkaTopics: ['inventory-events'], sinkTargets: ['Redis', 'ES'] },
+  { id: 'f6', name: '实时数据质量巡检', description: '对数据流进行实时质量规则校验，异常数据触发告警并写入质量报告', status: 'deploying', parallelism: 8, cpu: '4 Core', memory: '16 GB', recordsIn: '-', recordsOut: '-', delay: '-', backpressure: 'ok', checkpoint: '-', checkpointCount: 0, failoverCount: 0, startTime: '-', uptime: '-', owner: '李雪', department: '数据平台', jar: 'flink-quality-check-2.0.0.jar', entryClass: 'com.datagov.flink.QualityCheckJob', kafkaTopics: ['order-events', 'user-events'], sinkTargets: ['Kafka(alerts)', 'Hive'] },
+  { id: 'f7', name: '实时地域聚合', description: '按地域维度实时聚合交易数据，支持实时大屏展示', status: 'running', parallelism: 6, cpu: '3 Core', memory: '12 GB', recordsIn: '12,400/s', recordsOut: '3,200/s', delay: '95ms', backpressure: 'ok', checkpoint: '正常 (间隔30s)', checkpointCount: 3210, failoverCount: 0, startTime: '2026-05-25 10:00', uptime: '5天', owner: '陈静', department: 'BI 团队', jar: 'flink-region-agg-1.1.0.jar', entryClass: 'com.datagov.flink.RegionAggJob', kafkaTopics: ['order-events'], sinkTargets: ['Redis', 'ClickHouse'] },
+  { id: 'f8', name: '实时异常日志检测', description: '对应用日志流进行实时异常模式检测，触发运维告警', status: 'stopped', parallelism: 4, cpu: '2 Core', memory: '8 GB', recordsIn: '-', recordsOut: '-', delay: '-', backpressure: 'ok', checkpoint: '-', checkpointCount: 456, failoverCount: 1, startTime: '2026-05-10 08:00', uptime: '-', owner: '冯磊', department: '运维团队', jar: 'flink-log-detect-1.0.0.jar', entryClass: 'com.datagov.flink.LogDetectJob', kafkaTopics: ['app-logs'], sinkTargets: ['Kafka(alerts)'] },
+];
+
+// ─── 任务编排 ────────────────────────────────────────────────────────────────
+
+export const mockOrchestrations = [
+  { id: 'orch-1', name: 'T+1 离线数仓主链路', description: '每日凌晨运行的离线数仓 ETL 主流程，覆盖 ODS→DWD→DWS→ADS 全链路', status: 'active', taskCount: 8, cron: '0 1 * * *', avgDuration: '4h 30min', lastRun: '2026-05-30 01:00:00', lastStatus: 'success', owner: '张明', department: '交易数据组', createdAt: '2025-08-15' },
+  { id: 'orch-2', name: '数据质量日报生成', description: '在数仓主链路完成后运行，执行质量规则巡检并生成日报', status: 'active', taskCount: 3, cron: '0 6 * * *', avgDuration: '45min', lastRun: '2026-05-30 06:00:00', lastStatus: 'success', owner: '李雪', department: '数据平台', createdAt: '2025-10-01' },
+  { id: 'orch-3', name: '实时特征链路监控', description: '监控实时 Flink 作业状态，异常时触发告警和自动重启', status: 'active', taskCount: 5, cron: '*/5 * * * *', avgDuration: '2min', lastRun: '2026-05-30 14:35:00', lastStatus: 'success', owner: '林峰', department: '数据平台', createdAt: '2026-01-20' },
+  { id: 'orch-4', name: '月度报表数据准备', description: '每月初运行，汇总上月数据生成月度报表数据集', status: 'active', taskCount: 6, cron: '0 2 1 * *', avgDuration: '6h 15min', lastRun: '2026-05-01 02:00:00', lastStatus: 'success', owner: '陈静', department: 'BI 团队', createdAt: '2026-02-01' },
+  { id: 'orch-5', name: '缓存预热链路', description: '应用发布后运行，预热 Redis 和本地缓存', status: 'paused', taskCount: 4, cron: '手动触发', avgDuration: '25min', lastRun: '2026-05-28 20:00:00', lastStatus: 'success', owner: '冯磊', department: '运维团队', createdAt: '2026-03-10' },
+];
+
+export const mockDagNodes = [
+  { id: 'd1', orchestrationId: 'orch-1', name: 'MySQL→ODS 数据同步', type: 'sync', scriptId: 's1', status: 'success', upstream: [], downstream: ['d2', 'd3'], cron: '0 2 * * *', avgDuration: '45min', lastRun: '2026-05-30 02:45:12', owner: '张明' },
+  { id: 'd2', orchestrationId: 'orch-1', name: 'ODS→DWD 订单清洗', type: 'compute', scriptId: 'sc-001', status: 'success', upstream: ['d1'], downstream: ['d4'], cron: '0 4 * * *', avgDuration: '30min', lastRun: '2026-05-30 04:30:08', owner: '张明' },
+  { id: 'd3', orchestrationId: 'orch-1', name: 'ODS→DWD 用户清洗', type: 'compute', scriptId: 'sc-003', status: 'success', upstream: ['d1'], downstream: ['d4'], cron: '0 4 * * *', avgDuration: '25min', lastRun: '2026-05-30 04:25:15', owner: '赵敏' },
+  { id: 'd4', orchestrationId: 'orch-1', name: 'DWD→DWS 用户汇总', type: 'compute', scriptId: 'sc-004', status: 'success', upstream: ['d2', 'd3'], downstream: ['d5', 'd6'], cron: '0 6 * * *', avgDuration: '20min', lastRun: '2026-05-30 06:20:33', owner: '李雪' },
+  { id: 'd5', orchestrationId: 'orch-1', name: 'DWS→ADS 销售报表', type: 'compute', scriptId: 'sc-005', status: 'success', upstream: ['d4'], downstream: ['d7'], cron: '0 7 * * *', avgDuration: '10min', lastRun: '2026-05-30 07:10:45', owner: '陈静' },
+  { id: 'd6', orchestrationId: 'orch-1', name: '数据质量巡检', type: 'quality', scriptId: 'sc-006', status: 'running', upstream: ['d4'], downstream: ['d8'], cron: '0 8 * * *', avgDuration: '15min', lastRun: '2026-05-30 08:05:22', owner: '李雪' },
+  { id: 'd7', orchestrationId: 'orch-1', name: '报表数据推送', type: 'service', scriptId: null, status: 'waiting', upstream: ['d5'], downstream: [], cron: '0 8 * * *', avgDuration: '5min', lastRun: '2026-05-29 08:05:00', owner: '陈静' },
+  { id: 'd8', orchestrationId: 'orch-1', name: '质量报告生成', type: 'quality', scriptId: null, status: 'waiting', upstream: ['d6'], downstream: [], cron: '0 9 * * *', avgDuration: '8min', lastRun: '2026-05-29 09:08:10', owner: '李雪' },
+  { id: 'd9', orchestrationId: 'orch-2', name: '质量规则批量执行', type: 'quality', scriptId: null, status: 'success', upstream: [], downstream: ['d10', 'd11'], cron: '0 6 * * *', avgDuration: '30min', lastRun: '2026-05-30 06:30:00', owner: '李雪' },
+  { id: 'd10', orchestrationId: 'orch-2', name: '质量评分计算', type: 'compute', scriptId: null, status: 'success', upstream: ['d9'], downstream: ['d11'], cron: '0 6 * * *', avgDuration: '10min', lastRun: '2026-05-30 06:40:00', owner: '李雪' },
+  { id: 'd11', orchestrationId: 'orch-2', name: '日报生成与推送', type: 'service', scriptId: null, status: 'success', upstream: ['d9', 'd10'], downstream: [], cron: '0 6 * * *', avgDuration: '5min', lastRun: '2026-05-30 06:45:00', owner: '李雪' },
+];
+
+export const mockDagRunHistory = [
+  { id: 'dr1', orchestrationId: 'orch-1', startTime: '2026-05-30 01:00:00', endTime: '2026-05-30 05:30:12', duration: '4h 30min 12s', status: 'success', triggerType: 'scheduled', tasksTotal: 8, tasksSuccess: 8, tasksFailed: 0 },
+  { id: 'dr2', orchestrationId: 'orch-1', startTime: '2026-05-29 01:00:00', endTime: '2026-05-29 05:45:30', duration: '4h 45min 30s', status: 'success', triggerType: 'scheduled', tasksTotal: 8, tasksSuccess: 8, tasksFailed: 0 },
+  { id: 'dr3', orchestrationId: 'orch-1', startTime: '2026-05-28 01:00:00', endTime: '2026-05-28 06:10:45', duration: '5h 10min 45s', status: 'failed', triggerType: 'scheduled', tasksTotal: 8, tasksSuccess: 6, tasksFailed: 2 },
+  { id: 'dr4', orchestrationId: 'orch-1', startTime: '2026-05-27 01:00:00', endTime: '2026-05-27 05:28:20', duration: '4h 28min 20s', status: 'success', triggerType: 'scheduled', tasksTotal: 8, tasksSuccess: 8, tasksFailed: 0 },
+  { id: 'dr5', orchestrationId: 'orch-2', startTime: '2026-05-30 06:00:00', endTime: '2026-05-30 06:45:12', duration: '45min 12s', status: 'success', triggerType: 'scheduled', tasksTotal: 3, tasksSuccess: 3, tasksFailed: 0 },
+  { id: 'dr6', orchestrationId: 'orch-2', startTime: '2026-05-29 06:00:00', endTime: '2026-05-29 06:42:08', duration: '42min 8s', status: 'success', triggerType: 'scheduled', tasksTotal: 3, tasksSuccess: 3, tasksFailed: 0 },
+  { id: 'dr7', orchestrationId: 'orch-3', startTime: '2026-05-30 14:35:00', endTime: '2026-05-30 14:37:12', duration: '2min 12s', status: 'success', triggerType: 'scheduled', tasksTotal: 5, tasksSuccess: 5, tasksFailed: 0 },
+  { id: 'dr8', orchestrationId: 'orch-5', startTime: '2026-05-28 20:00:00', endTime: '2026-05-28 20:22:30', duration: '22min 30s', status: 'success', triggerType: 'manual', tasksTotal: 4, tasksSuccess: 4, tasksFailed: 0 },
+];
+
+// ─── 元数据采集 ──────────────────────────────────────────────────────────────
+
+export const mockCollectTasks = [
+  { id: 't1', name: '交易库全量元数据采集', dataSource: 'prod-mysql-trade', dsType: 'MySQL', scope: '全库', scopeDetail: 'trade_db (42 张表)', collectType: 'full', schedule: '每天 02:00', status: 'running', lastRun: '2026-05-30 02:00:00', nextRun: '2026-05-31 02:00:00', duration: '12分34秒', tableCount: 42, fieldCount: 386, progress: 68, owner: '张明', department: '交易数据组', createdAt: '2025-03-01', tags: ['核心', '生产'] },
+  { id: 't2', name: '数仓增量元数据采集', dataSource: 'prod-hive-warehouse', dsType: 'Hive', scope: '指定表', scopeDetail: 'ods_db / dwd_db / dws_db', collectType: 'incremental', schedule: '每小时', status: 'success', lastRun: '2026-05-30 14:00:00', nextRun: '2026-05-30 15:00:00', duration: '3分2秒', tableCount: 285, fieldCount: 2847, owner: '赵敏', department: '数据平台', createdAt: '2025-02-15', tags: ['核心', '增量'] },
+  { id: 't3', name: 'OLAP 引擎元数据采集', dataSource: 'prod-clickhouse-olap', dsType: 'ClickHouse', scope: '全库', scopeDetail: 'analytics_db (18 张表)', collectType: 'full', schedule: '每天 04:00', status: 'success', lastRun: '2026-05-30 04:08:00', nextRun: '2026-05-31 04:00:00', duration: '1分5秒', tableCount: 18, fieldCount: 214, owner: '林峰', department: '数据平台', createdAt: '2025-03-10', tags: ['OLAP'] },
+  { id: 't4', name: '用户中心元数据采集', dataSource: 'prod-pg-user', dsType: 'PostgreSQL', scope: '指定表', scopeDetail: 'user_*, member_* (28 张表)', collectType: 'incremental', schedule: '每小时', status: 'failed', lastRun: '2026-05-30 13:00:00', nextRun: '2026-05-30 15:00:00', duration: '0分3秒', tableCount: 28, fieldCount: 312, owner: '赵敏', department: '用户增长组', createdAt: '2025-01-20', tags: ['用户域'], errorMsg: '连接超时: could not connect to server on host 10.0.5.51' },
+  { id: 't5', name: '内容存储元数据采集', dataSource: 'prod-mongo-content', dsType: 'MongoDB', scope: '全库', scopeDetail: 'content_db (11 个集合)', collectType: 'full', schedule: '每天 03:30', status: 'paused', lastRun: '2026-05-29 03:45:00', nextRun: '-', duration: '2分钟', tableCount: 11, fieldCount: 98, owner: '孙立', department: '商品数据组', createdAt: '2025-04-01', tags: ['内容域'] },
+  { id: 't6', name: '搜索引擎索引采集', dataSource: 'prod-es-search', dsType: 'Elasticsearch', scope: '全库', scopeDetail: 'search_* (15 个索引)', collectType: 'full', schedule: '每天 05:00', status: 'waiting', lastRun: '2026-05-29 05:02:00', nextRun: '2026-05-30 05:00:00', duration: '4分0秒', tableCount: 15, fieldCount: 187, owner: '林峰', department: '数据平台', createdAt: '2025-04-05', tags: ['搜索'] },
+  { id: 't7', name: '实时数仓元数据采集', dataSource: 'prod-doris-realtime', dsType: 'Doris', scope: '指定表', scopeDetail: 'realtime_db (22 张表)', collectType: 'incremental', schedule: '每30分钟', status: 'success', lastRun: '2026-05-30 14:30:00', nextRun: '2026-05-30 15:00:00', duration: '0分8秒', tableCount: 22, fieldCount: 268, owner: '林峰', department: '数据平台', createdAt: '2025-04-10', tags: ['实时', '核心'] },
+  { id: 't8', name: '财务系统元数据采集', dataSource: 'prod-oracle-finance', dsType: 'MySQL', scope: '指定表', scopeDetail: 'finance_*, accounting_* (35 张表)', collectType: 'full', schedule: '每天 06:00', status: 'success', lastRun: '2026-05-30 06:15:00', nextRun: '2026-05-31 06:00:00', duration: '5分20秒', tableCount: 35, fieldCount: 420, owner: '刘畅', department: '财务数据组', createdAt: '2025-05-01', tags: ['财务', '敏感'] },
+];
+
+export const mockCollectRecords = [
+  { id: 'r1', taskId: 't1', taskName: '交易库全量元数据采集', dataSource: 'prod-mysql-trade', dsType: 'MySQL', startTime: '2026-05-30 02:00:00', endTime: '2026-05-30 02:12:34', duration: '12分34秒', status: 'success', tableCount: 42, fieldCount: 386, newTables: 2, updatedTables: 8, triggerType: 'schedule' },
+  { id: 'r2', taskId: 't2', taskName: '数仓增量元数据采集', dataSource: 'prod-hive-warehouse', dsType: 'Hive', startTime: '2026-05-30 14:00:00', endTime: '2026-05-30 14:03:02', duration: '3分2秒', status: 'success', tableCount: 285, fieldCount: 2847, newTables: 0, updatedTables: 12, triggerType: 'schedule' },
+  { id: 'r3', taskId: 't4', taskName: '用户中心元数据采集', dataSource: 'prod-pg-user', dsType: 'PostgreSQL', startTime: '2026-05-30 13:00:00', endTime: '2026-05-30 13:00:03', duration: '0分3秒', status: 'failed', tableCount: 0, fieldCount: 0, newTables: 0, updatedTables: 0, triggerType: 'schedule', errorMsg: '连接超时: could not connect to server on host 10.0.5.51' },
+  { id: 'r4', taskId: 't7', taskName: '实时数仓元数据采集', dataSource: 'prod-doris-realtime', dsType: 'Doris', startTime: '2026-05-30 14:30:00', endTime: '2026-05-30 14:30:08', duration: '0分8秒', status: 'success', tableCount: 22, fieldCount: 268, newTables: 1, updatedTables: 3, triggerType: 'schedule' },
+  { id: 'r5', taskId: 't3', taskName: 'OLAP 引擎元数据采集', dataSource: 'prod-clickhouse-olap', dsType: 'ClickHouse', startTime: '2026-05-30 04:00:00', endTime: '2026-05-30 04:01:05', duration: '1分5秒', status: 'success', tableCount: 18, fieldCount: 214, newTables: 0, updatedTables: 2, triggerType: 'schedule' },
+  { id: 'r6', taskId: 't8', taskName: '财务系统元数据采集', dataSource: 'prod-oracle-finance', dsType: 'MySQL', startTime: '2026-05-30 06:00:00', endTime: '2026-05-30 06:05:20', duration: '5分20秒', status: 'success', tableCount: 35, fieldCount: 420, newTables: 0, updatedTables: 5, triggerType: 'schedule' },
+  { id: 'r7', taskId: 't1', taskName: '交易库全量元数据采集', dataSource: 'prod-mysql-trade', dsType: 'MySQL', startTime: '2026-05-29 02:00:00', endTime: '2026-05-29 02:11:48', duration: '11分48秒', status: 'success', tableCount: 42, fieldCount: 384, newTables: 0, updatedTables: 3, triggerType: 'schedule' },
+  { id: 'r8', taskId: 't1', taskName: '交易库全量元数据采集', dataSource: 'prod-mysql-trade', dsType: 'MySQL', startTime: '2026-05-28 02:00:00', endTime: '2026-05-28 02:13:01', duration: '13分1秒', status: 'success', tableCount: 42, fieldCount: 382, newTables: 1, updatedTables: 6, triggerType: 'schedule' },
+];
+
+export const mockCollectRules = [
+  { id: 'cr1', name: '排除临时表', type: 'exclude', pattern: 'tmp_*, temp_*, bak_*', scope: 'table', enabled: true, description: '排除所有以 tmp_、temp_、bak_ 开头的临时表和备份表' },
+  { id: 'cr2', name: '仅采集业务库', type: 'include', pattern: 'trade_db, user_db, content_db, analytics_db', scope: 'database', enabled: true, description: '仅采集核心业务数据库，排除系统库和测试库' },
+  { id: 'cr3', name: '排除敏感字段', type: 'exclude', pattern: 'password, secret, token, id_card, bank_card', scope: 'field', enabled: true, description: '排除密码、密钥、证件号、银行卡号等敏感字段的元数据' },
+  { id: 'cr4', name: '包含维表', type: 'include', pattern: 'dim_*', scope: 'table', enabled: true, description: '强制采集所有维度表，确保维表元数据完整' },
+  { id: 'cr5', name: '排除日志表', type: 'exclude', pattern: '*_log, *_audit, *_trace', scope: 'table', enabled: false, description: '排除日志、审计、追踪类表（当前未启用）' },
+];
+
+// ─── 运维监控 ────────────────────────────────────────────────────────────────
+
+export const mockOpsServices = [
+  { id: 'sv1', name: 'API 网关', status: 'healthy', uptime: '99.99%', cpu: 35, memory: 48, instances: 4, qps: '125,000', latency: '3ms', version: 'v2.4.1' },
+  { id: 'sv2', name: '调度中心', status: 'healthy', uptime: '99.95%', cpu: 28, memory: 52, instances: 3, qps: '2,500', latency: '8ms', version: 'v3.1.0' },
+  { id: 'sv3', name: '元数据服务', status: 'healthy', uptime: '99.98%', cpu: 22, memory: 45, instances: 2, qps: '5,800', latency: '12ms', version: 'v2.0.3' },
+  { id: 'sv4', name: '血缘计算引擎', status: 'warning', uptime: '99.80%', cpu: 78, memory: 85, instances: 2, qps: '800', latency: '45ms', version: 'v1.5.2' },
+  { id: 'sv5', name: '数据质量引擎', status: 'healthy', uptime: '99.97%', cpu: 42, memory: 55, instances: 3, qps: '3,200', latency: '15ms', version: 'v2.2.0' },
+  { id: 'sv6', name: '实时计算集群', status: 'healthy', uptime: '99.92%', cpu: 65, memory: 72, instances: 8, qps: '85,000', latency: '25ms', version: 'v1.8.1' },
+  { id: 'sv7', name: '消息队列', status: 'healthy', uptime: '99.99%', cpu: 30, memory: 40, instances: 5, qps: '250,000', latency: '2ms', version: 'v3.5.0' },
+  { id: 'sv8', name: '对象存储', status: 'healthy', uptime: '99.99%', cpu: 18, memory: 35, instances: 12, qps: '45,000', latency: '5ms', version: 'v4.0.0' },
+  { id: 'sv9', name: '搜索引擎', status: 'warning', uptime: '99.85%', cpu: 72, memory: 82, instances: 3, qps: '18,000', latency: '35ms', version: 'v2.3.1' },
+  { id: 'sv10', name: '认证鉴权服务', status: 'healthy', uptime: '99.99%', cpu: 15, memory: 30, instances: 3, qps: '8,500', latency: '5ms', version: 'v2.1.0' },
+  { id: 'sv11', name: '数据同步引擎', status: 'error', uptime: '98.50%', cpu: 90, memory: 92, instances: 4, qps: '12,000', latency: '120ms', version: 'v1.3.0' },
+  { id: 'sv12', name: '监控采集', status: 'healthy', uptime: '99.98%', cpu: 25, memory: 38, instances: 2, qps: '50,000', latency: '1ms', version: 'v1.0.5' },
+];
+
+export const mockOpsAlerts = [
+  { id: 'al1', title: '数据同步引擎延迟飙升', severity: 'critical', service: '数据同步引擎', message: 'MySQL Binlog 消费延迟超过 5 分钟，当前延迟 12 分钟', time: '2026-05-30 14:32:00', resolved: false },
+  { id: 'al2', title: '血缘计算引擎内存告警', severity: 'warning', service: '血缘计算引擎', message: '内存使用率持续超过 85%，建议扩容', time: '2026-05-30 13:45:00', resolved: false },
+  { id: 'al3', title: '搜索引擎慢查询增加', severity: 'warning', service: '搜索引擎', message: '近 1 小时慢查询（>1s）数量增加 200%', time: '2026-05-30 12:20:00', resolved: false },
+  { id: 'al4', title: '调度中心任务超时', severity: 'warning', service: '调度中心', message: 'DAG 任务 dws_user_daily 执行超时，耗时 65 分钟', time: '2026-05-30 08:15:00', resolved: true },
+  { id: 'al5', title: 'API 网关 4xx 错误率上升', severity: 'info', service: 'API 网关', message: '/api/v1/lineage 返回 404 增多，已下线该接口', time: '2026-05-30 10:30:00', resolved: true },
+  { id: 'al6', title: '对象存储写入失败', severity: 'critical', service: '对象存储', message: '分区 bucket-trade-daily 写入失败 3 次', time: '2026-05-30 06:00:00', resolved: true },
+  { id: 'al7', title: '认证鉴权服务证书即将过期', severity: 'info', service: '认证鉴权服务', message: 'SSL 证书将于 2026-06-15 过期，请及时更新', time: '2026-05-30 09:00:00', resolved: false },
+  { id: 'al8', title: '消息队列积压', severity: 'warning', service: '消息队列', message: 'topic order-events 消费延迟 50,000 条', time: '2026-05-30 14:10:00', resolved: false },
+];
+
+// ─── 元数据模型 ──────────────────────────────────────────────────────────────
+
+export const mockMetadataModels: any[] = [
+  {
+    id: "m1",
+    name: "订单域概念模型",
+    version: "v2.1",
+    type: "conceptual",
+    description: "电商订单核心业务对象抽象",
+    entities: [
+      {
+        id: "e1",
+        name: "Order",
+        cnName: "订单",
+        type: "conceptual",
+        domain: "交易域",
+        layer: "DWD",
+        description: "用户下单后产生的业务单据",
+        owner: "张明",
+        version: "2.1",
+        updatedAt: "2024-01-15",
+        x: 200,
+        y: 150,
+        fields: [
+          { name: "order_id", type: "string", comment: "订单ID", nullable: false, primaryKey: true },
+          { name: "user_id", type: "string", comment: "用户ID", nullable: false, foreignKey: "User.user_id" },
+          { name: "order_time", type: "datetime", comment: "下单时间", nullable: false },
+          { name: "total_amount", type: "decimal", comment: "订单总额", nullable: false },
+          { name: "status", type: "string", comment: "订单状态", nullable: false },
+        ],
+      },
+      {
+        id: "e2",
+        name: "User",
+        cnName: "用户",
+        type: "conceptual",
+        domain: "交易域",
+        layer: "DWD",
+        description: "平台注册用户",
+        owner: "赵敏",
+        version: "1.5",
+        updatedAt: "2024-01-10",
+        x: 50,
+        y: 300,
+        fields: [
+          { name: "user_id", type: "string", comment: "用户ID", nullable: false, primaryKey: true },
+          { name: "user_name", type: "string", comment: "用户域", nullable: false },
+          { name: "register_time", type: "datetime", comment: "注册时间", nullable: false },
+          { name: "level", type: "int", comment: "会员等级", nullable: true },
+        ],
+      },
+      {
+        id: "e3",
+        name: "OrderItem",
+        cnName: "订单明细",
+        type: "conceptual",
+        domain: "交易域",
+        layer: "DWD",
+        description: "订单中的商品明细",
+        owner: "张明",
+        version: "2.1",
+        updatedAt: "2024-01-15",
+        x: 400,
+        y: 300,
+        fields: [
+          { name: "item_id", type: "string", comment: "明细ID", nullable: false, primaryKey: true },
+          { name: "order_id", type: "string", comment: "订单ID", nullable: false, foreignKey: "Order.order_id" },
+          { name: "sku_id", type: "string", comment: "商品SKU", nullable: false, foreignKey: "Product.sku_id" },
+          { name: "quantity", type: "int", comment: "数量", nullable: false },
+          { name: "price", type: "decimal", comment: "单价", nullable: false },
+        ],
+      },
+      {
+        id: "e4",
+        name: "Product",
+        cnName: "商品",
+        type: "conceptual",
+        domain: "交易域",
+        layer: "DIM",
+        description: "商品主数据",
+        owner: "林峰",
+        version: "3.0",
+        updatedAt: "2024-01-08",
+        x: 550,
+        y: 150,
+        fields: [
+          { name: "sku_id", type: "string", comment: "SKU ID", nullable: false, primaryKey: true },
+          { name: "product_name", type: "string", comment: "商品名称", nullable: false },
+          { name: "category", type: "string", comment: "类目", nullable: false },
+          { name: "brand", type: "string", comment: "品牌", nullable: true },
+        ],
+      },
+      {
+        id: "e5",
+        name: "Payment",
+        cnName: "支付",
+        type: "conceptual",
+        domain: "交易域",
+        layer: "DWD",
+        description: "订单支付记录",
+        owner: "张明",
+        version: "1.2",
+        updatedAt: "2024-01-12",
+        x: 200,
+        y: 450,
+        fields: [
+          { name: "pay_id", type: "string", comment: "支付ID", nullable: false, primaryKey: true },
+          { name: "order_id", type: "string", comment: "订单ID", nullable: false, foreignKey: "Order.order_id" },
+          { name: "pay_amount", type: "decimal", comment: "支付金额", nullable: false },
+          { name: "pay_time", type: "datetime", comment: "支付时间", nullable: false },
+          { name: "pay_channel", type: "string", comment: "支付渠道", nullable: false },
+        ],
+      },
+    ],
+    relationships: [
+      { from: "e2", to: "e1", type: "1:N", label: "下单" },
+      { from: "e1", to: "e3", type: "1:N", label: "包含" },
+      { from: "e4", to: "e3", type: "1:N", label: "被购买" },
+      { from: "e1", to: "e5", type: "1:1", label: "支付" },
+    ],
+  },
+  {
+    id: "m2",
+    name: "用户域逻辑模型",
+    version: "v1.8",
+    type: "logical",
+    description: "用户画像与行为分析模型，包含用户主体、行为日志、标签体系",
+    entities: [
+      {
+        id: "u1",
+        name: "DimUser",
+        cnName: "用户维度",
+        type: "logical",
+        domain: "用户域",
+        layer: "DIM",
+        description: "用户维度主表，整合用户基础属性",
+        owner: "赵敏",
+        version: "1.8",
+        updatedAt: "2024-01-18",
+        x: 100, y: 120,
+        fields: [
+          { name: "user_key", type: "bigint", comment: "用户代理键", nullable: false, primaryKey: true },
+          { name: "user_id", type: "string", comment: "业务用户ID", nullable: false },
+          { name: "user_name", type: "string", comment: "用户域", nullable: false },
+          { name: "gender", type: "string", comment: "性别", nullable: true },
+          { name: "age_range", type: "string", comment: "年龄段", nullable: true },
+          { name: "city", type: "string", comment: "所在城市", nullable: true },
+        ],
+      },
+      {
+        id: "u2",
+        name: "FactUserBehavior",
+        cnName: "用户行为事实",
+        type: "logical",
+        domain: "用户域",
+        layer: "DWD",
+        description: "用户行为事实表，记录浏览、点击、加购等行为",
+        owner: "赵敏",
+        version: "1.8",
+        updatedAt: "2024-01-18",
+        x: 400, y: 120,
+        fields: [
+          { name: "event_id", type: "string", comment: "事件ID", nullable: false, primaryKey: true },
+          { name: "user_key", type: "bigint", comment: "用户代理键", nullable: false, foreignKey: "DimUser.user_key" },
+          { name: "event_type", type: "string", comment: "事件类型", nullable: false },
+          { name: "event_time", type: "datetime", comment: "事件时间", nullable: false },
+          { name: "page_id", type: "string", comment: "页面ID", nullable: true },
+          { name: "duration", type: "int", comment: "停留时长(秒)'", nullable: true },
+        ],
+      },
+      {
+        id: "u3",
+        name: "DimUserTag",
+        cnName: "用户标签维度",
+        type: "logical",
+        domain: "用户域",
+        layer: "DIM",
+        description: "用户标签维度，存储画像标签体系",
+        owner: "孙琳",
+        version: "1.5",
+        updatedAt: "2024-01-16",
+        x: 100, y: 380,
+        fields: [
+          { name: "tag_id", type: "string", comment: "标签ID", nullable: false, primaryKey: true },
+          { name: "tag_name", type: "string", comment: "标签名称", nullable: false },
+          { name: "tag_category", type: "string", comment: "标签分类", nullable: false },
+          { name: "tag_level", type: "int", comment: "标签层级", nullable: false },
+        ],
+      },
+      {
+        id: "u4",
+        name: "FactUserTag",
+        cnName: "用户标签事实",
+        type: "logical",
+        domain: "用户域",
+        layer: "DWS",
+        description: "用户与标签的关联事实",
+        owner: "孙琳",
+        version: "1.5",
+        updatedAt: "2024-01-16",
+        x: 400, y: 380,
+        fields: [
+          { name: "id", type: "bigint", comment: "主键", nullable: false, primaryKey: true },
+          { name: "user_key", type: "bigint", comment: "用户代理键", nullable: false, foreignKey: "DimUser.user_key" },
+          { name: "tag_id", type: "string", comment: "标签ID", nullable: false, foreignKey: "DimUserTag.tag_id" },
+          { name: "tag_score", type: "decimal", comment: "标签得分", nullable: false },
+          { name: "update_time", type: "datetime", comment: "更新时间", nullable: false },
+        ],
+      },
+    ],
+    relationships: [
+      { from: "u1", to: "u2", type: "1:N", label: "产生行为" },
+      { from: "u1", to: "u4", type: "1:N", label: "拥有标签" },
+      { from: "u3", to: "u4", type: "1:N", label: "标签关联" },
+    ],
+  },
+  {
+    id: "m3",
+    name: "商品域物理模型",
+    version: "v3.2",
+    type: "physical",
+    description: "商品中心MySQL物理表结构，包含SPU、SKU、类目、品牌",
+    entities: [
+      {
+        id: "p1",
+        name: "t_product_spu",
+        cnName: "商品SPU表",
+        type: "physical",
+        domain: "商品域",
+        layer: "ODS",
+        description: "商品标准化产品单",
+        owner: "林峰",
+        version: "3.2",
+        updatedAt: "2024-01-20",
+        x: 100, y: 100,
+        fields: [
+          { name: "spu_id", type: "bigint", comment: "SPU ID", nullable: false, primaryKey: true },
+          { name: "spu_name", type: "varchar", comment: "SPU名称", nullable: false },
+          { name: "category_id", type: "bigint", comment: "类目ID", nullable: false, foreignKey: "t_category.category_id" },
+          { name: "brand_id", type: "bigint", comment: "品牌ID", nullable: true, foreignKey: "t_brand.brand_id" },
+          { name: "status", type: "tinyint", comment: "状态", nullable: false },
+          { name: "create_time", type: "datetime", comment: "创建时间", nullable: false },
+        ],
+      },
+      {
+        id: "p2",
+        name: "t_product_sku",
+        cnName: "商品SKU表",
+        type: "physical",
+        domain: "商品域",
+        layer: "ODS",
+        description: "商品库存单元，对应实际售卖单",
+        owner: "林峰",
+        version: "3.2",
+        updatedAt: "2024-01-20",
+        x: 400, y: 100,
+        fields: [
+          { name: "sku_id", type: "bigint", comment: "SKU ID", nullable: false, primaryKey: true },
+          { name: "spu_id", type: "bigint", comment: "SPU ID", nullable: false, foreignKey: "t_product_spu.spu_id" },
+          { name: "sku_code", type: "varchar", comment: "SKU编码", nullable: false },
+          { name: "price", type: "decimal", comment: "售价", nullable: false },
+          { name: "stock", type: "int", comment: "库存", nullable: false },
+          { name: "spec", type: "varchar", comment: "规格", nullable: true },
+        ],
+      },
+      {
+        id: "p3",
+        name: "t_category",
+        cnName: "商品类目表",
+        type: "physical",
+        domain: "商品域",
+        layer: "DIM",
+        description: "商品类目维度",
+        owner: "林峰",
+        version: "3.0",
+        updatedAt: "2024-01-15",
+        x: 100, y: 360,
+        fields: [
+          { name: "category_id", type: "bigint", comment: "类目ID", nullable: false, primaryKey: true },
+          { name: "category_name", type: "varchar", comment: "类目名称", nullable: false },
+          { name: "parent_id", type: "bigint", comment: "父类目ID", nullable: true },
+          { name: "level", type: "tinyint", comment: "类目层级", nullable: false },
+        ],
+      },
+      {
+        id: "p4",
+        name: "t_brand",
+        cnName: "品牌表",
+        type: "physical",
+        domain: "商品域",
+        layer: "DIM",
+        description: "商品品牌维度",
+        owner: "林峰",
+        version: "3.0",
+        updatedAt: "2024-01-15",
+        x: 400, y: 360,
+        fields: [
+          { name: "brand_id", type: "bigint", comment: "品牌ID", nullable: false, primaryKey: true },
+          { name: "brand_name", type: "varchar", comment: "品牌名称", nullable: false },
+          { name: "logo_url", type: "varchar", comment: "品牌LOGO", nullable: true },
+          { name: "country", type: "varchar", comment: "所属国家", nullable: true },
+        ],
+      },
+    ],
+    relationships: [
+      { from: "p1", to: "p2", type: "1:N", label: "包含SKU" },
+      { from: "p3", to: "p1", type: "1:N", label: "归属类目" },
+      { from: "p4", to: "p1", type: "1:N", label: "所属品牌" },
+    ],
+  },
+];
+
+// ─── 筛选选项数据 ──────────────────────────────────────────────────────────
+export const mockDataLayers = ['ODS', 'DWD', 'DWS', 'ADS', 'DIM'];
+export const mockSensitivities = ['公开', '内部', '敏感', '机密'];
+export const mockTagOptions = ['核心资产', '高价值', '高频访问', '敏感数据', '机密数据', '已认证', '已脱敏', '维表', '待治理'];
+export const mockSourceTypeOptions = ['Hive', 'ClickHouse', 'Field', 'Model', 'Metric', 'PostgreSQL', 'Kafka'];
+export const mockDataSourceCategories = ['关系型', '大数据', '消息队列', 'NoSQL', '搜索引擎', 'OLAP'];
+export const mockQualityDomains = ['交易域', '用户域', '商品域', '客户域', '公共域'];
+export const mockStandardDomains = ['用户域', '交易域', '财务域', '商品域', '安全域', '其他'];
+export const mockStandardDatabases = ['ecommerce_user', 'ecommerce_order', 'ecommerce_product', 'risk_control', 'other'];

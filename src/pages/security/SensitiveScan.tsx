@@ -22,6 +22,11 @@ import {
   fetchSensitiveScanTasks,
   updateSensitiveFindingStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type ScanStatus = "running" | "success" | "failed" | "pending";
 type FindingStatus = "pending" | "confirmed" | "ignored";
@@ -101,7 +106,17 @@ export default function SensitiveScan() {
   const [selectedLevel, setSelectedLevel] = useState<"all" | SensitiveLevel>("all");
   const [selectedStatus, setSelectedStatus] = useState<"all" | FindingStatus>("all");
   const [keyword, setKeyword] = useState("");
+  useKeyboardShortcut({
+    'ctrl+n': () => setIsTaskModalOpen(true),
+    'escape': () => setIsTaskModalOpen(false),
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedkeyword = useDebounce(keyword, 300);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);
@@ -272,7 +287,7 @@ export default function SensitiveScan() {
             </div>
           </div>
           <div className="space-y-3 p-4">
-            {filteredFindings.map((finding) => {
+            {paginatedFilteredFindings.map((finding) => {
               const level = levelConfig[finding.level];
               const status = findingStatusConfig[finding.status];
               return (
@@ -309,7 +324,7 @@ export default function SensitiveScan() {
                 </article>
               );
             })}
-            {filteredFindings.length === 0 && <div className="py-10 text-center text-sm text-slate-500">当前筛选条件下没有命中样本</div>}
+            {paginatedFilteredFindings.length === 0 && <div className="py-10 text-center text-sm text-slate-500">当前筛选条件下没有命中样本</div>}
           </div>
         </section>
       </div>

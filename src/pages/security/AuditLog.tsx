@@ -24,6 +24,13 @@ import {
   fetchAuditLogRisks,
   updateAuditLogRiskStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useTableSort } from '../../hooks/useTableSort';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
+import { useTableSelection } from '../../hooks/useTableSelection';
 
 type AuditResult = "allowed" | "blocked" | "reviewing";
 type RiskLevel = "high" | "medium" | "low";
@@ -126,9 +133,17 @@ export default function AuditLog() {
   const [exports, setExports] = useState<AuditExport[]>([]);
   const [retentionPolicies, setRetentionPolicies] = useState<RetentionPolicy[]>([]);
   const [keyword, setKeyword] = useState("");
+  useKeyboardShortcut({
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedkeyword = useDebounce(keyword, 300);
   const [selectedResult, setSelectedResult] = useState<"all" | AuditResult>("all");
   const [selectedRisk, setSelectedRisk] = useState<"all" | RiskLevel>("all");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);
@@ -195,7 +210,7 @@ export default function AuditLog() {
 
   const createExport = async () => {
     const created = await createAuditLogExport({
-      name: keyword ? `审计检索导出 - ${keyword}` : "审计日志检索导出",
+      name: keyword ? `审计检索导出 - ${debouncedKeyword}` : "审计日志检索导出",
       scope: selectedRisk === "all" ? "当前审计检索条件" : `${riskConfig[selectedRisk].label}事件`,
       requester: "安全合规组",
       format: "CSV",
@@ -290,7 +305,7 @@ export default function AuditLog() {
             </div>
           </div>
           <div className="space-y-3 p-4">
-            {filteredEvents.map((event) => {
+            {paginatedFilteredEvents.map((event) => {
               const result = resultConfig[event.result];
               const risk = riskConfig[event.risk];
               const level = levelConfig[event.level];
@@ -321,7 +336,7 @@ export default function AuditLog() {
                 </article>
               );
             })}
-            {filteredEvents.length === 0 && <div className="py-10 text-center text-sm text-slate-500">当前条件下没有审计事件</div>}
+            {paginatedFilteredEvents.length === 0 && <div className="py-10 text-center text-sm text-slate-500">当前条件下没有审计事件</div>}
           </div>
         </section>
 

@@ -27,6 +27,11 @@ import {
   runTaskSchedule,
   updateTaskScheduleStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type ScheduleStatus = "enabled" | "paused";
 type RunStatus = "success" | "running" | "failed" | "waiting";
@@ -134,6 +139,9 @@ export default function TaskSchedule() {
   const [selectedCycle, setSelectedCycle] = useState("all");
   const [selectedSchedule, setSelectedSchedule] = useState<TaskScheduleItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);
@@ -211,13 +219,13 @@ export default function TaskSchedule() {
     setBackfills((prev) => [created, ...prev]);
   };
 
+  if (error) {
+    return <ErrorFallback onRetry={loadData} />;
+  }
   if (loading || !overview) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
-          <p className="mt-3 text-sm text-slate-400">加载任务调度...</p>
-        </div>
+      <div className="space-y-6">
+        <TableSkeleton rows={5} cols={6} />
       </div>
     );
   }

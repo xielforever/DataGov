@@ -29,6 +29,11 @@ import {
   updateSystemConfigParamStatus,
   updateSystemRuntimeSwitchStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type ConfigStatus = "active" | "inactive";
 type IntegrationStatus = "connected" | "degraded";
@@ -139,9 +144,17 @@ export default function SystemConfig() {
   const [policies, setPolicies] = useState<EnvironmentPolicy[]>([]);
   const [changes, setChanges] = useState<ConfigChange[]>([]);
   const [keyword, setKeyword] = useState("");
+  useKeyboardShortcut({
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedkeyword = useDebounce(keyword, 300);
   const [selectedStatus, setSelectedStatus] = useState<"all" | ConfigStatus>("all");
   const [selectedParam, setSelectedParam] = useState<ConfigParam | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);

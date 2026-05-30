@@ -4,6 +4,8 @@ import { BarChart3, Building2, CreditCard, Download, Flame, Folder, Globe2, Laye
 import toast from 'react-hot-toast';
 import { fetchMapData } from '../../services/api';
 import Breadcrumb from '../../components/common/Breadcrumb';
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { CardSkeleton } from '../../components/common/Skeleton';
 
 type AssetNode = {
   id: string;
@@ -51,6 +53,7 @@ export default function DataMap() {
   const [assets, setAssets] = useState<AssetNode[]>([]);
   const [datacenters, setDatacenters] = useState<DatacenterItem[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     setLoadingData(true);
@@ -185,13 +188,13 @@ export default function DataMap() {
     return result;
   }, [filteredAssets]);
 
+  if (error) {
+    return <ErrorFallback onRetry={() => window.location.reload()} />;
+  }
   if (loadingData) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
-          <p className="mt-3 text-sm text-slate-400">加载数据地图...</p>
-        </div>
+      <div className="space-y-6">
+        <CardSkeleton />
       </div>
     );
   }

@@ -1,4 +1,8 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import toast from 'react-hot-toast';
+import { fetchCollectTasks, fetchCollectRecords, fetchCollectRules } from '../../services/api';
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
 import Breadcrumb from '../../components/common/Breadcrumb';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -51,97 +55,7 @@ interface CollectRule {
   description: string;
 }
 
-// ─── Mock Data ─────────────────────────────────────────────────────────────────
-const MOCK_TASKS: CollectTask[] = [
-  {
-    id: 't1', name: '交易库全量元数据采集集', dataSource: 'prod-mysql-trade',
-    dsType: 'MySQL', scope: '全库', scopeDetail: 'trade_db (42 张表)',
-    collectType: 'full', schedule: '每天 02:00', status: 'running',
-    lastRun: '今天 02:00', nextRun: '明天 02:00', duration: '12分34秒',
-    tableCount: 42, fieldCount: 386, progress: 68,
-    owner: '张三', createdAt: '2024-03-01', tags: ['核心', '生产'],
-  },
-  {
-      id: 't2', name: '数仓增量元数据采集集', dataSource: 'prod-hive-warehouse',
-      dsType: 'Hive', scope: '指定表', scopeDetail: 'ods_db / dwd_db / dws_db',
-      collectType: 'incremental', schedule: '每小时', status: 'success',
-    lastRun: '1小时前', nextRun: '30分钟前', duration: '3分2秒',
-    tableCount: 285, fieldCount: 2847, owner: '赵敏',
-    createdAt: '2024-02-15', tags: ['核心', '增量'],
-  },
-  {
-      id: 't3', name: 'OLAP引擎元数据采集集', dataSource: 'prod-clickhouse-olap',
-      dsType: 'ClickHouse', scope: '全库', scopeDetail: 'analytics_db (18 张表)',
-    collectType: 'full', schedule: '每天 04:00', status: 'success',
-    lastRun: '今天 04:08', nextRun: '明天 04:00', duration: '1分5秒',
-    tableCount: 18, fieldCount: 214, owner: '林峰',
-    createdAt: '2024-03-10', tags: ['OLAP'],
-  },
-  {
-    id: 't4', name: '用户中心元数据采集集', dataSource: 'prod-pg-user',
-    dsType: 'PostgreSQL', scope: '指定表', scopeDetail: 'user_*, member_* (28 张表)',
-    collectType: 'incremental', schedule: '每小时', status: 'failed',
-    lastRun: '2小时前', nextRun: '30分钟前', duration: '0分3秒',
-    tableCount: 28, fieldCount: 312, owner: '张三丰',
-    createdAt: '2024-01-20', tags: ['用户域'],
-  },
-  {
-    id: 't5', name: '内容存储元数据采集集', dataSource: 'prod-mongo-content',
-    dsType: 'MongoDB', scope: '全库', scopeDetail: 'content_db (11 个集合)',
-    collectType: 'full', schedule: '每天 03:30', status: 'paused',
-    lastRun: '昨天 03:45', nextRun: '暂停中', duration: '2分钟',
-    tableCount: 11, fieldCount: 98, owner: '王芳',
-    createdAt: '2024-04-01', tags: ['内容域'],
-  },
-  {
-    id: 't6', name: '搜索引擎索引采集', dataSource: 'prod-es-search',
-    dsType: 'Elasticsearch', scope: '全库', scopeDetail: 'search_* (15 个索引)',
-    collectType: 'full', schedule: '每天 05:00', status: 'waiting',
-    lastRun: '昨天 05:02', nextRun: '今天 05:00', duration: '4分0秒',
-    tableCount: 15, fieldCount: 187, owner: '陈晓',
-    createdAt: '2024-04-05', tags: ['搜索'],
-  },
-  {
-    id: 't7', name: '实时数仓元数据采集集', dataSource: 'prod-doris-realtime',
-    dsType: 'Doris', scope: '指定表', scopeDetail: 'realtime_db (22 张表)',
-    collectType: 'incremental', schedule: '每30分钟', status: 'success',
-    lastRun: '25分钟前', nextRun: '5分钟前', duration: '0分8秒',
-    tableCount: 22, fieldCount: 268, owner: '林峰',
-    createdAt: '2024-04-10', tags: ['实时', '核心'],
-  },
-  {
-      id: 't8', name: '财务系统元数据采集集', dataSource: 'prod-oracle-finance',
-      dsType: 'MySQL', scope: '指定表', scopeDetail: 'finance_db (34 张表)',
-      collectType: 'full', schedule: '每天 01:00', status: 'success',
-    lastRun: '今天 01:12', nextRun: '明天 01:00', duration: '5分2秒',
-    tableCount: 34, fieldCount: 421, owner: '王芳',
-    createdAt: '2024-02-01', tags: ['财务域', '核心'],
-  },
-];
-
-const MOCK_RECORDS: CollectRecord[] = [
-  { id: 'r1', taskId: 't1', taskName: '交易库全量元数据采集集', dataSource: 'prod-mysql-trade', dsType: 'MySQL', startTime: '今天 02:00:00', endTime: '-', duration: '进行中', status: 'running', tableCount: 28, fieldCount: 256, newTables: 2, updatedTables: 12, triggerType: 'schedule' },
-  { id: 'r2', taskId: 't2', taskName: '数仓增量元数据采集集', dataSource: 'prod-hive-warehouse', dsType: 'Hive', startTime: '今天 10:00:00', endTime: '今天 10:03:12', duration: '3分2秒', status: 'success', tableCount: 285, fieldCount: 2847, newTables: 0, updatedTables: 8, triggerType: 'schedule' },
-  { id: 'r3', taskId: 't4', taskName: '用户中心元数据采集集', dataSource: 'prod-pg-user', dsType: 'PostgreSQL', startTime: '今天 08:00:00', endTime: '今天 08:00:23', duration: '23秒', status: 'failed', tableCount: 0, fieldCount: 0, newTables: 0, updatedTables: 0, errorMsg: 'Connection timeout: 无法连接到数据源...，请检查网络配置', triggerType: 'schedule' },
-  { id: 'r4', taskId: 't3', taskName: 'OLAP引擎元数据采集集', dataSource: 'prod-clickhouse-olap', dsType: 'ClickHouse', startTime: '今天 04:00:00', endTime: '今天 04:01:45', duration: '1分5秒', status: 'success', tableCount: 18, fieldCount: 214, newTables: 1, updatedTables: 3, triggerType: 'schedule' },
-  { id: 'r5', taskId: 't7', taskName: '实时数仓元数据采集集', dataSource: 'prod-doris-realtime', dsType: 'Doris', startTime: '今天 09:30:00', endTime: '今天 09:30:48', duration: '48秒', status: 'success', tableCount: 22, fieldCount: 268, newTables: 0, updatedTables: 2, triggerType: 'schedule' },
-  { id: 'r6', taskId: 't8', taskName: '财务系统元数据采集集', dataSource: 'prod-oracle-finance', dsType: 'MySQL', startTime: '今天 01:00:00', endTime: '今天 01:05:22', duration: '5分2秒', status: 'success', tableCount: 34, fieldCount: 421, newTables: 0, updatedTables: 5, triggerType: 'schedule' },
-  { id: 'r7', taskId: 't2', taskName: '数仓增量元数据采集集', dataSource: 'prod-hive-warehouse', dsType: 'Hive', startTime: '今天 09:00:00', endTime: '今天 09:03:05', duration: '3分5秒', status: 'success', tableCount: 285, fieldCount: 2847, newTables: 0, updatedTables: 5, triggerType: 'schedule' },
-  { id: 'r8', taskId: 't1', taskName: '交易库全量元数据采集集', dataSource: 'prod-mysql-trade', dsType: 'MySQL', startTime: '昨天 02:00:00', endTime: '昨天 02:11:22', duration: '3分5秒', status: 'success', tableCount: 42, fieldCount: 386, newTables: 0, updatedTables: 14, triggerType: 'schedule' },
-  { id: 'r9', taskId: 't4', taskName: '用户中心元数据采集集', dataSource: 'prod-pg-user', dsType: 'PostgreSQL', startTime: '昨天 08:00:00', endTime: '昨天 08:00:19', duration: '3分5秒', status: 'failed', tableCount: 0, fieldCount: 0, newTables: 0, updatedTables: 0, errorMsg: 'Connection timeout: 无法连接到数据源...', triggerType: 'manual' },
-  { id: 'r10', taskId: 't6', taskName: '搜索引擎索引采集', dataSource: 'prod-es-search', dsType: 'Elasticsearch', startTime: '昨天 05:00:00', endTime: '昨天 05:04:30', duration: '3分5秒', status: 'success', tableCount: 15, fieldCount: 187, newTables: 2, updatedTables: 4, triggerType: 'schedule' },
-];
-
-const MOCK_RULES: CollectRule[] = [
-  { id: 'rule1', name: '排除临时表', type: 'exclude', pattern: '^tmp_|^temp_|_bak$', scope: 'table', enabled: true, description: '排除临时表或备份表' },
-  { id: 'rule2', name: '排除系统库', type: 'exclude', pattern: '^sys_|^information_schema', scope: 'database', enabled: true, description: '排除系统库和sys_开头的系统管理表' },
-  { id: 'rule3', name: '核心表优先采集', type: 'include', pattern: '^ods_|^dwd_|^dws_|^ads_', scope: 'table', enabled: true, description: '优先采集数仓各层核心业务表' },
-  { id: 'rule4', name: '排除敏感字段', type: 'exclude', pattern: 'password|secret|token|private_key', scope: 'field', enabled: true, description: '跳过密码、密钥等敏感字段的值采集（仅采集元信息）' },
-  { id: 'rule5', name: '排除测试库', type: 'exclude', pattern: '^test_|_dev$|_sandbox$', scope: 'database', enabled: false, description: '排除测试和开发用途的数据库（已停用，改用环境隔离）' },
-  { id: 'rule6', name: '包含维度表', type: 'include', pattern: '^dim_', scope: 'table', enabled: true, description: '确保维度表始终纳入采集范围' },
-];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 const DS_ICON: Record<string, { icon: string; color: string }> = {
   MySQL: { icon: '🐬', color: 'text-orange-400' },
   Hive: { icon: '🐝', color: 'text-yellow-400' },
@@ -239,7 +153,33 @@ export default function MetadataCollect() {
   const [showDetailDrawer, setShowDetailDrawer] = useState(false);
   const [detailTab, setDetailTab] = useState<'overview' | 'log' | 'config'>('overview');
   const [runningIds, setRunningIds] = useState<Set<string>>(new Set(['t1']));
-  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null);
+  
+  const [collectTasks, setCollectTasks] = useState<CollectTask[]>([]);
+  const [collectRecords, setCollectRecords] = useState<CollectRecord[]>([]);
+  const [collectRules, setCollectRules] = useState<CollectRule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  
+
+  const loadCollectData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [tasks, records, rules] = await Promise.all([
+        fetchCollectTasks(),
+        fetchCollectRecords(),
+        fetchCollectRules(),
+      ]);
+      setCollectTasks(tasks as CollectTask[]);
+      setCollectRecords(records as CollectRecord[]);
+      setCollectRules(rules as CollectRule[]);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadCollectData(); }, [loadCollectData]);
 
   // Create wizard
   const [wizardStep, setWizardStep] = useState(1);
@@ -249,22 +189,18 @@ export default function MetadataCollect() {
     scheduleInterval: '1', description: '',
   });
 
-  const showToast = (msg: string, type: 'success' | 'error' | 'info' = 'success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   const handleManualRun = (task: CollectTask) => {
     if (runningIds.has(task.id)) return;
     setRunningIds(prev => new Set([...prev, task.id]));
-    showToast(`已手动触发「{task.name}」，任务运行中…`, 'info');
+    toast(`已手动触发「${task.name}」，任务运行中…`);
     setTimeout(() => {
       setRunningIds(prev => { const n = new Set(prev); n.delete(task.id); return n; });
-      showToast(`「{task.name}」采集完成`, 'success');
+      toast.success(`${task.name}采集完成`);
     }, 6000);
   };
 
-  const tasks = MOCK_TASKS.map(t => ({
+  const tasks = collectTasks.map(t => ({
     ...t,
     status: runningIds.has(t.id) ? 'running' as const : t.status,
     progress: runningIds.has(t.id) ? t.progress ?? 50 : t.progress,
@@ -285,8 +221,8 @@ export default function MetadataCollect() {
     paused: tasks.filter(t => t.status === 'paused').length,
   };
 
-  const todaySuccess = MOCK_RECORDS.filter(r => r.status === 'success').length;
-  const todayFailed = MOCK_RECORDS.filter(r => r.status === 'failed').length;
+  const todaySuccess = collectRecords.filter(r => r.status === 'success').length;
+  const todayFailed = collectRecords.filter(r => r.status === 'failed').length;
   const totalFields = tasks.reduce((s, t) => s + t.fieldCount, 0);
 
   return (
@@ -527,10 +463,10 @@ export default function MetadataCollect() {
           {/* Summary cards */}
           <div className="grid grid-cols-4 gap-4">
             {[
-              { label: '今日执行次数', value: MOCK_RECORDS.length, color: 'text-cyan-400' },
+              { label: '今日执行次数', value: collectRecords.length, color: 'text-cyan-400' },
               { label: '成功次数', value: todaySuccess, color: 'text-emerald-400' },
               { label: '失败次数', value: todayFailed, color: 'text-red-400' },
-              { label: '成功率', value: `${Math.round(todaySuccess / MOCK_RECORDS.length * 100)}%`, color: 'text-blue-400' },
+              { label: '成功率', value: `${Math.round(todaySuccess / collectRecords.length * 100)}%`, color: 'text-blue-400' },
             ].map((s, i) => (
               <div key={i} className="rounded-xl border border-slate-700/50 bg-slate-800/60 p-4">
                 <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -543,7 +479,7 @@ export default function MetadataCollect() {
           <div className="rounded-xl border border-slate-700/50 bg-slate-800/60 overflow-hidden">
             <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-200">执行记录</h3>
-              <span className="text-xs text-slate-500">最近 {MOCK_RECORDS.length} 条</span>
+              <span className="text-xs text-slate-500">最近 {collectRecords.length} 条</span>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-[850px] w-full table-fixed text-sm">
@@ -555,7 +491,7 @@ export default function MetadataCollect() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-700/30">
-                  {MOCK_RECORDS.map(r => {
+                  {collectRecords.map(r => {
                     const sc = STATUS_CFG[r.status];
                     const ds = DS_ICON[r.dsType] ?? { icon: '🗄', color: 'text-slate-400' };
                     return (
@@ -622,7 +558,7 @@ export default function MetadataCollect() {
           </div>
 
           <div className="space-y-3">
-            {MOCK_RULES.map((rule, idx) => (
+            {collectRules.map((rule, idx) => (
               <div key={rule.id} className="rounded-xl border border-slate-700/50 bg-slate-800/60 p-4 flex items-start gap-4 group hover:border-slate-600/60 transition-all">
                 {/* Priority */}
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-700/60 text-xs font-bold text-slate-400 shrink-0">
@@ -801,7 +737,7 @@ export default function MetadataCollect() {
                   <div className="rounded-lg bg-slate-800/60 border border-slate-700/40 p-4">
                     <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">最近执行记</h4>
                     <div className="space-y-2">
-                      {MOCK_RECORDS.filter(r => r.taskId === selectedTask.id).slice(0, 4).map(r => {
+                      {collectRecords.filter(r => r.taskId === selectedTask.id).slice(0, 4).map(r => {
                         const sc = STATUS_CFG[r.status];
                         return (
                           <div key={r.id} className="flex items-center justify-between text-xs">
@@ -814,7 +750,7 @@ export default function MetadataCollect() {
                           </div>
                         );
                       })}
-                      {MOCK_RECORDS.filter(r => r.taskId === selectedTask.id).length === 0 && (
+                      {collectRecords.filter(r => r.taskId === selectedTask.id).length === 0 && (
                         <div className="text-xs text-slate-500 text-center py-2">暂无执行记录</div>
                       )}
                     </div>
@@ -936,7 +872,7 @@ export default function MetadataCollect() {
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1.5">选择数据<span className="text-red-400">*</span></label>
                     <div className="grid grid-cols-2 gap-2">
-                      {MOCK_TASKS.slice(0, 6).map(t => (
+                      {collectTasks.slice(0, 6).map(t => (
                         <button
                           key={t.dataSource}
                           onClick={() => setWizardForm(f => ({ ...f, dataSource: t.dataSource }))}
@@ -1134,13 +1070,13 @@ export default function MetadataCollect() {
               <button
                 onClick={() => {
                   if (wizardStep < 3) {
-                    if (wizardStep === 1 && !wizardForm.name) { showToast('请填写任务名称', 'error'); return; }
-                    if (wizardStep === 1 && !wizardForm.dataSource) { showToast('请选择数据源...', 'error'); return; }
+                    if (wizardStep === 1 && !wizardForm.name) { toast.error('请填写任务名称'); return; }
+                    if (wizardStep === 1 && !wizardForm.dataSource) { toast.error('请选择数据源'); return; }
                     setWizardStep(w => w + 1);
                   } else {
                     setShowCreateDialog(false);
                     setWizardStep(1);
-                    showToast(`采集任务「${wizardForm.name}」」已创建`, 'success');
+                    toast.success(`采集任务「${wizardForm.name}」已创建`);
                   }
                 }}
                 className="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-5 py-2 text-sm font-medium text-white shadow-lg shadow-cyan-500/20 hover:opacity-90 transition"
@@ -1152,17 +1088,6 @@ export default function MetadataCollect() {
         </div>
       )}
 
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed bottom-6 right-6 z-[60] flex items-center gap-3 rounded-xl px-4 py-3 text-sm shadow-2xl backdrop-blur border ${
-          toast.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' :
-          toast.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-300' :
-          'bg-blue-500/10 border-blue-500/30 text-blue-300'
-        }`}>
-          <span className="text-base">{toast.type === 'success' ? '✅' : toast.type === 'error' ? '❌' : 'ℹ️'}</span>
-          {toast.msg}
-        </div>
-      )}
     </div>
   );
 }

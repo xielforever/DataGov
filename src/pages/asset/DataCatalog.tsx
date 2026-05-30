@@ -3,7 +3,10 @@ import type { LucideIcon } from 'lucide-react';
 import { BarChart3, Building2, CircleDot, Copy, Database, Eye, HardDrive, Lock, MessageSquare, Plug, Search, Server, Table2, Tag, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Breadcrumb from '../../components/common/Breadcrumb';
-import { fetchAssetCatalog } from '../../services/api';
+import { fetchAssetCatalog, fetchBusinessDomainOptions, fetchDataLayers, fetchSensitivities, fetchTagOptions, fetchAssetDataSources } from '../../services/api';
+import { navigateTo } from '../../utils/navigation';
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
 
 type ViewMode = 'card' | 'table';
 type SortField = 'name' | 'updateTime' | 'visitCount' | 'qualityScore';
@@ -50,7 +53,18 @@ export default function DataCatalog() {
 
   const [allAssets, setAllAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
+
+  useEffect(() => {
+    Promise.all([
+      fetchBusinessDomainOptions().then((res) => setDomains((res as Array<{name: string}>).map(d => d.name))),
+      fetchDataLayers().then((res) => setLayers(res as string[])),
+      fetchSensitivities().then((res) => setSensitivities(res as string[])),
+      fetchTagOptions().then((res) => setTagOptions(res as string[])),
+      fetchAssetDataSources().then((res) => setSources((res as Array<{name: string}>).map(d => d.name))),
+    ]).catch(() => {});
+  }, []);
   useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -67,11 +81,11 @@ export default function DataCatalog() {
     return () => { mounted = false; };
   }, []);
 
-  const domains = ['交易域', '用户域', '商品域', '营销域', '财务域', '风控域', '物流域', '其他'];
-  const layers = ['ODS', 'DWD', 'DWS', 'ADS', 'DIM'];
-  const sensitivities = ['公开', '内部', '敏感', '机密'];
-  const sources = ['MySQL', 'Hive', 'Kafka', 'ClickHouse', 'PostgreSQL', 'MongoDB', 'Oracle', 'Redis', 'Elasticsearch', 'Doris'];
-  const tagOptions = ['核心资产', '高价值', '高频访问', '敏感数据', '机密数据', '已认证', '已脱敏', '维表', '待治理'];
+const [domains, setDomains] = useState<string[]>([]);
+const [layers, setLayers] = useState<string[]>([]);
+const [sensitivities, setSensitivities] = useState<string[]>([]);
+const [sources, setSources] = useState<string[]>([]);
+const [tagOptions, setTagOptions] = useState<string[]>([]);
 
   const layerColors: Record<string, string> = {
     ODS: 'from-blue-500/20 to-blue-600/20 text-blue-300 border-blue-500/30',
@@ -180,7 +194,7 @@ export default function DataCatalog() {
             <span>导出目录</span>
           </button>
           <button
-            onClick={() => { window.history.replaceState(null, "", "?view=asset-register"); window.dispatchEvent(new PopStateEvent("popstate")); }}
+            onClick={() => { navigateTo("asset-register"); }}
             className="px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg hover:shadow-cyan-500/30 transition flex items-center gap-2"
           >
             <span>注册资产</span>

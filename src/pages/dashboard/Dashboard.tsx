@@ -5,14 +5,16 @@ import {
   fetchDashboardQualityTrends,
   fetchDashboardTasks
 } from '../../services/api';
+import { StatsSkeleton, CardSkeleton, TableSkeleton } from '../../components/common/Skeleton';
+import ErrorFallback from '../../components/common/ErrorFallback';
 
 const Dashboard: React.FC = () => {
   const [timeRange, setTimeRange] = useState('6months');
   
-  const [stats, setStats] = useState<any[]>([]);
-  const [recentTables, setRecentTables] = useState<any[]>([]);
-  const [qualityTrends, setQualityTrends] = useState<any[]>([]);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [stats, setStats] = useState<Array<Record<string, unknown>>>([]);
+  const [recentTables, setRecentTables] = useState<Array<Record<string, unknown>>>([]);
+  const [qualityTrends, setQualityTrends] = useState<Array<Record<string, unknown>>>([]);
+  const [tasks, setTasks] = useState<Array<Record<string, unknown>>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -82,7 +84,16 @@ const Dashboard: React.FC = () => {
   const chartRange = chartMax - chartMin;
 
   if (loading) {
-    return <div className="text-slate-400 p-8 flex items-center justify-center">Loading dashboard data...</div>;
+    return (
+      <div className="space-y-6 p-6">
+        <StatsSkeleton count={4} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+        <TableSkeleton rows={5} cols={4} />
+      </div>
+    );
   }
 
   return (

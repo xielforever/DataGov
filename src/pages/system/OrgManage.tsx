@@ -24,6 +24,11 @@ import {
   updateOrgChangeStatus,
   updateSystemOrgStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type OrgStatus = "active" | "inactive";
 type ChangeStatus = "pending" | "reviewing" | "approved" | "rejected";
@@ -111,9 +116,19 @@ export default function OrgManage() {
   const [stewards, setStewards] = useState<OrgSteward[]>([]);
   const [changes, setChanges] = useState<OrgChange[]>([]);
   const [keyword, setKeyword] = useState("");
+  useKeyboardShortcut({
+    'ctrl+n': () => setIsModalOpen(true),
+    'escape': () => setIsModalOpen(false),
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedkeyword = useDebounce(keyword, 300);
   const [selectedStatus, setSelectedStatus] = useState<"all" | OrgStatus>("all");
   const [selectedOrg, setSelectedOrg] = useState<SystemOrg | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);
@@ -267,7 +282,7 @@ export default function OrgManage() {
             </div>
           </div>
           <div className="grid gap-3 p-4 xl:grid-cols-2">
-            {filteredOrgs.map((org) => {
+            {paginatedFilteredOrgs.map((org) => {
               const status = orgStatusConfig[org.status];
               const selected = selectedOrg?.id === org.id;
               return (

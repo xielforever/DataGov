@@ -28,6 +28,8 @@ import {
   updateBusinessDomain,
   updateBusinessDomainStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
 
 type DomainStatus = "active" | "paused" | "retired";
 
@@ -130,6 +132,7 @@ const inputClass =
 export default function BusinessDomainManage() {
   const [domains, setDomains] = useState<BusinessDomain[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | DomainStatus>("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
@@ -148,6 +151,7 @@ export default function BusinessDomainManage() {
       const data = await fetchBusinessDomains();
       setDomains(data);
     } catch (error) {
+      setError(true);
       toast.error("业务域加载失败");
     } finally {
       setLoading(false);
@@ -344,18 +348,15 @@ export default function BusinessDomainManage() {
     }
   };
 
-  const navigateTo = (view: string) => {
-    window.history.replaceState(null, "", `?view=${view}`);
-    window.dispatchEvent(new PopStateEvent("popstate"));
-  };
+  // navigateTo imported from utils/navigation
 
+  if (error) {
+    return <ErrorFallback onRetry={loadData} />;
+  }
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
-          <p className="mt-3 text-sm text-slate-400">加载业务域配置...</p>
-        </div>
+      <div className="space-y-6">
+        <TableSkeleton rows={5} cols={5} />
       </div>
     );
   }

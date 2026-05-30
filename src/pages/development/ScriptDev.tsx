@@ -1,5 +1,6 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Breadcrumb from '../../components/common/Breadcrumb';
+import ErrorFallback from '../../components/common/ErrorFallback';
 import {
   ChevronDown,
   ChevronRight,
@@ -79,25 +80,47 @@ type ScriptTemplate = {
 };
 
 const scriptTemplates: ScriptTemplate[] = [
-  { scriptType: 'mysql-sql', label: '新建 MySQL SQL', shortLabel: 'MySQL SQL', dataSourceTypes: ['MySQL'], editorLanguage: 'sql', dialect: 'mysql', defaultContent: 'SELECT * FROM your_table LIMIT 100;', icon: Database, color: 'text-blue-400' },
-  { scriptType: 'postgresql-sql', label: '新建 PostgreSQL SQL', shortLabel: 'PostgreSQL SQL', dataSourceTypes: ['PostgreSQL'], editorLanguage: 'sql', dialect: 'postgresql', defaultContent: 'SELECT * FROM public.your_table LIMIT 100;', icon: Database, color: 'text-indigo-400' },
-  { scriptType: 'hive-sql', label: '新建 Hive SQL', shortLabel: 'Hive SQL', dataSourceTypes: ['Hive'], editorLanguage: 'sql', dialect: 'hive', defaultContent: 'SELECT * FROM your_table LIMIT 100;', icon: Database, color: 'text-amber-400' },
-  { scriptType: 'clickhouse-sql', label: '新建 ClickHouse SQL', shortLabel: 'ClickHouse SQL', dataSourceTypes: ['ClickHouse'], editorLanguage: 'sql', dialect: 'clickhouse', defaultContent: 'SELECT * FROM your_table LIMIT 100;', icon: Database, color: 'text-yellow-400' },
   {
-    scriptType: 'kafka-consumer',
-    label: '新建 Kafka Consumer',
-    shortLabel: 'Kafka Consumer',
-    dataSourceTypes: ['Kafka'],
-    editorLanguage: 'python',
-    dialect: 'kafka',
-    defaultContent: ['from kafka import KafkaConsumer', '', 'consumer = KafkaConsumer("topic_name", bootstrap_servers=["localhost:9092"])', 'for message in consumer:', '    print(message.value)'].join('\n'),
-    icon: FileCode,
-    color: 'text-slate-300',
+    scriptType: 'mysql-sql', label: '新建 MySQL SQL', shortLabel: 'MySQL SQL', dataSourceTypes: ['MySQL'], editorLanguage: 'sql', dialect: 'mysql',
+    defaultContent: ['-- MySQL SQL', '-- 在此编写查询语句', '', 'SELECT', '  column1,', '  column2', 'FROM your_database.your_table', 'WHERE condition = true', 'LIMIT 100;'].join('\n'),
+    icon: Database, color: 'text-blue-400',
   },
-  { scriptType: 'redis-command', label: '新建 Redis Command', shortLabel: 'Redis Command', dataSourceTypes: ['Redis'], editorLanguage: 'plaintext', dialect: 'redis', defaultContent: 'GET key_name', icon: Terminal, color: 'text-rose-400' },
-  { scriptType: 'elasticsearch-dsl', label: '新建 Elasticsearch DSL', shortLabel: 'Elasticsearch DSL', dataSourceTypes: ['Elasticsearch'], editorLanguage: 'json', dialect: 'elasticsearch', defaultContent: '{\n  "query": {\n    "match_all": {}\n  }\n}', icon: FileCode, color: 'text-teal-400' },
-  { scriptType: 'python-task', label: '新建 Python Task', shortLabel: 'Python Task', dataSourceTypes: ['MySQL', 'PostgreSQL', 'Hive', 'ClickHouse', 'Kafka', 'Redis', 'Elasticsearch'], editorLanguage: 'python', defaultContent: '# Python task\n', icon: FileCode, color: 'text-yellow-400' },
-  { scriptType: 'shell-task', label: '新建 Shell Task', shortLabel: 'Shell Task', dataSourceTypes: [], editorLanguage: 'shell', defaultContent: '#!/usr/bin/env bash\n', icon: Terminal, color: 'text-emerald-400' },
+  {
+    scriptType: 'postgresql-sql', label: '新建 PostgreSQL SQL', shortLabel: 'PostgreSQL SQL', dataSourceTypes: ['PostgreSQL'], editorLanguage: 'sql', dialect: 'postgresql',
+    defaultContent: ['-- PostgreSQL SQL', '-- 支持 ARRAY、JSONB、CTE 等高级特性', '', 'WITH summary AS (', '  SELECT', '    user_id,', '    ARRAY_AGG(tag_name) AS tags,', '    COUNT(*) AS tag_count', '  FROM public.dim_user_tag', '  GROUP BY user_id', ')', 'SELECT * FROM summary WHERE tag_count > 0 LIMIT 100;'].join('\n'),
+    icon: Database, color: 'text-indigo-400',
+  },
+  {
+    scriptType: 'hive-sql', label: '新建 Hive SQL', shortLabel: 'Hive SQL', dataSourceTypes: ['Hive'], editorLanguage: 'sql', dialect: 'hive',
+    defaultContent: ['-- Hive SQL', '-- 注意：使用分区字段过滤以避免全表扫描', '', 'SET hive.exec.dynamic.partition=true;', 'SET hive.exec.dynamic.partition.mode=nonstrict;', '', 'SELECT', '  user_id,', '  user_name,', '  create_time', 'FROM ods.your_db.your_table', 'WHERE dt = ${bizdate}', 'LIMIT 100;'].join('\n'),
+    icon: Database, color: 'text-amber-400',
+  },
+  {
+    scriptType: 'clickhouse-sql', label: '新建 ClickHouse SQL', shortLabel: 'ClickHouse SQL', dataSourceTypes: ['ClickHouse'], editorLanguage: 'sql', dialect: 'clickhouse',
+    defaultContent: ['-- ClickHouse SQL', '-- 适合大表聚合分析，注意 LIMIT 语义与 MySQL 不同', '', 'SELECT', '  toStartOfMinute(event_time) AS minute,', '  count() AS cnt,', '  uniqExact(user_id) AS uv', 'FROM analytics.your_table', 'WHERE event_time >= now() - INTERVAL 1 HOUR', 'GROUP BY minute', 'ORDER BY minute DESC', 'LIMIT 100;'].join('\n'),
+    icon: Database, color: 'text-yellow-400',
+  },
+  {
+    scriptType: 'kafka-consumer', label: '新建 Kafka Consumer', shortLabel: 'Kafka Consumer', dataSourceTypes: ['Kafka'], editorLanguage: 'python', dialect: 'kafka',
+    defaultContent: ['"""Kafka Consumer 脚本', '监听指定主题并逐条处理消息。', '"""', '', 'import json', 'from kafka import KafkaConsumer', '', 'consumer = KafkaConsumer(', '    "your_topic",', '    bootstrap_servers=["localhost:9092"],', '    group_id="your-consumer-group",', '    value_deserializer=lambda m: json.loads(m.decode("utf-8")),', '    auto_offset_reset="latest",', ')', '', 'print("Listening on your_topic...")', 'for message in consumer:', '    print(f"offset={message.offset}, value={message.value}")'].join('\n'),
+    icon: FileCode, color: 'text-slate-300',
+  },
+  { scriptType: 'redis-command', label: '新建 Redis Command', shortLabel: 'Redis Command', dataSourceTypes: ['Redis'], editorLanguage: 'plaintext', dialect: 'redis', defaultContent: '-- Redis 命令\nGET your_key\nHGETALL your_hash\nKEYS pattern:*', icon: Terminal, color: 'text-rose-400' },
+  {
+    scriptType: 'elasticsearch-dsl', label: '新建 Elasticsearch DSL', shortLabel: 'Elasticsearch DSL', dataSourceTypes: ['Elasticsearch'], editorLanguage: 'json', dialect: 'elasticsearch',
+    defaultContent: ['{', '  "query": {', '    "bool": {', '      "must": [', '        { "match": { "field": "keyword" } }', '      ],', '      "filter": [', '        { "term": { "status": "active" } }', '      ]', '    }', '  },', '  "size": 20,', '  "sort": [{ "create_time": "desc" }]', '}'].join('\n'),
+    icon: FileCode, color: 'text-teal-400',
+  },
+  {
+    scriptType: 'python-task', label: '新建 Python Task', shortLabel: 'Python Task', dataSourceTypes: ['MySQL', 'PostgreSQL', 'Hive', 'ClickHouse', 'Kafka', 'Redis', 'Elasticsearch'], editorLanguage: 'python',
+    defaultContent: ['"""Python 数据任务脚本', '在下方实现 ETL、数据处理或分析逻辑。', '"""', '', 'import pandas as pd', 'from sqlalchemy import create_engine', '', '', 'def main():', '    # TODO: 配置数据源连接', '    # engine = create_engine("dialect+driver://user:pass@host/db")', '    # df = pd.read_sql("SELECT * FROM your_table LIMIT 100", engine)', '    # print(df.head())', '    pass', '', '', 'if __name__ == "__main__":', '    main()'].join('\n'),
+    icon: FileCode, color: 'text-yellow-400',
+  },
+  {
+    scriptType: 'shell-task', label: '新建 Shell Task', shortLabel: 'Shell Task', dataSourceTypes: [], editorLanguage: 'shell',
+    defaultContent: ['#!/usr/bin/env bash', 'set -euo pipefail', '', '# Shell 任务脚本', 'echo "[$(date)] Task started"', '', '# TODO: 在此编写任务逻辑', '', 'echo "[$(date)] Task done"'].join('\n'),
+    icon: Terminal, color: 'text-emerald-400',
+  },
 ];
 
 const getTemplateByType = (scriptType?: string) => scriptTemplates.find(template => template.scriptType === scriptType);

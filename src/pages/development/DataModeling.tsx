@@ -4,6 +4,8 @@ import Breadcrumb from "../../components/common/Breadcrumb";
 import DataModelingWizard from "./DataModelingWizard";
 import { Database, ChevronLeft, ChevronRight, FolderTree, Plus, FileText, X, AlertTriangle } from "lucide-react";
 import toast from 'react-hot-toast';
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
 
 interface Field {
   name: string;
@@ -58,6 +60,7 @@ export default function DataModeling() {
   const [models, setModels] = useState<Model[]>([]);
   const [dataSources, setDataSources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const [selectedDomain, setSelectedDomain] = useState<string>("all");
   const [selectedLayerTab, setSelectedLayerTab] = useState<string>("ODS");
@@ -94,6 +97,7 @@ export default function DataModeling() {
       setModels(modelsRes);
       setDataSources(dsRes);
     } catch (error) {
+      setError(true);
       console.error(error);
       toast.error('加载数据失败');
     } finally {

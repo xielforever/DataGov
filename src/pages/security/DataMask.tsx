@@ -22,6 +22,11 @@ import {
   fetchDataMaskValidations,
   updateDataMaskPolicyStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type MaskMode = "static" | "dynamic";
 type PolicyStatus = "enabled" | "disabled" | "draft";
@@ -102,7 +107,17 @@ export default function DataMask() {
   const [selectedMode, setSelectedMode] = useState<"all" | MaskMode>("all");
   const [selectedStatus, setSelectedStatus] = useState<"all" | PolicyStatus>("all");
   const [keyword, setKeyword] = useState("");
+  useKeyboardShortcut({
+    'ctrl+n': () => setIsModalOpen(true),
+    'escape': () => setIsModalOpen(false),
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedkeyword = useDebounce(keyword, 300);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);

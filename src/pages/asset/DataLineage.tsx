@@ -3,6 +3,9 @@ import { AlertTriangle, BarChart3, MessageSquare, Search, Trophy, User } from 'l
 import toast from 'react-hot-toast';
 import { fetchLineageData } from '../../services/api';
 import Breadcrumb from '../../components/common/Breadcrumb';
+import { navigateTo } from '../../utils/navigation';
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { CardSkeleton } from '../../components/common/Skeleton';
 
 // 血缘节点数据
 interface LineageNode {
@@ -46,6 +49,7 @@ export default function DataLineage() {
   const [allEdges, setAllEdges] = useState<LineageEdge[]>([]);
   const [fieldLineage, setFieldLineage] = useState<{ from: string; to: string; transform?: string; logic?: string; status?: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [viewMode, setViewMode] = useState<'graph' | 'field' | 'impact'>('graph');
   const [zoom, setZoom] = useState(1);
   const [showLabels, setShowLabels] = useState(true);
@@ -72,6 +76,7 @@ export default function DataLineage() {
 
       return { centerId: result.center, centerNode: nextCenterNode };
     } catch {
+      setError(true);
       setSearchFeedback({ type: 'error', text: `未找到表“${center || '未输入'}”的血缘样本，请尝试输入 mock 中已有表名。` });
       setTimeout(() => setSearchFeedback(null), 3000);
       return null;
@@ -984,7 +989,7 @@ export default function DataLineage() {
               影响分析
             </button>
             <button
-              onClick={() => { window.history.replaceState(null, "", `?view=data-catalog&asset=${selectedNode.id}`); window.dispatchEvent(new PopStateEvent("popstate")); }}
+              onClick={() => { navigateTo("data-catalog", { asset: selectedNode.id }); }}
               className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg transition-colors"
             >
               查看详情

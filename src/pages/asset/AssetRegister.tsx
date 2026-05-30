@@ -3,7 +3,10 @@ import type { LucideIcon } from 'lucide-react';
 import { CheckCircle, ClipboardList, Database, Link, Lock, Pencil, Plug, Shield, Table2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Breadcrumb from '../../components/common/Breadcrumb';
+import { navigateTo } from '../../utils/navigation';
 import { fetchAssetRegisterOptions, registerAssetTables } from '../../services/api';
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
 
 interface DataSource {
   id: string;
@@ -76,6 +79,7 @@ const AssetRegister: React.FC = () => {
   const [dataLayers, setDataLayers] = useState<Array<{ value: string; label: string; color: string }>>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -230,7 +234,7 @@ const AssetRegister: React.FC = () => {
           <h3 className="text-lg font-semibold text-white">选择数据源</h3>
           <p className="text-sm text-slate-400 mt-1">选择要注册资产的数据源，系统将自动扫描可用的数据库和数据表</p>
         </div>
-        <button onClick={() => { window.history.replaceState(null, "", "?view=data-source"); window.dispatchEvent(new PopStateEvent("popstate")); }} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-slate-300 transition-colors border border-slate-700">
+        <button onClick={() => { navigateTo("data-source"); }} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-slate-300 transition-colors border border-slate-700">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
@@ -692,7 +696,7 @@ const AssetRegister: React.FC = () => {
               继续注册
             </button>
             <button
-              onClick={() => { window.history.replaceState(null, "", "?view=data-catalog"); window.dispatchEvent(new PopStateEvent("popstate")); }}
+              onClick={() => { navigateTo("data-catalog"); }}
               className="px-6 py-2.5 rounded-lg font-medium bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all"
             >
               查看资产目录

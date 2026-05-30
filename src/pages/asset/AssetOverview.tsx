@@ -3,6 +3,16 @@ import type { LucideIcon } from 'lucide-react';
 import { AlertTriangle, ArrowRight, ClipboardList, Clock3, Database, FileText, KeyRound, Link2, MessageSquare, Search, Server, Table2, TrendingUp, User, Zap, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Breadcrumb from '../../components/common/Breadcrumb';
+import { navigateTo } from '../../utils/navigation';
+interface CoreMetric { label: string; value: string; change: string; icon: string; }
+interface LayerDist { layer: string; count: number; color: string; }
+interface BusinessDomain { name: string; count: number; color: string; }
+interface DataSource { name: string; type: string; count: number; }
+interface GrowthPoint { date: string; tables: number; fields: number; }
+interface HealthMetric { label: string; value: number; color: string; }
+interface HotAsset { name: string; domain: string; visits: number; quality: number; }
+interface PendingItem { type: string; title: string; count: number; view: string; }
+
 import {
   fetchAssetCoreMetrics,
   fetchAssetLayerDistribution,
@@ -13,19 +23,22 @@ import {
   fetchAssetHotAssets,
   fetchAssetPendingItems
 } from '../../services/api';
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { StatsSkeleton } from '../../components/common/Skeleton';
 
 const AssetOverview: React.FC = () => {
   const [timeRange, setTimeRange] = useState('30d');
 
-  const [coreMetrics, setCoreMetrics] = useState<any[]>([]);
-  const [layerDistribution, setLayerDistribution] = useState<any[]>([]);
-  const [businessDomains, setBusinessDomains] = useState<any[]>([]);
-  const [dataSources, setDataSources] = useState<any[]>([]);
-  const [growthTrend, setGrowthTrend] = useState<any[]>([]);
-  const [healthMetrics, setHealthMetrics] = useState<any[]>([]);
-  const [hotAssets, setHotAssets] = useState<any[]>([]);
-  const [pendingItems, setPendingItems] = useState<any[]>([]);
+  const [coreMetrics, setCoreMetrics] = useState<CoreMetric[]>([]);
+  const [layerDistribution, setLayerDistribution] = useState<LayerDist[]>([]);
+  const [businessDomains, setBusinessDomains] = useState<BusinessDomain[]>([]);
+  const [dataSources, setDataSources] = useState<DataSource[]>([]);
+  const [growthTrend, setGrowthTrend] = useState<GrowthPoint[]>([]);
+  const [healthMetrics, setHealthMetrics] = useState<HealthMetric[]>([]);
+  const [hotAssets, setHotAssets] = useState<HotAsset[]>([]);
+  const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const timeRangeOptions = [
     { key: '7d', label: '7天' },
@@ -99,15 +112,11 @@ const AssetOverview: React.FC = () => {
     },
   ];
 
-  const navigateTo = (view: string) => {
-    window.history.replaceState(null, '', `?view=${view}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  };
+  // navigateTo imported from utils/navigation
 
   const navigateToAsset = (view: string, assetName: string) => {
-    const param = view === 'data-lineage' ? `center=${assetName}` : `asset=${assetName}`;
-    window.history.replaceState(null, '', `?view=${view}&${param}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    const param = view === 'data-lineage' ? 'center' : 'asset';
+    navigateTo(view, { [param]: assetName });
   };
 
   const handlePendingClick = (type: string) => {
@@ -145,6 +154,7 @@ const AssetOverview: React.FC = () => {
         setHotAssets(hot);
         setPendingItems(pending);
       } catch (error) {
+        setError(true);
         console.error('Failed to load asset overview data:', error);
       } finally {
         setLoading(false);
@@ -170,8 +180,15 @@ const AssetOverview: React.FC = () => {
   const trendPointString = trendPoints.map((point) => `${point.x},${point.y}`).join(' ');
   const trendAreaPoints = trendPoints.length ? `0,100 ${trendPointString} 100,100` : '';
 
+  if (error) {
+    return <ErrorFallback onRetry={loadData} />;
+  }
   if (loading) {
-    return <div className="text-slate-400 p-8 flex items-center justify-center">Loading asset overview data...</div>;
+    return (
+      <div className="space-y-6">
+        <StatsSkeleton count={4} />
+      </div>
+    );
   }
 
   return (

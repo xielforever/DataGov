@@ -20,6 +20,11 @@ import {
   fetchQualityMonitorTrends,
   updateQualityMonitorAlertStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type AlertSeverity = "critical" | "high" | "medium" | "low";
 type AlertStatus = "open" | "acknowledged" | "resolved";
@@ -104,6 +109,9 @@ export default function QualityMonitor() {
   const [selectedDomain, setSelectedDomain] = useState("全部");
   const [selectedAlertStatus, setSelectedAlertStatus] = useState<"all" | AlertStatus>("all");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);
@@ -162,13 +170,13 @@ export default function QualityMonitor() {
     setAlerts((prev) => prev.map((item) => (item.id === alert.id ? updated : item)));
   };
 
+  if (error) {
+    return <ErrorFallback onRetry={loadData} />;
+  }
   if (loading || !overview) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
-          <p className="mt-3 text-sm text-slate-400">加载质量监控...</p>
-        </div>
+      <div className="space-y-6">
+        <TableSkeleton rows={5} cols={5} />
       </div>
     );
   }
@@ -291,7 +299,7 @@ export default function QualityMonitor() {
             </select>
           </div>
           <div className="max-h-[520px] space-y-3 overflow-y-auto p-3">
-            {filteredAlerts.map((alert) => {
+            {paginatedFilteredAlerts.map((alert) => {
               const severity = severityConfig[alert.severity];
               const status = alertStatusConfig[alert.status];
               return (
@@ -332,7 +340,7 @@ export default function QualityMonitor() {
                 </article>
               );
             })}
-            {filteredAlerts.length === 0 && <div className="py-10 text-center text-sm text-slate-500">当前筛选条件下没有告警</div>}
+            {paginatedFilteredAlerts.length === 0 && <div className="py-10 text-center text-sm text-slate-500">当前筛选条件下没有告警</div>}
           </div>
         </section>
       </div>

@@ -26,6 +26,11 @@ import {
   updateRoleRiskStatus,
   updateSystemRoleStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 
 type RoleStatus = "enabled" | "disabled";
 type RoleLevel = "high" | "medium" | "low";
@@ -127,9 +132,19 @@ export default function RoleManage() {
   const [members, setMembers] = useState<RoleMember[]>([]);
   const [risks, setRisks] = useState<RoleRisk[]>([]);
   const [keyword, setKeyword] = useState("");
+  useKeyboardShortcut({
+    'ctrl+n': () => setIsModalOpen(true),
+    'escape': () => setIsModalOpen(false),
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
+  });
+
+  const debouncedkeyword = useDebounce(keyword, 300);
   const [selectedStatus, setSelectedStatus] = useState<"all" | RoleStatus>("all");
   const [selectedRole, setSelectedRole] = useState<SystemRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);
@@ -284,7 +299,7 @@ export default function RoleManage() {
             </div>
           </div>
           <div className="grid gap-3 p-4 xl:grid-cols-2">
-            {filteredRoles.map((role) => {
+            {paginatedFilteredRoles.map((role) => {
               const status = statusConfig[role.status];
               const level = levelConfig[role.level];
               const selected = selectedRole?.id === role.id;

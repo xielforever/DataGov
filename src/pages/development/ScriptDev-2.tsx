@@ -24,6 +24,7 @@ import {
   fetchScriptVersions,
   fetchMetadataDataSources
 } from '../../services/api';
+import ErrorFallback from '../../components/common/ErrorFallback';
 
 export default function ScriptDev() {
   const [scripts, setScripts] = useState<any[]>([]);

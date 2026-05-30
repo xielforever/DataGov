@@ -1,6 +1,14 @@
 ﻿import { useState, useEffect, useMemo } from "react";
-import { fetchStandardDefinitions, createStandardDefinition, updateStandardDefinition, offlineStandardDefinition, importStandardDefinitions } from "../../services/api";
+import { fetchStandardDefinitions, createStandardDefinition, updateStandardDefinition, offlineStandardDefinition, importStandardDefinitions, fetchStandardDomains } from "../../services/api";
 import Breadcrumb from "../../components/common/Breadcrumb";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useTableSort } from '../../hooks/useTableSort';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
+import InlineEdit from '../../components/common/InlineEdit';
+import { useTableSelection } from '../../hooks/useTableSelection';
 
 type StandardStatus = "draft" | "reviewing" | "published" | "offline";
 
@@ -24,12 +32,21 @@ const STATUS_CONFIG = {
   offline: { label: "已下线", color: "text-red-400", bg: "bg-red-500/15", border: "border-red-500/30", dot: "bg-red-400" },
 };
 
-const DOMAINS = ["全部", "用户域", "交易域", "财务域", "商品域", "安全域", "其他"];
+const [DOMAINS, setDOMAINS] = useState<string[]>(["全部"]);
 
 export default function StandardDef() {
   const [data, setData] = useState<StandardDefData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [searchKeyword, setSearchKeyword] = useState("");
+  useKeyboardShortcut({
+    'ctrl+n': () => { setIsModalOpen(true); setModalMode('add'); setCurrentStandard({}); },
+    'escape': () => { setIsModalOpen(false); setIsDetailDrawerOpen(false); },
+  });
+
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 300);
   const [selectedDomain, setSelectedDomain] = useState("全部");
   const [selectedStatus, setSelectedStatus] = useState<"all" | StandardStatus>("all");
 
@@ -49,6 +66,10 @@ export default function StandardDef() {
     });
   };
 
+
+  useEffect(() => {
+    fetchStandardDomains().then((res) => setDOMAINS(["全部", ...(res as string[])])).catch(() => {});
+  }, []);
   useEffect(() => {
     loadData();
   }, []);
@@ -98,13 +119,13 @@ export default function StandardDef() {
     reviewing: data.filter((d) => d.status === "reviewing").length,
   }), [data]);
 
+  if (error) {
+    return <ErrorFallback onRetry={loadData} />;
+  }
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
-          <p className="mt-3 text-sm text-slate-400">加载标准数据...</p>
-        </div>
+      <div className="space-y-6">
+        <TableSkeleton rows={5} cols={7} />
       </div>
     );
   }
@@ -224,18 +245,21 @@ export default function StandardDef() {
         <table className="min-w-[970px] w-full table-fixed text-left text-sm">
           <thead>
             <tr className="border-b border-slate-800 bg-slate-900/60 text-left text-xs text-slate-400">
-              <th className="px-4 py-3 font-medium w-[200px]">标准名称 / 编码</th>
+              <th className="px-2 py-3 font-medium w-[36px]">
+                    <input type="checkbox" checked={selection.isAllSelected} ref={(el) => { if (el) el.indeterminate = selection.isPartialSelected; }} onChange={selection.toggleAll} className="accent-cyan-500" />
+                  </th>
+                  <th className="px-4 py-3 font-medium w-[200px]">标准名称 / 编码</th>
               <th className="px-4 py-3 font-medium w-[100px]">业务域</th>
               <th className="px-4 py-3 font-medium w-[90px]">数据类型</th>
               <th className="px-4 py-3 font-medium w-[200px]">描述</th>
               <th className="px-4 py-3 font-medium w-[80px]">状态</th>
               <th className="px-4 py-3 font-medium w-[90px]">负责人</th>
-              <th className="px-4 py-3 font-medium w-[110px]">更新时间</th>
+              <th className="px-4 py-3 font-medium w-[110px]"><span className="cursor-pointer hover:text-slate-200" onClick={() => handleSort('updateTime')}>更新时间 {getSortIcon('updateTime')}</span></th>
               <th className="px-4 py-3 font-medium w-[100px] text-right">操作</th>
             </tr>
           </thead>
           <tbody>
-            {filteredData.map((item) => {
+            {paginatedFilteredData.map((item) => {
               const status = STATUS_CONFIG[item.status];
               return (
                 <tr
@@ -292,7 +316,7 @@ export default function StandardDef() {
                 </tr>
               );
             })}
-            {filteredData.length === 0 && (
+            {paginatedFilteredData.length === 0 && (
               <tr>
                 <td colSpan={8} className="py-8 text-center text-sm text-slate-500">
                   没有找到匹配的标准定义
@@ -301,6 +325,22 @@ export default function StandardDef() {
             )}
           </tbody>
         </table>
+            {selection.selectedCount > 0 && (
+              <div className="flex items-center gap-3 px-4 py-2 bg-cyan-500/10 border-t border-cyan-500/20 text-sm">
+                <span className="text-cyan-300">已选 {selection.selectedCount} 项</span>
+                <button onClick={() => { toast.success(`批量发布 ${selection.selectedCount} 条`); selection.clear(); }} className="px-3 py-1 rounded bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 text-xs">批量操作</button>
+                <button onClick={() => { toast.error(`批量删除 ${selection.selectedCount} 条`); selection.clear(); }} className="px-3 py-1 rounded bg-red-500/15 text-red-300 hover:bg-red-500/25 text-xs">批量删除</button>
+              </div>
+            )}
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredData.length / pageSize)}
+              pageSize={pageSize}
+              total={filteredData.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+            />
       </div>
 
       {/* 标准表单/详情模态框 */}

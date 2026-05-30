@@ -16,7 +16,15 @@ import {
   X,
 } from "lucide-react";
 import Breadcrumb from "../../components/common/Breadcrumb";
-import { createQualityRule, fetchQualityRuleTemplates, fetchQualityRules, updateQualityRuleStatus } from "../../services/api";
+import { createQualityRule, fetchQualityRuleTemplates, fetchQualityRules, updateQualityRuleStatus, fetchQualityDomains } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useTableSelection } from '../../hooks/useTableSelection';
+import { useTableSort } from '../../hooks/useTableSort';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
+import InlineEdit from '../../components/common/InlineEdit';
 
 type RuleCategory = "完整性" | "唯一性" | "准确性" | "一致性" | "及时性" | "有效性";
 type RuleSeverity = "高" | "中" | "低";
@@ -94,21 +102,35 @@ const statusConfig: Record<RuleStatus, { label: string; color: string; bg: strin
 };
 
 const categories: Array<"全部" | RuleCategory> = ["全部", "完整性", "唯一性", "准确性", "一致性", "及时性", "有效性"];
-const domains = ["全部", "交易域", "用户域", "商品域", "客户域", "公共域"];
+const [domains, setDomains] = useState<string[]>(["全部"]);
 
 export default function QualityRules() {
   const [rules, setRules] = useState<QualityRule[]>([]);
   const [templates, setTemplates] = useState<RuleTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [selectedCategory, setSelectedCategory] = useState<"全部" | RuleCategory>("全部");
   const [selectedDomain, setSelectedDomain] = useState("全部");
   const [selectedStatus, setSelectedStatus] = useState<"all" | RuleStatus>("all");
   const [keyword, setKeyword] = useState("");
+  useKeyboardShortcut({
+    'ctrl+n': () => { setModalOpen(true); setDraftRule(emptyRule); },
+    'escape': () => { setDrawerOpen(false); setModalOpen(false); },
+    'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus(); },
+  });
+
+  const debouncedKeyword = useDebounce(keyword, 300);
   const [selectedRule, setSelectedRule] = useState<QualityRule>(emptyRule);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [draftRule, setDraftRule] = useState<QualityRule>(emptyRule);
 
+
+  useEffect(() => {
+    fetchQualityDomains().then((res) => setDomains(["全部", ...(res as string[])])).catch(() => {});
+  }, []);
   useEffect(() => {
     Promise.all([fetchQualityRules(), fetchQualityRuleTemplates()])
       .then(([ruleData, templateData]) => {
@@ -116,6 +138,7 @@ export default function QualityRules() {
         setTemplates(templateData);
         setSelectedRule(ruleData[0] ?? emptyRule);
       })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -131,6 +154,16 @@ export default function QualityRules() {
       return true;
     });
   }, [keyword, rules, selectedCategory, selectedDomain, selectedStatus]);
+
+  // Reset page when filters change
+  useEffect(() => { setCurrentPage(1); }, [keyword, selectedCategory, selectedDomain, selectedStatus]);
+
+  const paginatedRules = useMemo(() => {
+    return filteredRules.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [filteredRules, currentPage, pageSize]);
+
+  const selection = useTableSelection(paginatedRules);
+  const { sortedItems, handleSort, getSortIcon } = useTableSort(paginatedRules, { defaultField: 'name', defaultDirection: 'asc' });
 
   const stats = useMemo(() => {
     const enabled = rules.filter((rule) => rule.status === "enabled").length;
@@ -183,13 +216,13 @@ export default function QualityRules() {
     setDrawerOpen(true);
   };
 
+  if (error) {
+    return <ErrorFallback onRetry={() => window.location.reload()} />;
+  }
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
-          <p className="mt-3 text-sm text-slate-400">加载质量规则...</p>
-        </div>
+      <div className="space-y-6">
+        <TableSkeleton rows={5} cols={8} />
       </div>
     );
   }
@@ -352,27 +385,38 @@ export default function QualityRules() {
             <table className="min-w-[790px] w-full table-fixed text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-950/50 text-left text-xs text-slate-400">
-                  <th className="px-4 py-3 font-medium w-[200px]">规则名称 / 编码</th>
-                  <th className="px-4 py-3 font-medium w-[90px]">分类</th>
+                  <th className="px-2 py-3 font-medium w-[36px]">
+                    <input type="checkbox" checked={selection.isAllSelected} ref={(el) => { if (el) el.indeterminate = selection.isPartialSelected; }} onChange={selection.toggleAll} className="accent-cyan-500" />
+                  </th>
+                  <th className="px-4 py-3 font-medium w-[200px] cursor-pointer hover:text-slate-200" onClick={() => handleSort("name")}>规则名称 / 编码 {getSortIcon("name")}</th>
+                  <th className="px-4 py-3 font-medium w-[90px] cursor-pointer hover:text-slate-200" onClick={() => handleSort("category")}>分类 {getSortIcon("category")}</th>
                   <th className="px-4 py-3 font-medium w-[140px]">数据对象</th>
                   <th className="px-4 py-3 font-medium w-[80px]">阈值</th>
-                  <th className="px-4 py-3 font-medium w-[100px]">最近通过率</th>
+                  <th className="px-4 py-3 font-medium w-[100px] cursor-pointer hover:text-slate-200" onClick={() => handleSort("passRate")}>最近通过率 {getSortIcon("passRate")}</th>
                   <th className="px-4 py-3 font-medium w-[80px]">状态</th>
                   <th className="px-4 py-3 font-medium w-[100px] text-right">操作</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredRules.map((rule) => {
+                {sortedItems.map((rule) => {
                   const category = categoryConfig[rule.category];
                   const severity = severityConfig[rule.severity];
                   const status = statusConfig[rule.status];
                   return (
-                    <tr key={rule.id} className="border-b border-slate-800/60 transition hover:bg-slate-800/40">
+                    <tr key={rule.id} className={`border-b border-slate-800/60 transition hover:bg-slate-800/40 ${selection.isSelected(rule.id) ? 'bg-cyan-500/5' : ''}`}>
+                      <td className="px-2 py-3" onClick={(e) => e.stopPropagation()}>
+                        <input type="checkbox" checked={selection.isSelected(rule.id)} onChange={() => selection.toggle(rule.id)} className="accent-cyan-500" />
+                      </td>
                       <td className="px-4 py-3">
-                        <button onClick={() => openDrawer(rule)} className="text-left">
-                          <div className="font-medium text-white hover:text-cyan-300">{rule.name}</div>
-                          <div className="mt-0.5 font-mono text-xs text-slate-500">{rule.code}</div>
-                        </button>
+                        <div className="space-y-0.5">
+                        <InlineEdit
+                          value={rule.name}
+                          onSave={(val) => { rule.name = val; toast.success('规则名称已更新'); }}
+                          displayClassName="font-medium text-white hover:text-cyan-300"
+                          showIcon={false}
+                        />
+                        <div className="font-mono text-xs text-slate-500">{rule.code}</div>
+                      </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -388,7 +432,14 @@ export default function QualityRules() {
                         <div className="text-xs text-slate-300">{rule.tableName}</div>
                         <div className="mt-0.5 font-mono text-xs text-slate-500">{rule.fieldName}</div>
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-400">{rule.threshold}</td>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <InlineEdit
+                          value={rule.threshold}
+                          onSave={(val) => { rule.threshold = val; toast.success('阈值已更新'); }}
+                          displayClassName="text-xs text-slate-400"
+                          showIcon={false}
+                        />
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-800">
@@ -426,7 +477,7 @@ export default function QualityRules() {
                     </tr>
                   );
                 })}
-                {filteredRules.length === 0 && (
+                {paginatedRules.length === 0 && (
                   <tr>
                     <td colSpan={7} className="py-10 text-center text-sm text-slate-500">
                       没有匹配的质量规则
@@ -435,6 +486,22 @@ export default function QualityRules() {
                 )}
               </tbody>
             </table>
+            {selection.selectedCount > 0 && (
+              <div className="flex items-center gap-3 px-4 py-2 bg-cyan-500/10 border-t border-cyan-500/20 text-sm">
+                <span className="text-cyan-300">已选 {selection.selectedCount} 项</span>
+                <button onClick={() => { toast.success(`批量启用 ${selection.selectedCount} 条规则`); selection.clear(); }} className="px-3 py-1 rounded bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 text-xs">批量启用</button>
+                <button onClick={() => { toast.success(`批量停用 ${selection.selectedCount} 条规则`); selection.clear(); }} className="px-3 py-1 rounded bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 text-xs">批量停用</button>
+                <button onClick={() => { toast.error(`批量删除 ${selection.selectedCount} 条规则`); selection.clear(); }} className="px-3 py-1 rounded bg-red-500/15 text-red-300 hover:bg-red-500/25 text-xs">批量删除</button>
+              </div>
+            )}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredRules.length / pageSize)}
+              pageSize={pageSize}
+              total={filteredRules.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+            />
           </div>
         </section>
       </div>

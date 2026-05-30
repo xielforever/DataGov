@@ -25,6 +25,14 @@ import {
   updateSystemUserStatus,
   updateUserRiskAccountStatus,
 } from "../../services/api";
+import ErrorFallback from '../../components/common/ErrorFallback';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
+import { useTableSort } from '../../hooks/useTableSort';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
+import InlineEdit from '../../components/common/InlineEdit';
+import { useTableSelection } from '../../hooks/useTableSelection';
 
 type UserStatus = "active" | "locked" | "pending";
 type RiskStatus = "open" | "reviewing" | "closed";
@@ -107,9 +115,18 @@ export default function UserManage() {
   const [orgBindings, setOrgBindings] = useState<OrgBinding[]>([]);
   const [riskAccounts, setRiskAccounts] = useState<RiskAccount[]>([]);
   const [keyword, setKeyword] = useState("");
+  useKeyboardShortcut({
+    'ctrl+n': () => { setModalOpen(true); setModalMode('add'); setCurrentUser({}); },
+    'escape': () => { setModalOpen(false); setDetailOpen(false); },
+  });
+
+  const debouncedKeyword = useDebounce(keyword, 300);
   const [selectedStatus, setSelectedStatus] = useState<"all" | UserStatus>("all");
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const loadData = async () => {
     setLoading(true);
@@ -246,7 +263,7 @@ export default function UserManage() {
             </div>
           </div>
           <div className="grid gap-3 p-4 xl:grid-cols-2">
-            {filteredUsers.map((user) => {
+            {paginatedFilteredUsers.map((user) => {
               const status = userStatusConfig[user.status];
               const selected = selectedUser?.id === user.id;
               return (
