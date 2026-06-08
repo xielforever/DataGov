@@ -32,8 +32,6 @@ const STATUS_CONFIG = {
   offline: { label: "已下线", color: "text-red-400", bg: "bg-red-500/15", border: "border-red-500/30", dot: "bg-red-400" },
 };
 
-const [DOMAINS, setDOMAINS] = useState<string[]>(["全部"]);
-
 export default function StandardDef() {
   const [data, setData] = useState<StandardDefData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +45,7 @@ export default function StandardDef() {
   });
 
   const debouncedSearchKeyword = useDebounce(searchKeyword, 300);
+  const [DOMAINS, setDOMAINS] = useState<string[]>(["全部"]);
   const [selectedDomain, setSelectedDomain] = useState("全部");
   const [selectedStatus, setSelectedStatus] = useState<"all" | StandardStatus>("all");
 

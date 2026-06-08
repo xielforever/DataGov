@@ -105,3 +105,9 @@ DataGov 是一个商业化数据治理与数据开发平台的纯前端原型，
 
 - 5 个页面保留 `as any` 类型断言（枚举字符串选择场景），Mock 前端可接受。
 - `as any` 所在页面：DataModeling、MetadataModel、CodeManage、StandardDef、StandardMap。
+
+## 2026-06-08
+
+- 修复脚本开发页：清理页面与脚本 Mock 数据乱码，默认打开首个脚本，补充控制台日志/结果集切换，并修复 Tab 关闭可访问性。
+- 修复全局路由阻断：移除 MetadataQuery、QualityRules、StandardDef、StandardMap 中的组件外 Hook 调用，避免脚本开发页被无关页面白屏错误阻断。
+- 验证：`npx.cmd vite build --emptyOutDir=false` 通过；桌面与移动视口访问 `http://127.0.0.1:5174/?view=script-dev` 无控制台错误，脚本页无中文乱码。

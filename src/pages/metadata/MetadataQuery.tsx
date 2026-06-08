@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Breadcrumb from '../../components/common/Breadcrumb';
-import { fetchMetadataQueryData } from '../../services/api';
+import { fetchMetadataQueryData, fetchSourceTypes } from '../../services/api';
 import { Skeleton, StatsSkeleton } from '../../components/common/Skeleton';
 import ErrorFallback from '../../components/common/ErrorFallback';
 
@@ -90,7 +90,6 @@ const layerMeta: Record<string, string> = {
   SOURCE: 'border-slate-500/30 bg-slate-500/10 text-slate-300',
 };
 
-const [sourceTypeOptions, setSourceTypeOptions] = useState<string[]>(["全部"]);
 const updatedOptions: Array<{ key: Filters['updatedRange']; label: string }> = [
   { key: 'all', label: '全部时间' },
   { key: '24h', label: '24小时' },
@@ -163,6 +162,7 @@ function ResultsSkeleton() {
 
 export default function MetadataQuery() {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const [sourceTypeOptions, setSourceTypeOptions] = useState<string[]>(["全部"]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [searching, setSearching] = useState(false);

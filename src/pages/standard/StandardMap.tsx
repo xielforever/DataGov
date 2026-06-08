@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useMemo } from "react";
-import { fetchStandardMappings, updateStandardMappingStatus, rescanStandardMappings, createManualMapping } from "../../services/api";
+import { fetchStandardMappings, updateStandardMappingStatus, rescanStandardMappings, createManualMapping, fetchStandardDatabases } from "../../services/api";
 import Breadcrumb from "../../components/common/Breadcrumb";
 import ErrorFallback from '../../components/common/ErrorFallback';
 import { TableSkeleton } from '../../components/common/Skeleton';
@@ -32,8 +32,6 @@ const STATUS_CONFIG = {
   rejected: { label: "已忽略", color: "text-slate-400", bg: "bg-slate-500/15", border: "border-slate-500/30", dot: "bg-slate-400" },
 };
 
-const [DATABASES, setDATABASES] = useState<string[]>(["全部"]);
-
 export default function StandardMap() {
   const [data, setData] = useState<StandardMappingData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +46,7 @@ export default function StandardMap() {
   });
 
   const debouncedsearchKeyword = useDebounce(searchKeyword, 300);
+  const [DATABASES, setDATABASES] = useState<string[]>(["全部"]);
   const [selectedDb, setSelectedDb] = useState("全部");
   const [selectedStatus, setSelectedStatus] = useState<"all" | MappingStatus>("all");
   

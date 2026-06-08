@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Breadcrumb from '../../components/common/Breadcrumb';
-import ErrorFallback from '../../components/common/ErrorFallback';
+import Editor from '@monaco-editor/react';
 import {
   ChevronDown,
   ChevronRight,
   Database,
   FileCode,
   Folder,
+  FolderInput,
   FolderOpen,
   History,
   Maximize2,
@@ -18,14 +18,13 @@ import {
   Plus,
   Save,
   Send,
-  FolderInput,
   Settings,
   Square,
   Terminal,
   X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Editor from '@monaco-editor/react';
+import Breadcrumb from '../../components/common/Breadcrumb';
 import {
   createScript,
   fetchMetadataDataSources,
@@ -36,12 +35,16 @@ import {
   updateScript,
 } from '../../services/api';
 
+type ScriptKind = 'folder' | 'sql' | 'python' | 'shell' | 'json' | 'plaintext' | string;
+type EditorLanguage = 'sql' | 'python' | 'shell' | 'json' | 'plaintext';
+type ConsoleTab = 'logs' | 'results';
+
 type ScriptItem = {
   id: string;
   name: string;
-  type: 'folder' | 'sql' | 'python' | 'shell' | string;
+  type: ScriptKind;
   scriptType?: string;
-  editorLanguage?: string;
+  editorLanguage?: EditorLanguage;
   dialect?: string;
   parentId?: string | null;
   content?: string;
@@ -67,12 +70,14 @@ type ScriptVersion = {
   comment?: string;
 };
 
+type RunResultRow = Record<string, string | number | boolean | null>;
+
 type ScriptTemplate = {
   scriptType: string;
   label: string;
   shortLabel: string;
   dataSourceTypes: string[];
-  editorLanguage: 'sql' | 'python' | 'shell' | 'json' | 'plaintext';
+  editorLanguage: EditorLanguage;
   dialect?: string;
   defaultContent: string;
   icon: typeof Database;
@@ -81,55 +86,229 @@ type ScriptTemplate = {
 
 const scriptTemplates: ScriptTemplate[] = [
   {
-    scriptType: 'mysql-sql', label: '新建 MySQL SQL', shortLabel: 'MySQL SQL', dataSourceTypes: ['MySQL'], editorLanguage: 'sql', dialect: 'mysql',
-    defaultContent: ['-- MySQL SQL', '-- 在此编写查询语句', '', 'SELECT', '  column1,', '  column2', 'FROM your_database.your_table', 'WHERE condition = true', 'LIMIT 100;'].join('\n'),
-    icon: Database, color: 'text-blue-400',
+    scriptType: 'mysql-sql',
+    label: '新建 MySQL SQL',
+    shortLabel: 'MySQL SQL',
+    dataSourceTypes: ['MySQL'],
+    editorLanguage: 'sql',
+    dialect: 'mysql',
+    defaultContent: [
+      '-- MySQL SQL',
+      '-- 在此编写查询、加工或校验语句',
+      '',
+      'SELECT',
+      '  column1,',
+      '  column2',
+      'FROM your_database.your_table',
+      'WHERE condition = true',
+      'LIMIT 100;',
+    ].join('\n'),
+    icon: Database,
+    color: 'text-blue-400',
   },
   {
-    scriptType: 'postgresql-sql', label: '新建 PostgreSQL SQL', shortLabel: 'PostgreSQL SQL', dataSourceTypes: ['PostgreSQL'], editorLanguage: 'sql', dialect: 'postgresql',
-    defaultContent: ['-- PostgreSQL SQL', '-- 支持 ARRAY、JSONB、CTE 等高级特性', '', 'WITH summary AS (', '  SELECT', '    user_id,', '    ARRAY_AGG(tag_name) AS tags,', '    COUNT(*) AS tag_count', '  FROM public.dim_user_tag', '  GROUP BY user_id', ')', 'SELECT * FROM summary WHERE tag_count > 0 LIMIT 100;'].join('\n'),
-    icon: Database, color: 'text-indigo-400',
+    scriptType: 'postgresql-sql',
+    label: '新建 PostgreSQL SQL',
+    shortLabel: 'PostgreSQL SQL',
+    dataSourceTypes: ['PostgreSQL'],
+    editorLanguage: 'sql',
+    dialect: 'postgresql',
+    defaultContent: [
+      '-- PostgreSQL SQL',
+      '-- 支持 ARRAY、JSONB、CTE 等高级能力',
+      '',
+      'WITH summary AS (',
+      '  SELECT',
+      '    user_id,',
+      '    ARRAY_AGG(tag_name) AS tags,',
+      '    COUNT(*) AS tag_count',
+      '  FROM public.dim_user_tag',
+      '  GROUP BY user_id',
+      ')',
+      'SELECT * FROM summary WHERE tag_count > 0 LIMIT 100;',
+    ].join('\n'),
+    icon: Database,
+    color: 'text-indigo-400',
   },
   {
-    scriptType: 'hive-sql', label: '新建 Hive SQL', shortLabel: 'Hive SQL', dataSourceTypes: ['Hive'], editorLanguage: 'sql', dialect: 'hive',
-    defaultContent: ['-- Hive SQL', '-- 注意：使用分区字段过滤以避免全表扫描', '', 'SET hive.exec.dynamic.partition=true;', 'SET hive.exec.dynamic.partition.mode=nonstrict;', '', 'SELECT', '  user_id,', '  user_name,', '  create_time', 'FROM ods.your_db.your_table', 'WHERE dt = ${bizdate}', 'LIMIT 100;'].join('\n'),
-    icon: Database, color: 'text-amber-400',
+    scriptType: 'hive-sql',
+    label: '新建 Hive SQL',
+    shortLabel: 'Hive SQL',
+    dataSourceTypes: ['Hive'],
+    editorLanguage: 'sql',
+    dialect: 'hive',
+    defaultContent: [
+      '-- Hive SQL',
+      '-- 建议使用分区字段过滤，避免全表扫描',
+      '',
+      'SET hive.exec.dynamic.partition=true;',
+      'SET hive.exec.dynamic.partition.mode=nonstrict;',
+      '',
+      'SELECT',
+      '  user_id,',
+      '  user_name,',
+      '  create_time',
+      'FROM ods.your_db.your_table',
+      "WHERE dt = '${bizdate}'",
+      'LIMIT 100;',
+    ].join('\n'),
+    icon: Database,
+    color: 'text-amber-400',
   },
   {
-    scriptType: 'clickhouse-sql', label: '新建 ClickHouse SQL', shortLabel: 'ClickHouse SQL', dataSourceTypes: ['ClickHouse'], editorLanguage: 'sql', dialect: 'clickhouse',
-    defaultContent: ['-- ClickHouse SQL', '-- 适合大表聚合分析，注意 LIMIT 语义与 MySQL 不同', '', 'SELECT', '  toStartOfMinute(event_time) AS minute,', '  count() AS cnt,', '  uniqExact(user_id) AS uv', 'FROM analytics.your_table', 'WHERE event_time >= now() - INTERVAL 1 HOUR', 'GROUP BY minute', 'ORDER BY minute DESC', 'LIMIT 100;'].join('\n'),
-    icon: Database, color: 'text-yellow-400',
+    scriptType: 'clickhouse-sql',
+    label: '新建 ClickHouse SQL',
+    shortLabel: 'ClickHouse SQL',
+    dataSourceTypes: ['ClickHouse'],
+    editorLanguage: 'sql',
+    dialect: 'clickhouse',
+    defaultContent: [
+      '-- ClickHouse SQL',
+      '-- 适合大表聚合分析，请注意 LIMIT 与时间范围',
+      '',
+      'SELECT',
+      '  toStartOfMinute(event_time) AS minute,',
+      '  count() AS cnt,',
+      '  uniqExact(user_id) AS uv',
+      'FROM analytics.your_table',
+      'WHERE event_time >= now() - INTERVAL 1 HOUR',
+      'GROUP BY minute',
+      'ORDER BY minute DESC',
+      'LIMIT 100;',
+    ].join('\n'),
+    icon: Database,
+    color: 'text-yellow-400',
   },
   {
-    scriptType: 'kafka-consumer', label: '新建 Kafka Consumer', shortLabel: 'Kafka Consumer', dataSourceTypes: ['Kafka'], editorLanguage: 'python', dialect: 'kafka',
-    defaultContent: ['"""Kafka Consumer 脚本', '监听指定主题并逐条处理消息。', '"""', '', 'import json', 'from kafka import KafkaConsumer', '', 'consumer = KafkaConsumer(', '    "your_topic",', '    bootstrap_servers=["localhost:9092"],', '    group_id="your-consumer-group",', '    value_deserializer=lambda m: json.loads(m.decode("utf-8")),', '    auto_offset_reset="latest",', ')', '', 'print("Listening on your_topic...")', 'for message in consumer:', '    print(f"offset={message.offset}, value={message.value}")'].join('\n'),
-    icon: FileCode, color: 'text-slate-300',
+    scriptType: 'kafka-consumer',
+    label: '新建 Kafka Consumer',
+    shortLabel: 'Kafka Consumer',
+    dataSourceTypes: ['Kafka'],
+    editorLanguage: 'python',
+    dialect: 'kafka',
+    defaultContent: [
+      '"""Kafka Consumer 脚本',
+      '监听指定主题并逐条处理消息。',
+      '"""',
+      '',
+      'import json',
+      'from kafka import KafkaConsumer',
+      '',
+      'consumer = KafkaConsumer(',
+      '    "your_topic",',
+      '    bootstrap_servers=["localhost:9092"],',
+      '    group_id="your-consumer-group",',
+      '    value_deserializer=lambda m: json.loads(m.decode("utf-8")),',
+      '    auto_offset_reset="latest",',
+      ')',
+      '',
+      'print("Listening on your_topic...")',
+      'for message in consumer:',
+      '    print(f"offset={message.offset}, value={message.value}")',
+    ].join('\n'),
+    icon: FileCode,
+    color: 'text-slate-300',
   },
-  { scriptType: 'redis-command', label: '新建 Redis Command', shortLabel: 'Redis Command', dataSourceTypes: ['Redis'], editorLanguage: 'plaintext', dialect: 'redis', defaultContent: '-- Redis 命令\nGET your_key\nHGETALL your_hash\nKEYS pattern:*', icon: Terminal, color: 'text-rose-400' },
   {
-    scriptType: 'elasticsearch-dsl', label: '新建 Elasticsearch DSL', shortLabel: 'Elasticsearch DSL', dataSourceTypes: ['Elasticsearch'], editorLanguage: 'json', dialect: 'elasticsearch',
-    defaultContent: ['{', '  "query": {', '    "bool": {', '      "must": [', '        { "match": { "field": "keyword" } }', '      ],', '      "filter": [', '        { "term": { "status": "active" } }', '      ]', '    }', '  },', '  "size": 20,', '  "sort": [{ "create_time": "desc" }]', '}'].join('\n'),
-    icon: FileCode, color: 'text-teal-400',
+    scriptType: 'redis-command',
+    label: '新建 Redis Command',
+    shortLabel: 'Redis Command',
+    dataSourceTypes: ['Redis'],
+    editorLanguage: 'plaintext',
+    dialect: 'redis',
+    defaultContent: ['-- Redis 命令', 'GET your_key', 'HGETALL your_hash', 'KEYS pattern:*'].join('\n'),
+    icon: Terminal,
+    color: 'text-rose-400',
   },
   {
-    scriptType: 'python-task', label: '新建 Python Task', shortLabel: 'Python Task', dataSourceTypes: ['MySQL', 'PostgreSQL', 'Hive', 'ClickHouse', 'Kafka', 'Redis', 'Elasticsearch'], editorLanguage: 'python',
-    defaultContent: ['"""Python 数据任务脚本', '在下方实现 ETL、数据处理或分析逻辑。', '"""', '', 'import pandas as pd', 'from sqlalchemy import create_engine', '', '', 'def main():', '    # TODO: 配置数据源连接', '    # engine = create_engine("dialect+driver://user:pass@host/db")', '    # df = pd.read_sql("SELECT * FROM your_table LIMIT 100", engine)', '    # print(df.head())', '    pass', '', '', 'if __name__ == "__main__":', '    main()'].join('\n'),
-    icon: FileCode, color: 'text-yellow-400',
+    scriptType: 'elasticsearch-dsl',
+    label: '新建 Elasticsearch DSL',
+    shortLabel: 'Elasticsearch DSL',
+    dataSourceTypes: ['Elasticsearch'],
+    editorLanguage: 'json',
+    dialect: 'elasticsearch',
+    defaultContent: [
+      '{',
+      '  "query": {',
+      '    "bool": {',
+      '      "must": [',
+      '        { "match": { "field": "keyword" } }',
+      '      ],',
+      '      "filter": [',
+      '        { "term": { "status": "active" } }',
+      '      ]',
+      '    }',
+      '  },',
+      '  "size": 20,',
+      '  "sort": [{ "create_time": "desc" }]',
+      '}',
+    ].join('\n'),
+    icon: FileCode,
+    color: 'text-teal-400',
   },
   {
-    scriptType: 'shell-task', label: '新建 Shell Task', shortLabel: 'Shell Task', dataSourceTypes: [], editorLanguage: 'shell',
-    defaultContent: ['#!/usr/bin/env bash', 'set -euo pipefail', '', '# Shell 任务脚本', 'echo "[$(date)] Task started"', '', '# TODO: 在此编写任务逻辑', '', 'echo "[$(date)] Task done"'].join('\n'),
-    icon: Terminal, color: 'text-emerald-400',
+    scriptType: 'python-task',
+    label: '新建 Python Task',
+    shortLabel: 'Python Task',
+    dataSourceTypes: ['MySQL', 'PostgreSQL', 'Hive', 'ClickHouse', 'Kafka', 'Redis', 'Elasticsearch'],
+    editorLanguage: 'python',
+    defaultContent: [
+      '"""Python 数据任务脚本',
+      '在下方实现 ETL、数据处理或分析逻辑。',
+      '"""',
+      '',
+      'import pandas as pd',
+      'from sqlalchemy import create_engine',
+      '',
+      '',
+      'def main():',
+      '    # TODO: 配置数据源连接',
+      '    # engine = create_engine("dialect+driver://user:pass@host/db")',
+      '    # df = pd.read_sql("SELECT * FROM your_table LIMIT 100", engine)',
+      '    # print(df.head())',
+      '    pass',
+      '',
+      '',
+      'if __name__ == "__main__":',
+      '    main()',
+    ].join('\n'),
+    icon: FileCode,
+    color: 'text-yellow-400',
+  },
+  {
+    scriptType: 'shell-task',
+    label: '新建 Shell Task',
+    shortLabel: 'Shell Task',
+    dataSourceTypes: [],
+    editorLanguage: 'shell',
+    defaultContent: [
+      '#!/usr/bin/env bash',
+      'set -euo pipefail',
+      '',
+      '# Shell 任务脚本',
+      'echo "[$(date)] Task started"',
+      '',
+      '# TODO: 在此编写任务逻辑',
+      '',
+      'echo "[$(date)] Task done"',
+    ].join('\n'),
+    icon: Terminal,
+    color: 'text-emerald-400',
   },
 ];
 
-const getTemplateByType = (scriptType?: string) => scriptTemplates.find(template => template.scriptType === scriptType);
+const getTemplateByType = (scriptType?: string) => scriptTemplates.find((template) => template.scriptType === scriptType);
+
+const statusMeta: Record<string, { label: string; className: string }> = {
+  draft: { label: '草稿', className: 'border-slate-600 bg-slate-700/40 text-slate-300' },
+  published: { label: '已发布', className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' },
+  approving: { label: '审批中', className: 'border-amber-500/30 bg-amber-500/10 text-amber-300' },
+};
 
 const getLegacyTemplate = (script: ScriptItem | null | undefined, dataSources: DataSource[]) => {
   if (!script || script.type === 'folder') return undefined;
-  const dataSourceType = dataSources.find(ds => ds.id === script.dataSourceId)?.type;
+  const dataSourceType = dataSources.find((dataSource) => dataSource.id === script.dataSourceId)?.type;
   if (script.type === 'sql') {
-    if (dataSourceType === 'MySQL') return getTemplateByType('mysql-sql');
     if (dataSourceType === 'PostgreSQL') return getTemplateByType('postgresql-sql');
     if (dataSourceType === 'Hive') return getTemplateByType('hive-sql');
     if (dataSourceType === 'ClickHouse') return getTemplateByType('clickhouse-sql');
@@ -139,6 +318,13 @@ const getLegacyTemplate = (script: ScriptItem | null | undefined, dataSources: D
   if (script.type === 'shell') return getTemplateByType('shell-task');
   return undefined;
 };
+
+function normalizeScriptType(editorLanguage: EditorLanguage): ScriptKind {
+  if (editorLanguage === 'sql') return 'sql';
+  if (editorLanguage === 'python') return 'python';
+  if (editorLanguage === 'shell') return 'shell';
+  return editorLanguage;
+}
 
 export default function ScriptDev() {
   const [scripts, setScripts] = useState<ScriptItem[]>([]);
@@ -152,7 +338,9 @@ export default function ScriptDev() {
   const [newScriptParentId, setNewScriptParentId] = useState<string | null | undefined>(undefined);
   const [editorTheme, setEditorTheme] = useState<'vs-dark' | 'light' | 'hc-black'>('vs-dark');
   const [showSettings, setShowSettings] = useState(false);
-  const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
+  const [consoleLogs, setConsoleLogs] = useState<string[]>(['等待运行脚本...']);
+  const [consoleTab, setConsoleTab] = useState<ConsoleTab>('logs');
+  const [runResults, setRunResults] = useState<RunResultRow[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [mobilePanel, setMobilePanel] = useState<'files' | 'editor' | 'console'>('files');
@@ -162,6 +350,7 @@ export default function ScriptDev() {
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
   const [isDraggingConsole, setIsDraggingConsole] = useState(false);
   const [treeContextMenu, setTreeContextMenu] = useState<{ script?: ScriptItem; parentId?: string | null; left: number; top: number } | null>(null);
+  const [loadError, setLoadError] = useState('');
 
   const editorRef = useRef<any>(null);
   const tabListRef = useRef<HTMLDivElement | null>(null);
@@ -171,15 +360,66 @@ export default function ScriptDev() {
   const treeContextMenuRef = useRef<HTMLDivElement | null>(null);
   const settingsRef = useRef<HTMLDivElement | null>(null);
 
-  const folders = useMemo(() => scripts.filter(script => script.type === 'folder'), [scripts]);
-  const rootScripts = useMemo(() => scripts.filter(script => script.type !== 'folder' && !script.parentId), [scripts]);
-  const activeTemplate = useMemo(() => getTemplateByType(activeScript?.scriptType) || getLegacyTemplate(activeScript, dataSources), [activeScript, dataSources]);
+  const folders = useMemo(() => scripts.filter((script) => script.type === 'folder'), [scripts]);
+  const rootScripts = useMemo(() => scripts.filter((script) => script.type !== 'folder' && !script.parentId), [scripts]);
+  const activeTemplate = useMemo(
+    () => getTemplateByType(activeScript?.scriptType) || getLegacyTemplate(activeScript, dataSources),
+    [activeScript, dataSources],
+  );
   const filteredDataSources = useMemo(() => {
     if (!activeTemplate) return [];
-    return dataSources.filter(ds => activeTemplate.dataSourceTypes.includes(ds.type));
+    return dataSources.filter((dataSource) => activeTemplate.dataSourceTypes.includes(dataSource.type));
   }, [activeTemplate, dataSources]);
-  const activeDataSource = filteredDataSources.find(ds => ds.id === activeScript?.dataSourceId);
+  const activeDataSource = filteredDataSources.find((dataSource) => dataSource.id === activeScript?.dataSourceId);
   const editorLanguage = activeScript?.editorLanguage || activeTemplate?.editorLanguage || (activeScript?.type === 'python' ? 'python' : activeScript?.type === 'shell' ? 'shell' : 'sql');
+  const resultColumns = useMemo(() => Array.from(new Set(runResults.flatMap((row) => Object.keys(row)))), [runResults]);
+
+  const selectScript = (script: ScriptItem) => {
+    if (script.type === 'folder') return;
+    setOpenTabs((tabs) => (tabs.some((tab) => tab.id === script.id) ? tabs : [...tabs, script]));
+    setActiveScript(script);
+    setMobilePanel('editor');
+  };
+
+  const loadScripts = async () => {
+    try {
+      setLoadError('');
+      const result = (await fetchScripts()) as ScriptItem[];
+      setScripts(result);
+
+      const initialFolders = new Set<string>(
+        result.filter((script) => script.type === 'folder').map((script) => script.id),
+      );
+      setExpandedFolders((prev) => (prev.size > 0 ? prev : initialFolders));
+
+      setActiveScript((current) => {
+        const currentScript = current ? result.find((script) => script.id === current.id && script.type !== 'folder') : undefined;
+        const fallbackScript = result.find((script) => script.type !== 'folder') || null;
+        const nextScript = currentScript || fallbackScript;
+        if (nextScript) {
+          setOpenTabs((tabs) => {
+            const mergedTabs = tabs
+              .map((tab) => result.find((script) => script.id === tab.id && script.type !== 'folder') || tab)
+              .filter((tab) => result.some((script) => script.id === tab.id));
+            return mergedTabs.some((tab) => tab.id === nextScript.id) ? mergedTabs : [nextScript, ...mergedTabs];
+          });
+        }
+        return nextScript;
+      });
+    } catch {
+      setLoadError('脚本数据加载失败，请稍后重试。');
+      toast.error('获取脚本失败');
+    }
+  };
+
+  const loadDataSources = async () => {
+    try {
+      const result = (await fetchMetadataDataSources()) as DataSource[];
+      setDataSources(result);
+    } catch {
+      toast.error('获取数据源失败');
+    }
+  };
 
   useEffect(() => {
     loadScripts();
@@ -188,8 +428,8 @@ export default function ScriptDev() {
 
   useEffect(() => {
     if (!activeScript?.dataSourceId) return;
-    if (filteredDataSources.some(ds => ds.id === activeScript.dataSourceId)) return;
-    updateActiveDraft(script => ({ ...script, dataSourceId: '', dataSourceConfig: {} }));
+    if (filteredDataSources.some((dataSource) => dataSource.id === activeScript.dataSourceId)) return;
+    updateActiveDraft((script) => ({ ...script, dataSourceId: '', dataSourceConfig: {} }));
   }, [activeScript?.id, activeScript?.type, activeScript?.scriptType, activeScript?.dataSourceId, filteredDataSources]);
 
   useEffect(() => {
@@ -197,7 +437,6 @@ export default function ScriptDev() {
       if (isDraggingSidebar) {
         setSidebarWidth(Math.min(420, Math.max(240, event.clientX - 255)));
       }
-
       if (isDraggingConsole) {
         const viewportBottom = window.innerHeight - 24;
         setConsoleHeight(Math.min(360, Math.max(120, viewportBottom - event.clientY)));
@@ -220,16 +459,10 @@ export default function ScriptDev() {
   useEffect(() => {
     const handleDocumentClick = (event: MouseEvent) => {
       const target = event.target as Node;
-      const clickedNewMenu =
-        tabNewMenuRef.current?.contains(target) ||
-        floatingNewMenuRef.current?.contains(target);
+      const clickedNewMenu = tabNewMenuRef.current?.contains(target) || floatingNewMenuRef.current?.contains(target);
       if (!clickedNewMenu) closeNewScriptMenu();
-      if (treeContextMenuRef.current && !treeContextMenuRef.current.contains(target)) {
-        setTreeContextMenu(null);
-      }
-      if (settingsRef.current && !settingsRef.current.contains(target)) {
-        setShowSettings(false);
-      }
+      if (treeContextMenuRef.current && !treeContextMenuRef.current.contains(target)) setTreeContextMenu(null);
+      if (settingsRef.current && !settingsRef.current.contains(target)) setShowSettings(false);
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -241,19 +474,15 @@ export default function ScriptDev() {
       }
 
       const key = event.key.toLowerCase();
-      const isSaveShortcut = (event.ctrlKey || event.metaKey) && key === 's';
-      const isRunShortcut = (event.ctrlKey || event.metaKey) && event.key === 'Enter';
-      const isFormatShortcut = event.altKey && event.shiftKey && key === 'f';
-
-      if (isSaveShortcut) {
+      if ((event.ctrlKey || event.metaKey) && key === 's') {
         event.preventDefault();
         handleSave();
       }
-      if (isRunShortcut) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
         event.preventDefault();
         handleRun();
       }
-      if (isFormatShortcut) {
+      if (event.altKey && event.shiftKey && key === 'f') {
         event.preventDefault();
         editorRef.current?.getAction?.('editor.action.formatDocument')?.run?.();
       }
@@ -271,26 +500,6 @@ export default function ScriptDev() {
     activeTabRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
   }, [activeScript?.id, openTabs.length]);
 
-  const loadScripts = async () => {
-    try {
-      const res = await fetchScripts();
-      setScripts(res);
-      const initialFolders = new Set(res.filter((script: ScriptItem) => script.type === 'folder').map((script: ScriptItem) => script.id));
-      setExpandedFolders(prev => (prev.size > 0 ? prev : initialFolders));
-    } catch (e) {
-      toast.error('获取脚本失败');
-    }
-  };
-
-  const loadDataSources = async () => {
-    try {
-      const res = await fetchMetadataDataSources();
-      setDataSources(res);
-    } catch (e) {
-      toast.error('获取数据源失败');
-    }
-  };
-
   const getIcon = (type: string, scriptType?: string) => {
     const template = getTemplateByType(scriptType);
     if (template) {
@@ -298,77 +507,42 @@ export default function ScriptDev() {
       return <Icon className={`h-4 w-4 ${template.color}`} />;
     }
 
-    switch (type) {
-      case 'sql':
-        return <Database className="h-4 w-4 text-blue-400" />;
-      case 'python':
-        return <FileCode className="h-4 w-4 text-yellow-400" />;
-      case 'shell':
-        return <Terminal className="h-4 w-4 text-emerald-400" />;
-      default:
-        return <Folder className="h-4 w-4 text-slate-400" />;
-    }
+    if (type === 'sql') return <Database className="h-4 w-4 text-blue-400" />;
+    if (type === 'python') return <FileCode className="h-4 w-4 text-yellow-400" />;
+    if (type === 'shell') return <Terminal className="h-4 w-4 text-emerald-400" />;
+    return <Folder className="h-4 w-4 text-slate-400" />;
   };
 
   const updateActiveDraft = (updater: (script: ScriptItem) => ScriptItem) => {
-    setActiveScript(current => {
+    setActiveScript((current) => {
       if (!current) return current;
       const next = updater(current);
-      setOpenTabs(tabs => tabs.map(tab => (tab.id === next.id ? next : tab)));
-      setScripts(items => items.map(item => (item.id === next.id ? next : item)));
+      setOpenTabs((tabs) => tabs.map((tab) => (tab.id === next.id ? next : tab)));
+      setScripts((items) => items.map((item) => (item.id === next.id ? next : item)));
       return next;
     });
   };
 
   const toggleFolder = (folderId: string) => {
-    setExpandedFolders(prev => {
+    setExpandedFolders((prev) => {
       const next = new Set(prev);
-      if (next.has(folderId)) {
-        next.delete(folderId);
-      } else {
-        next.add(folderId);
-      }
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
       return next;
     });
   };
 
-  const handleScriptClick = (script: ScriptItem) => {
-    if (script.type === 'folder') return;
-    const existingTab = openTabs.find(tab => tab.id === script.id);
-    if (!existingTab) {
-      setOpenTabs(tabs => [...tabs, script]);
-    }
-    setActiveScript(existingTab || script);
-    setMobilePanel('editor');
-  };
-
   const handleCloseTab = (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    const nextTabs = openTabs.filter(tab => tab.id !== id);
-    setOpenTabs(nextTabs);
-    if (activeScript?.id === id) {
-      setActiveScript(nextTabs.length > 0 ? nextTabs[0] : null);
-      if (nextTabs.length === 0) setMobilePanel('files');
-    }
-  };
-
-  const handleCreateFolder = async () => {
-    setTreeContextMenu(null);
-    const name = window.prompt('请输入目录名称', '新建目录')?.trim();
-    if (!name) return;
-
-    try {
-      const folder = await createScript({
-        name,
-        type: 'folder',
-        parentId: null,
-      });
-      await loadScripts();
-      setExpandedFolders(prev => new Set(prev).add(folder.id));
-      toast.success('目录创建成功');
-    } catch (e) {
-      toast.error('目录创建失败');
-    }
+    setOpenTabs((tabs) => {
+      const nextTabs = tabs.filter((tab) => tab.id !== id);
+      if (activeScript?.id === id) {
+        const nextActive = nextTabs[0] || null;
+        setActiveScript(nextActive);
+        if (!nextActive) setMobilePanel('files');
+      }
+      return nextTabs;
+    });
   };
 
   const openTreeContextMenu = (event: React.MouseEvent, options: { script?: ScriptItem; parentId?: string | null } = {}) => {
@@ -381,282 +555,6 @@ export default function ScriptDev() {
       left: Math.min(Math.max(gutter, event.clientX), window.innerWidth - width - gutter),
       top: Math.min(Math.max(gutter, event.clientY), window.innerHeight - gutter),
     });
-  };
-
-  const handleCreateScriptFromTree = (parentId: string | null = null) => {
-    setTreeContextMenu(null);
-    const fallbackLeft = window.innerWidth > 320 ? 300 : 12;
-    const fallbackTop = 180;
-    setNewMenuAnchor('tree');
-    setNewScriptParentId(parentId);
-    setNewMenuPosition({
-      left: Math.min(fallbackLeft, window.innerWidth - 268),
-      top: Math.min(fallbackTop, window.innerHeight - 80),
-    });
-  };
-
-  const patchScriptEverywhere = (updatedScript: ScriptItem) => {
-    setScripts(items => items.map(item => (item.id === updatedScript.id ? updatedScript : item)));
-    setOpenTabs(tabs => tabs.map(tab => (tab.id === updatedScript.id ? updatedScript : tab)));
-    setActiveScript(current => (current?.id === updatedScript.id ? updatedScript : current));
-  };
-
-  const handleRenameScript = async (script: ScriptItem) => {
-    setTreeContextMenu(null);
-    const name = window.prompt('请输入脚本名称', script.name)?.trim();
-    if (!name || name === script.name) return;
-
-    try {
-      const updatedScript = await updateScript(script.id, { ...script, name });
-      patchScriptEverywhere(updatedScript);
-      toast.success('脚本已重命名');
-    } catch (e) {
-      toast.error('重命名失败');
-    }
-  };
-
-  const handleMoveScript = async (script: ScriptItem, parentId: string | null) => {
-    setTreeContextMenu(null);
-    if ((script.parentId || null) === parentId) return;
-
-    try {
-      const updatedScript = await updateScript(script.id, { ...script, parentId });
-      patchScriptEverywhere(updatedScript);
-      if (parentId) {
-        setExpandedFolders(prev => new Set(prev).add(parentId));
-      }
-      toast.success('脚本已移动');
-    } catch (e) {
-      toast.error('移动失败');
-    }
-  };
-
-  const handleCreateScript = async (template: ScriptTemplate) => {
-    closeNewScriptMenu();
-    const targetFolderId = newScriptParentId !== undefined ? newScriptParentId : activeScript?.parentId || folders[0]?.id || null;
-    const preferredDataSource = dataSources.find(ds => template.dataSourceTypes.includes(ds.type));
-    const type = template.editorLanguage === 'sql' ? 'sql' : template.editorLanguage;
-    const dsType = template.shortLabel;
-    const newScriptData = {
-      name: `新建${dsType}脚本`,
-      type,
-      scriptType: template.scriptType,
-      editorLanguage: template.editorLanguage,
-      dialect: template.dialect,
-      parentId: targetFolderId,
-      content: template.defaultContent,
-      dataSourceId: preferredDataSource?.id || '',
-      dataSourceConfig: {},
-    };
-
-    try {
-      const res = await createScript(newScriptData);
-      await loadScripts();
-      if (targetFolderId) {
-        setExpandedFolders(prev => new Set(prev).add(targetFolderId));
-      }
-      setOpenTabs(tabs => [...tabs, res]);
-      setActiveScript(res);
-      setMobilePanel('editor');
-    } catch (e) {
-      toast.error('创建脚本失败');
-    }
-  };
-
-  const handleDataSourceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    if (!activeScript) return;
-    updateActiveDraft(script => ({ ...script, dataSourceId: event.target.value, dataSourceConfig: {} }));
-  };
-
-  const handleConfigChange = (key: string, value: string) => {
-    if (!activeScript) return;
-    updateActiveDraft(script => ({
-      ...script,
-      dataSourceConfig: { ...script.dataSourceConfig, [key]: value },
-    }));
-  };
-
-  const handleSave = async () => {
-    if (!activeScript) {
-      toast('请先选择脚本');
-      return;
-    }
-
-    try {
-      const savedScript = await updateScript(activeScript.id, activeScript);
-      toast.success('保存成功');
-      setActiveScript(savedScript);
-      setOpenTabs(tabs => tabs.map(tab => (tab.id === savedScript.id ? savedScript : tab)));
-      await loadScripts();
-    } catch (e) {
-      toast.error('保存失败');
-    }
-  };
-
-  const handlePublish = async () => {
-    if (!activeScript) {
-      toast('请先选择脚本');
-      return;
-    }
-
-    try {
-      await publishScript(activeScript.id);
-      toast.success('已提交审批');
-      const approvingScript = { ...activeScript, status: 'approving' };
-      setActiveScript(approvingScript);
-      setOpenTabs(tabs => tabs.map(tab => (tab.id === activeScript.id ? approvingScript : tab)));
-      await loadScripts();
-    } catch (e) {
-      toast.error('发布失败');
-    }
-  };
-
-  const handleRun = async () => {
-    if (!activeScript) {
-      toast('请先选择脚本');
-      return;
-    }
-
-    try {
-      setConsoleCollapsed(false);
-      setMobilePanel('console');
-      toast.success('正在运行脚本...');
-      setIsRunning(true);
-      setConsoleLogs(['Job started...', 'Executing...']);
-      const res = await runScript(activeScript.id);
-      setConsoleLogs(res?.logs || ['Success.']);
-    } catch (e) {
-      toast.error('运行失败');
-      setConsoleLogs(['Error: Execution failed.']);
-    } finally {
-      setIsRunning(false);
-    }
-  };
-
-  const handleStop = () => {
-    if (!isRunning) {
-      toast('当前没有运行中的任务');
-      return;
-    }
-
-    setIsRunning(false);
-    setConsoleLogs(logs => [...logs, 'Job stopped by user.']);
-    toast.success('已停止运行');
-  };
-
-  const loadVersions = async () => {
-    if (!activeScript) {
-      toast('请先选择脚本');
-      return;
-    }
-
-    try {
-      const res = await fetchScriptVersions(activeScript.id);
-      setVersions(res);
-      setShowVersions(true);
-    } catch (e) {
-      toast.error('获取版本失败');
-    }
-  };
-
-  const handleViewVersion = (version: ScriptVersion) => {
-    updateActiveDraft(script => ({ ...script, content: version.content }));
-    setShowVersions(false);
-    toast.success(`已载入 V${version.version} 版本内容`);
-  };
-
-  const renderScriptRow = (script: ScriptItem) => (
-    <button
-      key={script.id}
-      type="button"
-      onClick={() => handleScriptClick(script)}
-      onContextMenu={event => openTreeContextMenu(event, { script, parentId: script.parentId ?? null })}
-      className={`group flex w-full min-w-0 items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-sm transition ${
-        activeScript?.id === script.id
-          ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
-          : 'border-transparent text-slate-400 hover:border-white/10 hover:bg-white/5 hover:text-slate-200'
-      }`}
-      title={script.name}
-    >
-      <span className="shrink-0">{getIcon(script.type, script.scriptType)}</span>
-      <span className="min-w-0 flex-1 truncate">{script.name}</span>
-      {script.status === 'approving' && (
-        <span className="shrink-0 rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-300">
-          审批中
-        </span>
-      )}
-    </button>
-  );
-
-  const renderTreeContextMenu = () => {
-    if (!treeContextMenu) return null;
-
-    const { script, parentId } = treeContextMenu;
-    const moveTargets = script ? folders.filter(folder => folder.id !== script.parentId) : [];
-    const canMoveToRoot = Boolean(script?.parentId);
-
-    return (
-      <div
-        ref={treeContextMenuRef}
-        className="fixed z-[90] w-56 overflow-hidden rounded-lg border border-white/10 bg-slate-900 py-1 shadow-2xl"
-        style={{ left: treeContextMenu.left, top: treeContextMenu.top }}
-      >
-        <button
-          type="button"
-          onClick={handleCreateFolder}
-          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
-        >
-          <Folder className="h-4 w-4 text-cyan-300" />
-          新建目录
-        </button>
-        <button
-          type="button"
-          onClick={() => handleCreateScriptFromTree(parentId ?? null)}
-          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
-        >
-          <Plus className="h-4 w-4 text-cyan-300" />
-          新建脚本
-        </button>
-        {script && <div className="my-1 border-t border-white/10" />}
-        {script && (
-        <button
-          type="button"
-          onClick={() => handleRenameScript(script)}
-          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
-        >
-          <Pencil className="h-4 w-4 text-cyan-300" />
-          重命名
-        </button>
-        )}
-        {script && (
-        <div className="mt-1 border-t border-white/10 pt-1">
-          <div className="px-3 py-1 text-[11px] text-slate-500">移动到</div>
-          {canMoveToRoot && (
-            <button
-              type="button"
-              onClick={() => handleMoveScript(script, null)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
-            >
-              <FolderInput className="h-4 w-4 text-slate-400" />
-              根目录
-            </button>
-          )}
-          {moveTargets.map(folder => (
-            <button
-              key={folder.id}
-              type="button"
-              onClick={() => handleMoveScript(script, folder.id)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
-            >
-              <FolderInput className="h-4 w-4 text-cyan-300" />
-              <span className="min-w-0 flex-1 truncate">{folder.name}</span>
-            </button>
-          ))}
-          {!canMoveToRoot && moveTargets.length === 0 && <div className="px-3 py-2 text-xs text-slate-500">暂无可移动目录</div>}
-        </div>
-        )}
-      </div>
-    );
   };
 
   const openNewScriptMenu = (anchor: 'tree' | 'tab', event: React.MouseEvent<HTMLButtonElement>) => {
@@ -683,13 +581,300 @@ export default function ScriptDev() {
     setNewScriptParentId(undefined);
   };
 
+  const handleCreateScriptFromTree = (parentId: string | null = null) => {
+    setTreeContextMenu(null);
+    setNewMenuAnchor('tree');
+    setNewScriptParentId(parentId);
+    setNewMenuPosition({
+      left: Math.min(window.innerWidth > 320 ? 300 : 12, window.innerWidth - 268),
+      top: Math.min(180, window.innerHeight - 80),
+    });
+  };
+
+  const patchScriptEverywhere = (updatedScript: ScriptItem) => {
+    setScripts((items) => items.map((item) => (item.id === updatedScript.id ? updatedScript : item)));
+    setOpenTabs((tabs) => tabs.map((tab) => (tab.id === updatedScript.id ? updatedScript : tab)));
+    setActiveScript((current) => (current?.id === updatedScript.id ? updatedScript : current));
+  };
+
+  const handleCreateFolder = async () => {
+    setTreeContextMenu(null);
+    const name = window.prompt('请输入目录名称', '新建目录')?.trim();
+    if (!name) return;
+
+    try {
+      const folder = (await createScript({ name, type: 'folder', parentId: null })) as ScriptItem;
+      await loadScripts();
+      setExpandedFolders((prev) => new Set(prev).add(folder.id));
+      toast.success('目录创建成功');
+    } catch {
+      toast.error('目录创建失败');
+    }
+  };
+
+  const handleRenameScript = async (script: ScriptItem) => {
+    setTreeContextMenu(null);
+    const name = window.prompt(script.type === 'folder' ? '请输入目录名称' : '请输入脚本名称', script.name)?.trim();
+    if (!name || name === script.name) return;
+
+    try {
+      const updatedScript = (await updateScript(script.id, { ...script, name })) as ScriptItem;
+      patchScriptEverywhere(updatedScript);
+      toast.success(script.type === 'folder' ? '目录已重命名' : '脚本已重命名');
+    } catch {
+      toast.error('重命名失败');
+    }
+  };
+
+  const handleMoveScript = async (script: ScriptItem, parentId: string | null) => {
+    setTreeContextMenu(null);
+    if (script.type === 'folder' || (script.parentId || null) === parentId) return;
+
+    try {
+      const updatedScript = (await updateScript(script.id, { ...script, parentId })) as ScriptItem;
+      patchScriptEverywhere(updatedScript);
+      if (parentId) setExpandedFolders((prev) => new Set(prev).add(parentId));
+      toast.success('脚本已移动');
+    } catch {
+      toast.error('移动失败');
+    }
+  };
+
+  const handleCreateScript = async (template: ScriptTemplate) => {
+    closeNewScriptMenu();
+    const targetFolderId = newScriptParentId !== undefined ? newScriptParentId : activeScript?.parentId || folders[0]?.id || null;
+    const preferredDataSource = dataSources.find((dataSource) => template.dataSourceTypes.includes(dataSource.type));
+
+    const newScriptData = {
+      name: `新建${template.shortLabel}脚本`,
+      type: normalizeScriptType(template.editorLanguage),
+      scriptType: template.scriptType,
+      editorLanguage: template.editorLanguage,
+      dialect: template.dialect,
+      parentId: targetFolderId,
+      content: template.defaultContent,
+      dataSourceId: preferredDataSource?.id || '',
+      dataSourceConfig: {},
+    };
+
+    try {
+      const result = (await createScript(newScriptData)) as ScriptItem;
+      await loadScripts();
+      if (targetFolderId) setExpandedFolders((prev) => new Set(prev).add(targetFolderId));
+      setOpenTabs((tabs) => [...tabs.filter((tab) => tab.id !== result.id), result]);
+      setActiveScript(result);
+      setMobilePanel('editor');
+      toast.success('脚本创建成功');
+    } catch {
+      toast.error('创建脚本失败');
+    }
+  };
+
+  const handleDataSourceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    updateActiveDraft((script) => ({ ...script, dataSourceId: event.target.value, dataSourceConfig: {} }));
+  };
+
+  const handleConfigChange = (key: string, value: string) => {
+    updateActiveDraft((script) => ({
+      ...script,
+      dataSourceConfig: { ...script.dataSourceConfig, [key]: value },
+    }));
+  };
+
+  const handleSave = async () => {
+    if (!activeScript) {
+      toast('请先选择脚本');
+      return;
+    }
+
+    try {
+      const savedScript = (await updateScript(activeScript.id, activeScript)) as ScriptItem;
+      patchScriptEverywhere(savedScript);
+      await loadScripts();
+      toast.success('保存成功');
+    } catch {
+      toast.error('保存失败');
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!activeScript) {
+      toast('请先选择脚本');
+      return;
+    }
+
+    try {
+      await publishScript(activeScript.id);
+      const approvingScript = { ...activeScript, status: 'approving' };
+      patchScriptEverywhere(approvingScript);
+      await loadScripts();
+      toast.success('已提交审批');
+    } catch {
+      toast.error('发布失败');
+    }
+  };
+
+  const handleRun = async () => {
+    if (!activeScript) {
+      toast('请先选择脚本');
+      return;
+    }
+
+    try {
+      setConsoleCollapsed(false);
+      setConsoleTab('logs');
+      setMobilePanel('console');
+      setIsRunning(true);
+      setRunResults([]);
+      setConsoleLogs(['任务已提交', `脚本：${activeScript.name}`, '正在执行...']);
+      toast.success('正在运行脚本...');
+
+      const result = (await runScript(activeScript.id)) as { logs?: string[]; data?: RunResultRow[] };
+      setConsoleLogs(result?.logs?.length ? result.logs : ['执行完成。']);
+      setRunResults(Array.isArray(result?.data) ? result.data : []);
+      if (Array.isArray(result?.data) && result.data.length > 0) setConsoleTab('results');
+    } catch {
+      setConsoleLogs(['Error: 执行失败，请检查脚本或数据源配置。']);
+      setRunResults([]);
+      toast.error('运行失败');
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleStop = () => {
+    if (!isRunning) {
+      toast('当前没有运行中的任务');
+      return;
+    }
+
+    setIsRunning(false);
+    setConsoleLogs((logs) => [...logs, '任务已由用户停止。']);
+    toast.success('已停止运行');
+  };
+
+  const loadVersions = async () => {
+    if (!activeScript) {
+      toast('请先选择脚本');
+      return;
+    }
+
+    try {
+      const result = (await fetchScriptVersions(activeScript.id)) as ScriptVersion[];
+      setVersions(result);
+      setShowVersions(true);
+    } catch {
+      toast.error('获取版本失败');
+    }
+  };
+
+  const handleViewVersion = (version: ScriptVersion) => {
+    updateActiveDraft((script) => ({ ...script, content: version.content }));
+    setShowVersions(false);
+    toast.success(`已载入 V${version.version} 版本内容`);
+  };
+
+  const renderScriptRow = (script: ScriptItem) => {
+    const meta = statusMeta[script.status || 'draft'] || statusMeta.draft;
+
+    return (
+      <button
+        key={script.id}
+        type="button"
+        onClick={() => selectScript(script)}
+        onContextMenu={(event) => openTreeContextMenu(event, { script, parentId: script.parentId ?? null })}
+        className={`group flex w-full min-w-0 items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-sm transition ${
+          activeScript?.id === script.id
+            ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
+            : 'border-transparent text-slate-400 hover:border-white/10 hover:bg-white/5 hover:text-slate-200'
+        }`}
+        title={script.name}
+      >
+        <span className="shrink-0">{getIcon(script.type, script.scriptType)}</span>
+        <span className="min-w-0 flex-1 truncate">{script.name}</span>
+        <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] ${meta.className}`}>{meta.label}</span>
+      </button>
+    );
+  };
+
+  const renderTreeContextMenu = () => {
+    if (!treeContextMenu) return null;
+
+    const { script, parentId } = treeContextMenu;
+    const moveTargets = script && script.type !== 'folder' ? folders.filter((folder) => folder.id !== script.parentId) : [];
+    const canMoveToRoot = Boolean(script?.parentId) && script?.type !== 'folder';
+
+    return (
+      <div
+        ref={treeContextMenuRef}
+        className="fixed z-[90] w-56 overflow-hidden rounded-lg border border-white/10 bg-slate-900 py-1 shadow-2xl"
+        style={{ left: treeContextMenu.left, top: treeContextMenu.top }}
+      >
+        <button
+          type="button"
+          onClick={handleCreateFolder}
+          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
+        >
+          <Folder className="h-4 w-4 text-cyan-300" />
+          新建目录
+        </button>
+        <button
+          type="button"
+          onClick={() => handleCreateScriptFromTree(parentId ?? null)}
+          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
+        >
+          <Plus className="h-4 w-4 text-cyan-300" />
+          新建脚本
+        </button>
+        {script && <div className="my-1 border-t border-white/10" />}
+        {script && (
+          <button
+            type="button"
+            onClick={() => handleRenameScript(script)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
+          >
+            <Pencil className="h-4 w-4 text-cyan-300" />
+            重命名
+          </button>
+        )}
+        {script && script.type !== 'folder' && (
+          <div className="mt-1 border-t border-white/10 pt-1">
+            <div className="px-3 py-1 text-[11px] text-slate-500">移动到</div>
+            {canMoveToRoot && (
+              <button
+                type="button"
+                onClick={() => handleMoveScript(script, null)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
+              >
+                <FolderInput className="h-4 w-4 text-slate-400" />
+                根目录
+              </button>
+            )}
+            {moveTargets.map((folder) => (
+              <button
+                key={folder.id}
+                type="button"
+                onClick={() => handleMoveScript(script, folder.id)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
+              >
+                <FolderInput className="h-4 w-4 text-cyan-300" />
+                <span className="min-w-0 flex-1 truncate">{folder.name}</span>
+              </button>
+            ))}
+            {!canMoveToRoot && moveTargets.length === 0 && <div className="px-3 py-2 text-xs text-slate-500">暂无可移动目录</div>}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderNewScriptMenu = () => (
     <div
       ref={floatingNewMenuRef}
       className="fixed z-[80] max-h-[min(520px,calc(100vh-80px))] w-64 overflow-y-auto rounded-lg border border-white/10 bg-slate-900 shadow-2xl"
       style={{ left: newMenuPosition?.left ?? 0, top: newMenuPosition?.top ?? 0 }}
     >
-      {scriptTemplates.map(option => {
+      {scriptTemplates.map((option) => {
         const Icon = option.icon;
         return (
           <button
@@ -713,11 +898,26 @@ export default function ScriptDev() {
           <FolderOpen className="h-4 w-4 text-cyan-400" />
           脚本目录
         </div>
+        <button
+          type="button"
+          onClick={(event) => openNewScriptMenu('tree', event)}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-cyan-300"
+          aria-label="新建脚本"
+          title="新建脚本"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
       </div>
 
-      <div className="custom-scrollbar flex-1 overflow-y-auto px-2 py-3" onContextMenu={event => openTreeContextMenu(event, { parentId: null })}>
-        {folders.map(folder => {
-          const children = scripts.filter(script => script.parentId === folder.id);
+      <div className="custom-scrollbar flex-1 overflow-y-auto px-2 py-3" onContextMenu={(event) => openTreeContextMenu(event, { parentId: null })}>
+        {loadError && (
+          <div className="mb-3 rounded-lg border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-200">
+            {loadError}
+          </div>
+        )}
+
+        {folders.map((folder) => {
+          const children = scripts.filter((script) => script.parentId === folder.id);
           const isExpanded = expandedFolders.has(folder.id);
 
           return (
@@ -725,7 +925,7 @@ export default function ScriptDev() {
               <button
                 type="button"
                 onClick={() => toggleFolder(folder.id)}
-                onContextMenu={event => openTreeContextMenu(event, { parentId: folder.id })}
+                onContextMenu={(event) => openTreeContextMenu(event, { script: folder, parentId: folder.id })}
                 className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-slate-300 transition hover:bg-slate-800/80"
               >
                 {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-slate-500" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-500" />}
@@ -735,22 +935,63 @@ export default function ScriptDev() {
               </button>
               {isExpanded && (
                 <div className="ml-4 mt-1 space-y-1 border-l border-slate-800 pl-3">
-                  {children.map(renderScriptRow)}
-                  {children.length === 0 && <div className="px-2 py-3 text-xs text-slate-500">暂无脚本</div>}
+                  {children.filter((script) => script.type !== 'folder').map(renderScriptRow)}
+                  {children.filter((script) => script.type !== 'folder').length === 0 && <div className="px-2 py-3 text-xs text-slate-500">暂无脚本</div>}
                 </div>
               )}
             </div>
           );
         })}
 
-        {rootScripts.length > 0 && (
-          <div className="space-y-1">
-            {rootScripts.map(renderScriptRow)}
-          </div>
-        )}
+        {rootScripts.length > 0 && <div className="space-y-1">{rootScripts.map(renderScriptRow)}</div>}
       </div>
     </div>
   );
+
+  const renderConsoleBody = () => {
+    if (consoleTab === 'results') {
+      if (runResults.length === 0) {
+        return <div className="p-3 text-xs text-slate-600">暂无结果集。</div>;
+      }
+
+      return (
+        <div className="custom-scrollbar overflow-auto p-3">
+          <table className="min-w-full border-collapse text-left text-xs">
+            <thead className="sticky top-0 bg-slate-950">
+              <tr>
+                {resultColumns.map((column) => (
+                  <th key={column} className="border-b border-slate-800 px-3 py-2 font-medium text-slate-400">
+                    {column}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {runResults.map((row, index) => (
+                <tr key={index} className="border-b border-slate-900/80">
+                  {resultColumns.map((column) => (
+                    <td key={column} className="px-3 py-2 text-slate-300">
+                      {String(row[column] ?? '')}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    return (
+      <div className="custom-scrollbar flex-1 overflow-y-auto p-3 font-mono text-xs text-slate-300">
+        {consoleLogs.map((log, index) => (
+          <div key={`${log}-${index}`} className="mb-1 whitespace-pre-wrap">
+            {log}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-5">
@@ -758,22 +999,21 @@ export default function ScriptDev() {
         <div>
           <Breadcrumb items={[{ label: '数据开发' }, { label: '脚本开发' }]} />
           <h1 className="mt-2 text-2xl font-bold text-white">脚本开发</h1>
-          <p className="mt-1 text-sm text-slate-400">在线编写、调试和发布多数据源脚本，统一管理 SQL、任务脚本与执行配置。</p>
+          <p className="mt-1 text-sm text-slate-400">在线编写、调试和发布多数据源脚本，统一管理 SQL 方言、任务脚本与执行配置。</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            disabled
-            className="rounded-lg border border-white/10 bg-slate-800/70 px-4 py-2 text-sm text-slate-500"
-            title="能力规划中"
+            onClick={loadVersions}
+            className="rounded-lg border border-white/10 bg-slate-900/70 px-4 py-2 text-sm text-slate-300 transition hover:border-cyan-500/30 hover:text-cyan-200 disabled:cursor-not-allowed disabled:text-slate-600"
+            disabled={!activeScript}
           >
             运行历史
           </button>
           <button
             type="button"
-            disabled
-            className="rounded-lg border border-white/10 bg-slate-800/70 px-4 py-2 text-sm text-slate-500"
-            title="能力规划中"
+            onClick={() => toast('环境变量面板待接入执行资源配置')}
+            className="rounded-lg border border-white/10 bg-slate-900/70 px-4 py-2 text-sm text-slate-300 transition hover:border-cyan-500/30 hover:text-cyan-200"
           >
             环境变量
           </button>
@@ -785,7 +1025,7 @@ export default function ScriptDev() {
           { id: 'files', label: '目录' },
           { id: 'editor', label: '编辑器' },
           { id: 'console', label: '控制台' },
-        ].map(panel => (
+        ].map((panel) => (
           <button
             key={panel.id}
             type="button"
@@ -817,34 +1057,43 @@ export default function ScriptDev() {
         <section className={`${mobilePanel === 'files' ? 'hidden' : 'flex'} min-w-0 flex-1 flex-col overflow-hidden bg-slate-950 lg:flex`}>
           <div className={`${mobilePanel === 'console' ? 'hidden' : 'flex'} min-h-0 flex-1 flex-col lg:flex`}>
             <div ref={tabListRef} className="custom-scrollbar flex shrink-0 items-end gap-2 overflow-x-auto border-b border-slate-800 bg-slate-900/60 px-2 pt-2">
-              {openTabs.map(tab => (
-                <button
+              {openTabs.map((tab) => (
+                <div
                   key={tab.id}
-                  ref={activeScript?.id === tab.id ? activeTabRef : null}
-                  type="button"
-                  onClick={() => {
-                    setActiveScript(tab);
-                    setMobilePanel('editor');
-                  }}
-                  className={`group flex max-w-[220px] shrink-0 items-center gap-2 rounded-t-lg border border-b-0 px-3 py-2 text-sm transition ${
+                  className={`group flex max-w-[220px] shrink-0 items-center gap-2 rounded-t-lg border border-b-0 px-2 py-1.5 text-sm transition ${
                     activeScript?.id === tab.id
                       ? 'border-white/10 bg-slate-950 text-slate-100'
                       : 'border-transparent bg-transparent text-slate-500 hover:bg-white/5 hover:text-slate-200'
                   }`}
                   title={tab.name}
                 >
-                  {getIcon(tab.type, tab.scriptType)}
-                  <span className="truncate">{tab.name}</span>
-                  <X
-                    className="h-3.5 w-3.5 text-slate-500 opacity-80 transition hover:text-rose-300"
-                    onClick={event => handleCloseTab(tab.id, event)}
-                  />
-                </button>
+                  <button
+                    ref={activeScript?.id === tab.id ? activeTabRef : null}
+                    type="button"
+                    onClick={() => {
+                      setActiveScript(tab);
+                      setMobilePanel('editor');
+                    }}
+                    className="flex min-w-0 flex-1 items-center gap-2 rounded px-1 py-0.5 text-left"
+                  >
+                    {getIcon(tab.type, tab.scriptType)}
+                    <span className="truncate">{tab.name}</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`关闭 ${tab.name}`}
+                    title="关闭"
+                    className="rounded p-0.5 text-slate-500 opacity-80 transition hover:bg-white/10 hover:text-rose-300"
+                    onClick={(event) => handleCloseTab(tab.id, event)}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               ))}
               <div ref={tabNewMenuRef} className="sticky right-0 mb-1 bg-slate-900/90 pl-1">
                 <button
                   type="button"
-                  onClick={event => openNewScriptMenu('tab', event)}
+                  onClick={(event) => openNewScriptMenu('tab', event)}
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-cyan-300"
                   aria-label="新建脚本"
                   title="新建脚本"
@@ -869,7 +1118,7 @@ export default function ScriptDev() {
                       <input
                         type="text"
                         value={activeScript.name}
-                        onChange={event => updateActiveDraft(script => ({ ...script, name: event.target.value }))}
+                        onChange={(event) => updateActiveDraft((script) => ({ ...script, name: event.target.value }))}
                         className="min-w-0 rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm font-medium text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 md:w-64"
                         aria-label="脚本名称"
                       />
@@ -883,25 +1132,25 @@ export default function ScriptDev() {
                         {activeTemplate?.dataSourceTypes.length === 0 ? (
                           <span className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-slate-500">无需数据源</span>
                         ) : (
-                        <select
-                          value={activeDataSource ? activeScript.dataSourceId : ''}
-                          onChange={handleDataSourceChange}
-                          className="min-w-0 rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-slate-300 outline-none transition focus:border-cyan-500/60 sm:w-56"
-                          aria-label="选择数据源"
-                        >
-                          <option value="">选择数据源...</option>
-                          {filteredDataSources.map(ds => (
-                            <option key={ds.id} value={ds.id}>
-                              {ds.name} ({ds.type})
-                            </option>
-                          ))}
-                        </select>
+                          <select
+                            value={activeDataSource ? activeScript.dataSourceId : ''}
+                            onChange={handleDataSourceChange}
+                            className="min-w-0 rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-slate-300 outline-none transition focus:border-cyan-500/60 sm:w-56"
+                            aria-label="选择数据源"
+                          >
+                            <option value="">选择数据源...</option>
+                            {filteredDataSources.map((dataSource) => (
+                              <option key={dataSource.id} value={dataSource.id}>
+                                {dataSource.name} ({dataSource.type})
+                              </option>
+                            ))}
+                          </select>
                         )}
 
                         {activeDataSource?.type === 'Hive' && (
                           <select
                             value={activeScript.dataSourceConfig?.queue || ''}
-                            onChange={event => handleConfigChange('queue', event.target.value)}
+                            onChange={(event) => handleConfigChange('queue', event.target.value)}
                             className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-slate-300 outline-none transition focus:border-cyan-500/60 sm:w-40"
                             aria-label="选择执行队列"
                           >
@@ -933,7 +1182,7 @@ export default function ScriptDev() {
                       <div ref={settingsRef} className="relative border-l border-white/10 pl-2">
                         <button
                           type="button"
-                          onClick={() => setShowSettings(open => !open)}
+                          onClick={() => setShowSettings((open) => !open)}
                           className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-slate-200"
                           aria-label="编辑器设置"
                           title="编辑器设置"
@@ -942,12 +1191,12 @@ export default function ScriptDev() {
                         </button>
                         {showSettings && (
                           <div className="absolute right-0 top-10 z-50 w-44 overflow-hidden rounded-lg border border-white/10 bg-slate-900 shadow-2xl">
-                            <div className="border-b border-white/10 px-3 py-2 text-xs text-slate-500">涓婚椋庢牸</div>
+                            <div className="border-b border-white/10 px-3 py-2 text-xs text-slate-500">编辑器主题</div>
                             {[
-                              { value: 'vs-dark', label: '娣辫壊' },
-                              { value: 'light', label: '娴呰壊' },
+                              { value: 'vs-dark', label: '深色' },
+                              { value: 'light', label: '浅色' },
                               { value: 'hc-black', label: '高对比度' },
-                            ].map(theme => (
+                            ].map((theme) => (
                               <button
                                 key={theme.value}
                                 type="button"
@@ -984,10 +1233,10 @@ export default function ScriptDev() {
                     theme={editorTheme}
                     language={editorLanguage}
                     value={activeScript.content || ''}
-                    onMount={editor => {
+                    onMount={(editor) => {
                       editorRef.current = editor;
                     }}
-                    onChange={value => updateActiveDraft(script => ({ ...script, content: value || '' }))}
+                    onChange={(value) => updateActiveDraft((script) => ({ ...script, content: value || '' }))}
                     options={{
                       automaticLayout: true,
                       fontSize: 14,
@@ -1021,16 +1270,34 @@ export default function ScriptDev() {
                 {isRunning && <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-300">运行中</span>}
               </div>
               <div className="flex items-center gap-1">
+                {[
+                  { id: 'logs', label: '日志' },
+                  { id: 'results', label: `结果 ${runResults.length}` },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setConsoleTab(tab.id as ConsoleTab)}
+                    className={`rounded px-2 py-1 text-xs transition ${
+                      consoleTab === tab.id ? 'bg-cyan-500/15 text-cyan-300' : 'text-slate-500 hover:bg-white/10 hover:text-slate-300'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
                 <button
                   type="button"
-                  onClick={() => setConsoleLogs([])}
+                  onClick={() => {
+                    setConsoleLogs(['等待运行脚本...']);
+                    setRunResults([]);
+                  }}
                   className="rounded px-2 py-1 text-xs text-slate-500 transition hover:bg-white/10 hover:text-slate-300"
                 >
                   清空
                 </button>
                 <button
                   type="button"
-                  onClick={() => setConsoleCollapsed(collapsed => !collapsed)}
+                  onClick={() => setConsoleCollapsed((collapsed) => !collapsed)}
                   className="hidden rounded p-1 text-slate-500 transition hover:bg-white/10 hover:text-slate-300 lg:block"
                   aria-label={consoleCollapsed ? '展开控制台' : '折叠控制台'}
                   title={consoleCollapsed ? '展开控制台' : '折叠控制台'}
@@ -1039,7 +1306,7 @@ export default function ScriptDev() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setConsoleHeight(height => (height < 300 ? 340 : 190))}
+                  onClick={() => setConsoleHeight((height) => (height < 300 ? 340 : 190))}
                   className="hidden rounded p-1 text-slate-500 transition hover:bg-white/10 hover:text-slate-300 lg:block"
                   aria-label="切换控制台高度"
                   title="切换控制台高度"
@@ -1048,19 +1315,7 @@ export default function ScriptDev() {
                 </button>
               </div>
             </div>
-            {!consoleCollapsed && (
-              <div className="custom-scrollbar flex-1 overflow-y-auto p-3 font-mono text-xs text-slate-300">
-                {consoleLogs.length === 0 ? (
-                  <span className="text-slate-600">No output yet...</span>
-                ) : (
-                  consoleLogs.map((log, index) => (
-                    <div key={`${log}-${index}`} className="mb-1 whitespace-pre-wrap">
-                      {log}
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
+            {!consoleCollapsed && renderConsoleBody()}
           </div>
         </section>
       </div>
@@ -1087,7 +1342,7 @@ export default function ScriptDev() {
                 <div className="py-12 text-center text-sm text-slate-500">暂无历史版本</div>
               ) : (
                 <div className="divide-y divide-white/10">
-                  {versions.map(version => (
+                  {versions.map((version) => (
                     <div key={version.id} className="flex flex-col gap-3 p-4 transition hover:bg-white/[0.03] sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
                         <div className="text-sm font-medium text-cyan-300">版本 V{version.version}</div>

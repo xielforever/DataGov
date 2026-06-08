@@ -102,7 +102,6 @@ const statusConfig: Record<RuleStatus, { label: string; color: string; bg: strin
 };
 
 const categories: Array<"全部" | RuleCategory> = ["全部", "完整性", "唯一性", "准确性", "一致性", "及时性", "有效性"];
-const [domains, setDomains] = useState<string[]>(["全部"]);
 
 export default function QualityRules() {
   const [rules, setRules] = useState<QualityRule[]>([]);
@@ -112,6 +111,7 @@ export default function QualityRules() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [selectedCategory, setSelectedCategory] = useState<"全部" | RuleCategory>("全部");
+  const [domains, setDomains] = useState<string[]>(["全部"]);
   const [selectedDomain, setSelectedDomain] = useState("全部");
   const [selectedStatus, setSelectedStatus] = useState<"all" | RuleStatus>("all");
   const [keyword, setKeyword] = useState("");

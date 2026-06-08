@@ -2048,8 +2048,11 @@ export const handlers = [
     return HttpResponse.json({
       code: 0,
       data: {
-        logs: ['Job started...', 'Running query...', 'Success in 2.3s'],
-        data: [{ id: 1, name: 'Test Result' }]
+        logs: ['任务已启动', '正在连接数据源...', '执行成功，用时 2.3s'],
+        data: [
+          { id: 1, name: 'sample_result', rows: 128, status: 'success' },
+          { id: 2, name: 'quality_check', rows: 0, status: 'passed' },
+        ]
       }
     });
   }),
