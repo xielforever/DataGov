@@ -45,7 +45,7 @@ export default function StandardMap() {
     'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
   });
 
-  const debouncedsearchKeyword = useDebounce(searchKeyword, 300);
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 300);
   const [DATABASES, setDATABASES] = useState<string[]>(["全部"]);
   const [selectedDb, setSelectedDb] = useState("全部");
   const [selectedStatus, setSelectedStatus] = useState<"all" | MappingStatus>("all");
@@ -375,9 +375,9 @@ export default function StandardMap() {
         </table>
             <Pagination
               currentPage={currentPage}
-              totalPages={Math.ceil(filtered.length / pageSize)}
+              totalPages={Math.ceil(filteredData.length / pageSize)}
               pageSize={pageSize}
-              total={filtered.length}
+              total={filteredData.length}
               onPageChange={setCurrentPage}
               onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
             />

@@ -110,6 +110,11 @@ export default function StandardDef() {
       return true;
     });
   }, [data, searchKeyword, selectedDomain, selectedStatus]);
+  const paginatedFilteredData = useMemo(() => {
+    return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [filteredData, currentPage, pageSize]);
+  const { sortedItems, handleSort, getSortIcon } = useTableSort(paginatedFilteredData, { defaultField: 'updateTime', defaultDirection: 'desc' });
+  const selection = useTableSelection(sortedItems);
 
   const stats = useMemo(() => ({
     total: data.length,
@@ -258,7 +263,7 @@ export default function StandardDef() {
             </tr>
           </thead>
           <tbody>
-            {paginatedFilteredData.map((item) => {
+            {sortedItems.map((item) => {
               const status = STATUS_CONFIG[item.status];
               return (
                 <tr

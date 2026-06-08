@@ -1,5 +1,7 @@
 # DataGov API Specification Draft (v1)
 
+> 历史归档：本文档是早期单文件草案，可能包含过期接口。当前后端联调请以 `docs/api-docs/specification/README.md` 为准。
+
 本文档基于前端 v2.0 Mock 数据重构产出，作为与后端开发对接的契约草案。
 所有的接口都应该遵循以下的全局规范。
 

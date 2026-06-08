@@ -138,7 +138,7 @@ export default function RoleManage() {
     'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
   });
 
-  const debouncedkeyword = useDebounce(keyword, 300);
+  const debouncedKeyword = useDebounce(keyword, 300);
   const [selectedStatus, setSelectedStatus] = useState<"all" | RoleStatus>("all");
   const [selectedRole, setSelectedRole] = useState<SystemRole | null>(null);
   const [loading, setLoading] = useState(true);
@@ -184,6 +184,10 @@ export default function RoleManage() {
       return true;
     });
   }, [keyword, roles, selectedStatus]);
+
+  const paginatedFilteredRoles = useMemo(() => {
+    return filteredRoles.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [currentPage, filteredRoles, pageSize]);
 
   const selectedPermissionGroups = useMemo(
     () => permissionGroups.filter((group) => group.roleId === selectedRole?.id),

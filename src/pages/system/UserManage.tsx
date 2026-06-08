@@ -165,6 +165,10 @@ export default function UserManage() {
     });
   }, [keyword, selectedStatus, users]);
 
+  const paginatedFilteredUsers = useMemo(() => {
+    return filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [currentPage, filteredUsers, pageSize]);
+
   const statusSummary = useMemo(() => {
     const map = new Map<UserStatus, number>();
     users.forEach((user) => map.set(user.status, (map.get(user.status) ?? 0) + 1));

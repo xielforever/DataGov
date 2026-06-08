@@ -1,4 +1,5 @@
 import type {
+  AuthUser, LoginRequestData, LoginResponseData,
   CreateQualityRuleData, CreateCheckBatchData, CreateReportData,
   CreateSensitiveScanTaskData, CreateAuditLogExportData,
   CreateBusinessDomainData, UpdateBusinessDomainData, RegisterAssetTablesData,
@@ -10,25 +11,131 @@ import type {
   CreateOrgData, UpdateOrgData, CreateNotificationData, UpdateSystemConfigData,
   CreateDictCategoryData, CreateDictItemData, UpdateDictItemData,
   CreateModelData, UpdateModelData,
+  AiAssistantRequest, AiBehaviorEventData, AiConversation, AiConversationDetail,
+  AiFeedbackData, AiPreference, AiContextPreview, AiTokenUsageOverview,
+  AiToolInfo, CreateAiConversationData, PreviewAiContextData, UpdateAiConversationData,
+  AiAssistantResponse,
 } from '../types/api';
 
 // Use relative path so MSW can correctly intercept regardless of the preview environment or port
 const BASE_URL = '/api/v1';
+export const AUTH_TOKEN_STORAGE_KEY = 'datagov.auth.token';
+export const AUTH_USER_STORAGE_KEY = 'datagov.auth.user';
 
-async function fetchJson(url: string, options?: RequestInit) {
-  const response = await fetch(`${BASE_URL}${url}`, options);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch: ${response.statusText}`);
+export function getStoredAuthToken() {
+  return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) || '';
+}
+
+export function persistAuthSession(session: LoginResponseData) {
+  localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, session.token);
+  localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(session.user));
+}
+
+export function clearAuthSession() {
+  localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+  localStorage.removeItem('datagov.authenticated');
+}
+
+function withAuthHeaders(options?: RequestInit) {
+  const headers = new Headers(options?.headers);
+  const token = getStoredAuthToken();
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
   }
-  const json = await response.json();
-  if (json.code !== 0) {
-    throw new Error(json.message || 'API Error');
+  return { ...options, headers };
+}
+
+async function fetchJson(url: string, options?: RequestInit): Promise<any> {
+  const response = await fetch(`${BASE_URL}${url}`, withAuthHeaders(options));
+  let json: { code?: number; message?: string; data?: unknown } | null = null;
+  try {
+    json = await response.json();
+  } catch {
+    json = null;
+  }
+  if (!response.ok) {
+    throw new Error(json?.message || `Failed to fetch: ${response.statusText}`);
+  }
+  if (!json || json.code !== 0) {
+    throw new Error(json?.message || 'API Error');
   }
   return json.data;
 }
 
+// Auth
+export const login = (data: LoginRequestData) => fetchJson('/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+}) as Promise<LoginResponseData>;
+
+export const fetchCurrentUser = () => fetchJson('/auth/me') as Promise<AuthUser>;
+
+export const logout = () => fetchJson('/auth/logout', {
+  method: 'POST'
+}) as Promise<{ success: boolean }>;
+
 // Home
 export const fetchHomeGovernanceOverview = () => fetchJson('/home/governance-overview');
+
+// AI Assistant
+export const fetchAiCapabilities = () => fetchJson('/ai/capabilities');
+export const askAiAssistant = (data: AiAssistantRequest) => fetchJson('/ai/assistant/messages', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+}) as Promise<AiAssistantResponse>;
+export const fetchAiConversations = (params?: { search?: string; includeArchived?: boolean; limit?: number }) => {
+  const query = new URLSearchParams();
+  if (params?.search) query.set('search', params.search);
+  if (params?.includeArchived) query.set('includeArchived', 'true');
+  if (params?.limit) query.set('limit', String(params.limit));
+  const suffix = query.toString() ? `?${query.toString()}` : '';
+  return fetchJson(`/ai/conversations${suffix}`) as Promise<AiConversation[]>;
+};
+export const createAiConversation = (data: CreateAiConversationData) => fetchJson('/ai/conversations', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+}) as Promise<AiConversation>;
+export const fetchAiConversationDetail = (id: string) => fetchJson(`/ai/conversations/${id}`) as Promise<AiConversationDetail>;
+export const updateAiConversation = (id: string, data: UpdateAiConversationData) => fetchJson(`/ai/conversations/${id}`, {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+}) as Promise<AiConversation>;
+export const sendAiConversationMessage = (conversationId: string, data: AiAssistantRequest) => fetchJson(`/ai/conversations/${conversationId}/messages`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+}) as Promise<AiAssistantResponse>;
+export const regenerateAiMessage = (messageId: string) => fetchJson(`/ai/messages/${messageId}/regenerate`, {
+  method: 'POST'
+}) as Promise<AiAssistantResponse>;
+export const submitAiMessageFeedback = (messageId: string, data: AiFeedbackData) => fetchJson(`/ai/messages/${messageId}/feedback`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+}) as Promise<{ success: boolean }>;
+export const recordAiBehaviorEvent = (data: AiBehaviorEventData) => fetchJson('/ai/behavior-events', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+}) as Promise<{ success: boolean }>;
+export const fetchAiPreferences = () => fetchJson('/ai/preferences') as Promise<AiPreference>;
+export const updateAiPreferences = (data: AiPreference) => fetchJson('/ai/preferences', {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+}) as Promise<AiPreference>;
+export const previewAiContext = (data: PreviewAiContextData) => fetchJson('/ai/context/preview', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+}) as Promise<AiContextPreview>;
+export const fetchAiTokenUsage = () => fetchJson('/ai/token-usage') as Promise<AiTokenUsageOverview>;
+export const fetchAiTools = () => fetchJson('/ai/tools') as Promise<AiToolInfo[]>;
 
 // Dashboard
 export const fetchDashboardStats = () => fetchJson('/dashboard/stats').catch(() => []);

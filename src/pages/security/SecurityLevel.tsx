@@ -151,6 +151,9 @@ export default function SecurityLevel() {
       return true;
     });
   }, [assets, keyword, selectedDomain, selectedLevel]);
+  const paginatedFilteredAssets = useMemo(() => {
+    return filteredAssets.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [filteredAssets, currentPage, pageSize]);
 
   const pendingReviews = useMemo(() => reviews.filter((review) => review.status === "pending"), [reviews]);
 

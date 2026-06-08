@@ -13,3 +13,4 @@
 - [7. 数据质量与监控 (Quality)](./07-quality.md)
 - [8. 数据服务 (Service)](./08-service.md)
 - [9. 系统管理 (System)](./09-system.md)
+- [10. AI 助手 (AI)](./10-ai.md)

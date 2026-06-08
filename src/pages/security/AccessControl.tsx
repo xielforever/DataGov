@@ -165,6 +165,9 @@ export default function AccessControl() {
       return true;
     });
   }, [applications, keyword, selectedStatus]);
+  const paginatedFilteredApplications = useMemo(() => {
+    return filteredApplications.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [filteredApplications, currentPage, pageSize]);
 
   const activeGrants = useMemo(() => grants.filter((grant) => grant.status !== "revoked"), [grants]);
 

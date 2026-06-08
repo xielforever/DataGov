@@ -52,7 +52,7 @@ export default function CodeManage() {
     'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
   });
 
-  const debouncedsearchKeyword = useDebounce(searchKeyword, 300);
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 300);
   const [selectedType, setSelectedType] = useState<"all" | "national" | "industry" | "enterprise">("all");
 
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
@@ -335,9 +335,9 @@ export default function CodeManage() {
         </table>
             <Pagination
               currentPage={currentPage}
-              totalPages={Math.ceil(filteredSets.length / pageSize)}
+              totalPages={Math.ceil(filteredCodeSets.length / pageSize)}
               pageSize={pageSize}
-              total={filteredSets.length}
+              total={filteredCodeSets.length}
               onPageChange={setCurrentPage}
               onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
             />

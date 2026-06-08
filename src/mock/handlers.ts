@@ -1,4 +1,17 @@
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse, passthrough } from 'msw';
+import type {
+  AiAssistantRequest,
+  AiAssistantResponse,
+  AiBehaviorEventData,
+  AiCapabilityType,
+  AiContextPreview,
+  AiConversation,
+  AiConversationMessage,
+  AiFeedbackData,
+  AiPreference,
+  PreviewAiContextData,
+  UpdateAiConversationData,
+} from '../types/api';
 import { 
   mockDashboardStats,
   mockDashboardRecentTables,
@@ -134,7 +147,21 @@ import {
   mockCollectRules,
   mockOpsServices,
   mockOpsAlerts,
+  mockDataLayers,
+  mockSensitivities,
+  mockTagOptions,
+  mockSourceTypeOptions,
+  mockDataSourceCategories,
+  mockQualityDomains,
+  mockStandardDomains,
+  mockStandardDatabases,
   mockMetadataModels,
+  mockAiCapabilities,
+  mockAiConversations,
+  mockAiMessages,
+  mockAiPreference,
+  mockAiTokenUsage,
+  mockAiTools,
 } from './data';
 
 const businessDomainColors = [
@@ -149,6 +176,14 @@ const businessDomainColors = [
 ];
 
 const formatTimestamp = () => new Date().toISOString().replace('T', ' ').substring(0, 16);
+
+const aiConversations = [...mockAiConversations] as AiConversation[];
+const aiConversationMessages: Record<string, AiConversationMessage[]> = {
+  ai_sess_mock_script: [...mockAiMessages] as AiConversationMessage[],
+};
+let aiPreference = { ...mockAiPreference } as AiPreference;
+
+const estimateAiTokens = (value: string) => Math.max(1, Math.ceil(value.trim().length / 2));
 
 const getDataSourceCategory = (type: string) => {
   if (['MySQL', 'PostgreSQL', 'Oracle'].includes(type)) return '关系型';
@@ -171,9 +206,325 @@ const getAssetBusinessDomainSummary = () => {
   }));
 };
 
+const aiSuggestions: Record<AiCapabilityType, string[]> = {
+  'write-sql': ['把这段 SQL 改成 Hive 方言', '补充分区过滤和字段注释', '生成对应质量校验 SQL'],
+  'review-sql': ['给出优化后的 SQL', '按风险等级生成整改清单', '检查是否符合数据标准'],
+  'lineage-impact': ['生成发布前检查清单', '列出高风险下游任务', '解释字段变更影响面'],
+  'knowledge-explain': ['用业务例子再解释一次', '生成新手培训提纲', '关联平台菜单说明'],
+  'quality-rule': ['转成规则配置表', '生成异常明细查询 SQL', '补充告警阈值建议'],
+  'ops-diagnosis': ['生成排查命令清单', '分析可能的上游阻塞', '沉淀为故障复盘模板'],
+};
+
+const buildAiAnswer = (body: AiAssistantRequest): AiAssistantResponse => {
+  const question = body.question.trim();
+  const pageTitle = body.context?.viewTitle || '当前页面';
+  const pageId = body.context?.viewId || 'unknown';
+
+  const answers: Record<AiCapabilityType, string> = {
+    'write-sql': [
+      '下面是一版可直接放入脚本开发页调试的统计 SQL，默认按订单明细事实表建模：',
+      '',
+      '```sql',
+      'SELECT',
+      '  dt AS biz_date,',
+      '  COUNT(DISTINCT order_id) AS order_count,',
+      '  COUNT(DISTINCT user_id) AS pay_user_count,',
+      '  SUM(pay_amount) AS total_pay_amount',
+      'FROM dwd_order_detail',
+      "WHERE dt >= date_format(date_sub(current_date, 7), 'yyyy-MM-dd')",
+      '  AND order_status IN (\'PAID\', \'FINISHED\')',
+      'GROUP BY dt',
+      'ORDER BY biz_date ASC;',
+      '```',
+      '',
+      '建议确认三件事：订单状态口径是否包含退款订单、金额字段是否为实付金额、分区字段是否与调度周期一致。',
+    ].join('\n'),
+    'review-sql': [
+      'SQL 分析结论：',
+      '',
+      '- 性能风险：`select *` 会放大全表扫描和网络传输成本，应明确字段列表。',
+      '- 分区风险：如果 `dt` 是字符串分区，建议使用平台统一日期变量，避免函数包裹分区字段。',
+      '- 口径风险：近 7 天需要明确是否包含当天、是否按支付时间还是下单时间统计。',
+      '- 治理建议：补充责任人、业务域、输出表命名、质量校验和血缘说明。',
+      '',
+      '推荐改写方向：先限定分区和状态，再只选择下游需要字段，并把统计口径写入脚本说明。',
+    ].join('\n'),
+    'lineage-impact': [
+      '血缘影响分析可以按“上游输入 -> 当前加工 -> 下游消费”三层拆解：',
+      '',
+      '- 上游：确认 ODS 原始表、维表、实时 Topic 是否存在延迟或字段漂移。',
+      '- 当前层：检查字段映射、清洗规则、主键粒度、分区策略和质量规则是否变更。',
+      '- 下游：重点关注报表、指标、服务 API、风控特征和调度依赖。',
+      '- 发布门禁：字段删除/改名必须做下游订阅确认；口径调整必须同步标准与指标说明。',
+      '',
+      `当前上下文来自 ${pageTitle}（${pageId}），建议在数据血缘页联动查看高频访问资产。`,
+    ].join('\n'),
+    'knowledge-explain': [
+      '可以把数据治理理解成一条“可发现、可理解、可信任、可控制”的链路：',
+      '',
+      '- 元数据回答“有什么”：表、字段、任务、接口、负责人、分区、更新频率。',
+      '- 血缘回答“从哪来到哪去”：上游来源、加工过程、下游影响和变更半径。',
+      '- 数据标准回答“应该是什么”：命名、类型、值域、业务定义和管理责任。',
+      '- 质量规则回答“是否可靠”：完整性、唯一性、及时性、一致性和准确性。',
+      '',
+      '这几个能力组合起来，才能支撑脚本上线、资产发布、问题追踪和审计问责。',
+    ].join('\n'),
+    'quality-rule': [
+      '建议先落三类规则：',
+      '',
+      '1. 主键唯一：`order_id + dt` 在同一分区内不可重复。',
+      '2. 金额合法：`pay_amount >= 0`，且退款状态下允许为 0 但需单独统计。',
+      '3. 分区及时：每日 T+1 07:00 前产出昨日分区，缺失或行数波动超过 30% 告警。',
+      '',
+      '上线前建议把规则绑定到业务域、责任人、告警渠道和整改 SLA。',
+    ].join('\n'),
+    'ops-diagnosis': [
+      '任务延迟可以按四段排查：',
+      '',
+      '- 上游依赖：检查前置任务是否未完成、Kafka/Hive 分区是否未到齐。',
+      '- 资源队列：查看 YARN/Flink 队列等待、并发配额和资源抢占。',
+      '- 执行计划：关注大表 Join、数据倾斜、小文件过多、分区裁剪失效。',
+      '- 平台调度：检查补数据、重跑、优先级、告警静默和调度日历。',
+      '',
+      '建议先定位“等待时间”还是“运行时间”变长，再分别进入调度依赖或执行日志。',
+    ].join('\n'),
+  };
+
+  const capability = mockAiCapabilities.find((item) => item.id === body.capability);
+
+  return {
+    id: `ai-${Date.now()}`,
+    title: capability?.title || 'AI 分析',
+    summary: `已基于“${pageTitle}”上下文处理你的问题：${question.slice(0, 48)}${question.length > 48 ? '…' : ''}`,
+    answer: answers[body.capability],
+    suggestions: aiSuggestions[body.capability],
+    references: [
+      { label: pageTitle, type: '页面上下文' },
+      { label: '数据治理知识库', type: '内置知识' },
+      { label: '平台 Mock 元数据', type: '模拟数据' },
+    ],
+    createdAt: formatTimestamp(),
+    confidence: 0.86,
+    tokenUsage: {
+      model: 'MiniMax-M3',
+      inputTokens: estimateAiTokens(`${pageTitle}\n${question}`),
+      outputTokens: estimateAiTokens(answers[body.capability]),
+      totalTokens: estimateAiTokens(`${pageTitle}\n${question}`) + estimateAiTokens(answers[body.capability]),
+      latencyMs: 640,
+    },
+    contextPreview: buildAiContextPreview({
+      capability: body.capability,
+      question: body.question,
+      conversationId: 'ai_sess_mock_inline',
+      context: body.context,
+    }),
+    toolCalls: buildAiToolCalls(body.capability, question),
+  };
+};
+
+const buildAiContextPreview = (body: PreviewAiContextData): AiContextPreview => {
+  const pageTitle = body.context?.viewTitle || '当前页面';
+  const blocks = [
+    {
+      id: 'page',
+      type: 'page',
+      title: '当前页面',
+      content: `页面：${pageTitle}\nURL：${body.context?.url || '-'}`,
+      priority: 100,
+      tokenEstimate: estimateAiTokens(`${pageTitle}\n${body.context?.url || ''}`),
+      included: true,
+    },
+    {
+      id: 'user-preference',
+      type: 'preference',
+      title: '用户偏好',
+      content: `回答风格：${aiPreference.answerStyle}\n默认 SQL 方言：${aiPreference.sqlDialect}`,
+      priority: 70,
+      tokenEstimate: estimateAiTokens(`${aiPreference.answerStyle}\n${aiPreference.sqlDialect}`),
+      included: aiPreference.memoryEnabled,
+    },
+    {
+      id: 'question-intent',
+      type: 'intent',
+      title: '用户问题摘要',
+      content: body.question || '等待输入问题',
+      priority: 100,
+      tokenEstimate: estimateAiTokens(body.question || '等待输入问题'),
+      included: true,
+    },
+  ];
+  const totalTokens = blocks.filter((block) => block.included).reduce((sum, block) => sum + block.tokenEstimate, 0);
+  return {
+    blocks,
+    totalTokens,
+    budgetTokens: 6000,
+    redactionHits: 0,
+    truncated: false,
+    strategy: 'MSW 兜底：页面上下文 + 用户偏好 + 问题摘要。',
+    conversationId: body.conversationId,
+    userMemoryUsed: aiPreference.memoryEnabled,
+    capabilityTitle: mockAiCapabilities.find((item) => item.id === body.capability)?.title,
+  };
+};
+
+const buildAiToolCalls = (capability: AiCapabilityType, question: string) => {
+  if (capability === 'review-sql') {
+    return [{ toolName: 'development.getScript', args: { source: 'msw' }, resultSummary: 'MSW 已提供当前脚本摘要。', status: 'succeeded', latencyMs: 12 }];
+  }
+  if (capability === 'lineage-impact') {
+    return [{ toolName: 'lineage.getImpactSummary', args: { query: question.slice(0, 80) }, resultSummary: 'MSW 已模拟上游 raw.ods_order 与下游 ads_sales_report 影响摘要。', status: 'succeeded', latencyMs: 14 }];
+  }
+  if (capability === 'quality-rule') {
+    return [{ toolName: 'quality.searchRules', args: { source: 'msw' }, resultSummary: 'MSW 已读取质量规则模板摘要。', status: 'succeeded', latencyMs: 10 }];
+  }
+  return [];
+};
+
 export const handlers = [
   // Health check
   http.get('/api/v1/health', () => HttpResponse.json({ status: 'ok' })),
+
+  // AI Assistant
+  http.get('/api/v1/ai/capabilities', () => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    return HttpResponse.json({ code: 0, data: mockAiCapabilities });
+  }),
+  http.post('/api/v1/ai/assistant/messages', async ({ request }) => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    const body = await request.json() as AiAssistantRequest;
+    return HttpResponse.json({ code: 0, data: buildAiAnswer(body) });
+  }),
+  http.get('/api/v1/ai/conversations', ({ request }) => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    const url = new URL(request.url);
+    const search = (url.searchParams.get('search') || '').trim().toLowerCase();
+    const includeArchived = url.searchParams.get('includeArchived') === 'true';
+    const data = aiConversations
+      .filter((item) => includeArchived || !item.archivedAt)
+      .filter((item) => !search || item.title.toLowerCase().includes(search))
+      .sort((a, b) => Number(b.favorite) - Number(a.favorite) || b.lastMessageAt.localeCompare(a.lastMessageAt));
+    return HttpResponse.json({ code: 0, data });
+  }),
+  http.post('/api/v1/ai/conversations', async ({ request }) => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    const body = await request.json() as { title?: string; context?: AiConversation['context'] };
+    const conversation: AiConversation = {
+      id: `ai_sess_msw_${Date.now()}`,
+      title: body.title || body.context?.viewTitle || 'AI 会话',
+      status: 'active',
+      sourceViewId: body.context?.viewId || 'unknown',
+      sourceUrl: body.context?.url || '',
+      favorite: false,
+      messageCount: 0,
+      lastMessageAt: formatTimestamp(),
+      context: body.context || { viewId: 'unknown', viewTitle: '当前页面', url: '' },
+    };
+    aiConversations.unshift(conversation);
+    aiConversationMessages[conversation.id] = [];
+    return HttpResponse.json({ code: 0, data: conversation });
+  }),
+  http.get('/api/v1/ai/conversations/:id', ({ params }) => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    const id = String(params.id);
+    const conversation = aiConversations.find((item) => item.id === id);
+    if (!conversation) return HttpResponse.json({ code: 404, message: 'AI 会话不存在' }, { status: 404 });
+    return HttpResponse.json({ code: 0, data: { conversation, messages: aiConversationMessages[id] || [] } });
+  }),
+  http.patch('/api/v1/ai/conversations/:id', async ({ params, request }) => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    const id = String(params.id);
+    const body = await request.json() as UpdateAiConversationData;
+    const index = aiConversations.findIndex((item) => item.id === id);
+    if (index < 0) return HttpResponse.json({ code: 404, message: 'AI 会话不存在' }, { status: 404 });
+    aiConversations[index] = {
+      ...aiConversations[index],
+      title: body.title ?? aiConversations[index].title,
+      favorite: body.favorite ?? aiConversations[index].favorite,
+      status: body.archived ? 'archived' : body.status || aiConversations[index].status,
+      archivedAt: body.archived ? formatTimestamp() : body.archived === false ? undefined : aiConversations[index].archivedAt,
+    };
+    return HttpResponse.json({ code: 0, data: aiConversations[index] });
+  }),
+  http.post('/api/v1/ai/conversations/:id/messages', async ({ params, request }) => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    const conversationId = String(params.id);
+    const body = await request.json() as AiAssistantRequest;
+    const conversation = aiConversations.find((item) => item.id === conversationId);
+    if (!conversation) return HttpResponse.json({ code: 404, message: 'AI 会话不存在' }, { status: 404 });
+    const answer = buildAiAnswer(body);
+    answer.conversationId = conversationId;
+    const createdAt = formatTimestamp();
+    const userMessage: AiConversationMessage = {
+      id: `${answer.id}-user`,
+      role: 'user',
+      capability: body.capability,
+      content: body.question,
+      createdAt,
+      status: 'succeeded',
+    };
+    const assistantMessage: AiConversationMessage = {
+      id: answer.id,
+      role: 'assistant',
+      capability: body.capability,
+      content: answer.answer,
+      summary: answer.summary,
+      suggestions: answer.suggestions,
+      references: answer.references,
+      tokenUsage: answer.tokenUsage,
+      createdAt,
+      status: 'succeeded',
+    };
+    aiConversationMessages[conversationId] = [...(aiConversationMessages[conversationId] || []), userMessage, assistantMessage];
+    conversation.messageCount = aiConversationMessages[conversationId].length;
+    conversation.lastMessageAt = createdAt;
+    return HttpResponse.json({ code: 0, data: answer });
+  }),
+  http.post('/api/v1/ai/messages/:id/regenerate', ({ params }) => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    const messageId = String(params.id);
+    const conversationId = Object.keys(aiConversationMessages).find((id) => aiConversationMessages[id].some((message) => message.id === messageId));
+    const conversation = aiConversations.find((item) => item.id === conversationId) || aiConversations[0];
+    const answer = buildAiAnswer({
+      capability: 'review-sql',
+      question: '请重新生成上一次分析，并给出更明确的执行建议。',
+      context: conversation.context,
+    });
+    answer.conversationId = conversation.id;
+    return HttpResponse.json({ code: 0, data: answer });
+  }),
+  http.post('/api/v1/ai/messages/:id/feedback', async ({ request }) => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    await request.json() as AiFeedbackData;
+    return HttpResponse.json({ code: 0, data: { success: true } });
+  }),
+  http.post('/api/v1/ai/behavior-events', async ({ request }) => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    await request.json() as AiBehaviorEventData;
+    return HttpResponse.json({ code: 0, data: { success: true } });
+  }),
+  http.get('/api/v1/ai/preferences', () => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    return HttpResponse.json({ code: 0, data: aiPreference });
+  }),
+  http.put('/api/v1/ai/preferences', async ({ request }) => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    const body = await request.json() as AiPreference;
+    aiPreference = { ...aiPreference, ...body, updatedAt: formatTimestamp() };
+    return HttpResponse.json({ code: 0, data: aiPreference });
+  }),
+  http.post('/api/v1/ai/context/preview', async ({ request }) => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    const body = await request.json() as PreviewAiContextData;
+    return HttpResponse.json({ code: 0, data: buildAiContextPreview(body) });
+  }),
+  http.get('/api/v1/ai/token-usage', () => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    return HttpResponse.json({ code: 0, data: mockAiTokenUsage });
+  }),
+  http.get('/api/v1/ai/tools', () => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    return HttpResponse.json({ code: 0, data: mockAiTools });
+  }),
 
   // Home endpoints
   http.get('/api/v1/home/governance-overview', () => {
@@ -1605,12 +1956,14 @@ export const handlers = [
 
   // Metadata endpoints
   http.get('/api/v1/metadata/data-sources', () => {
+    if (import.meta.env.VITE_REAL_METADATA_DATA_SOURCES !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockAllDataSources
     });
   }),
   http.post('/api/v1/metadata/data-sources', async ({ request }) => {
+    if (import.meta.env.VITE_REAL_METADATA_DATA_SOURCES !== 'false') return passthrough();
     const data = await request.json() as any;
     const sourceStore = mockAllDataSources as any[];
     const newSource = {
@@ -1639,6 +1992,7 @@ export const handlers = [
     return HttpResponse.json({ code: 0, data: newSource });
   }),
   http.post('/api/v1/metadata/data-sources/:id/sync', ({ params }) => {
+    if (import.meta.env.VITE_REAL_METADATA_DATA_SOURCES !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const sourceStore = mockAllDataSources as any[];
     const index = sourceStore.findIndex((source) => source.id === id);
@@ -1653,6 +2007,7 @@ export const handlers = [
     return HttpResponse.json({ code: 0, data: sourceStore[index] });
   }),
   http.post('/api/v1/metadata/data-sources/:id/status', async ({ request, params }) => {
+    if (import.meta.env.VITE_REAL_METADATA_DATA_SOURCES !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const { status } = await request.json() as any;
     const sourceStore = mockAllDataSources as any[];
@@ -2009,9 +2364,11 @@ export const handlers = [
   // Development Scripts APIs
   // ========================================
   http.get('/api/v1/development/scripts', () => {
+    if (import.meta.env.VITE_REAL_DEVELOPMENT_SCRIPTS !== 'false') return passthrough();
     return HttpResponse.json({ code: 0, data: mockScripts });
   }),
   http.post('/api/v1/development/scripts', async ({ request }) => {
+    if (import.meta.env.VITE_REAL_DEVELOPMENT_SCRIPTS !== 'false') return passthrough();
     const data = await request.json() as any;
     const newScript = {
       ...data,
@@ -2035,6 +2392,7 @@ export const handlers = [
     return HttpResponse.json({ code: 0, data: newScript });
   }),
   http.put('/api/v1/development/scripts/:id', async ({ request, params }) => {
+    if (import.meta.env.VITE_REAL_DEVELOPMENT_SCRIPTS !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const data = await request.json() as any;
     const index = mockScripts.findIndex(s => s.id === id);
@@ -2045,6 +2403,7 @@ export const handlers = [
     return HttpResponse.json({ code: 404, message: 'Script not found' }, { status: 404 });
   }),
   http.post('/api/v1/development/scripts/:id/run', async () => {
+    if (import.meta.env.VITE_REAL_DEVELOPMENT_SCRIPTS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: {
@@ -2057,6 +2416,7 @@ export const handlers = [
     });
   }),
   http.post('/api/v1/development/scripts/:id/publish', async ({ params }) => {
+    if (import.meta.env.VITE_REAL_DEVELOPMENT_SCRIPTS !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const index = mockScripts.findIndex(s => s.id === id);
     if (index !== -1) {
@@ -2080,6 +2440,7 @@ export const handlers = [
     return HttpResponse.json({ code: 404, message: 'Script not found' }, { status: 404 });
   }),
   http.get('/api/v1/development/scripts/:id/versions', ({ params }) => {
+    if (import.meta.env.VITE_REAL_DEVELOPMENT_SCRIPTS !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const versions = mockScriptVersions.filter(v => v.scriptId === id);
     return HttpResponse.json({ code: 0, data: versions });

@@ -1,5 +1,7 @@
 # 页面与接口映射关系
 
+> 历史归档：本文档是早期单文件草案，可能包含过期接口。当前后端联调请以 `docs/api-docs/mapping/README.md` 和 `docs/api-docs/specification/README.md` 为准。
+
 为便于前后端联调与功能验证，本文档列出了数据治理系统（DataGov）中所有页面及其所依赖的 API 接口，并说明了这些接口对应的页面功能。
 
 ---

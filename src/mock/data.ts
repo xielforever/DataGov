@@ -5814,3 +5814,146 @@ export const mockDataSourceCategories = ['关系型', '大数据', '消息队列
 export const mockQualityDomains = ['交易域', '用户域', '商品域', '客户域', '公共域'];
 export const mockStandardDomains = ['用户域', '交易域', '财务域', '商品域', '安全域', '其他'];
 export const mockStandardDatabases = ['ecommerce_user', 'ecommerce_order', 'ecommerce_product', 'risk_control', 'other'];
+
+export const mockAiCapabilities = [
+  {
+    id: 'write-sql',
+    title: '写 SQL',
+    description: '按业务口径生成 MySQL、PostgreSQL、Hive、ClickHouse 查询或建表脚本。',
+    prompt: '帮我写一段 SQL：统计近 7 天每日订单金额、订单数和下单用户数，按日期升序输出。',
+    icon: 'sql',
+    accent: 'cyan',
+  },
+  {
+    id: 'review-sql',
+    title: '分析 SQL',
+    description: '检查性能风险、口径歧义、字段标准、分区过滤和可维护性。',
+    prompt: '帮我分析这段 SQL 的性能风险、口径风险和治理建议：\nselect * from dwd_order_detail where dt >= current_date - 7;',
+    icon: 'review',
+    accent: 'emerald',
+  },
+  {
+    id: 'lineage-impact',
+    title: '分析血缘',
+    description: '梳理上游来源、下游影响、变更风险和发布前检查清单。',
+    prompt: '帮我分析订单明细表 dwd_order_detail 的上下游血缘影响，以及字段变更发布前需要检查什么。',
+    icon: 'lineage',
+    accent: 'blue',
+  },
+  {
+    id: 'knowledge-explain',
+    title: '知识讲解',
+    description: '解释数据治理、元数据、数据标准、质量规则和安全分级知识。',
+    prompt: '用平台实施视角讲解元数据、数据血缘、数据标准和质量规则之间的关系。',
+    icon: 'book',
+    accent: 'violet',
+  },
+  {
+    id: 'quality-rule',
+    title: '质量规则',
+    description: '把业务口径转成可执行的完整性、唯一性、及时性或一致性规则。',
+    prompt: '帮我为订单事实表设计 3 条质量规则，覆盖主键唯一、金额非负和分区及时性。',
+    icon: 'quality',
+    accent: 'amber',
+  },
+  {
+    id: 'ops-diagnosis',
+    title: '任务诊断',
+    description: '分析同步、调度、实时计算任务的失败线索和排查路径。',
+    prompt: '帮我诊断一个 Hive 离线任务延迟 40 分钟的可能原因，并给出排查步骤。',
+    icon: 'ops',
+    accent: 'rose',
+  },
+];
+
+export const mockAiPreference = {
+  answerStyle: '专业简洁',
+  sqlDialect: 'PostgreSQL',
+  language: 'zh-CN',
+  showTokenPreview: true,
+  memoryEnabled: true,
+  updatedAt: '2026-06-09 02:10:00',
+};
+
+export const mockAiConversations = [
+  {
+    id: 'ai_sess_mock_script',
+    title: '订单明细 SQL 分析',
+    status: 'active',
+    sourceViewId: 'script-dev',
+    sourceUrl: 'http://127.0.0.1:5174/?view=script-dev',
+    favorite: true,
+    messageCount: 2,
+    lastMessageAt: '2026-06-09 02:10:00',
+    context: {
+      viewId: 'script-dev',
+      viewTitle: '脚本开发',
+      url: 'http://127.0.0.1:5174/?view=script-dev',
+      dialect: 'PostgreSQL',
+    },
+  },
+];
+
+export const mockAiMessages = [
+  {
+    id: 'ai_msg_mock_user_1',
+    role: 'user',
+    capability: 'review-sql',
+    content: '帮我分析订单明细 SQL 的性能风险和血缘影响',
+    createdAt: '2026-06-09 02:09:00',
+    status: 'succeeded',
+  },
+  {
+    id: 'ai_msg_mock_assistant_1',
+    role: 'assistant',
+    capability: 'review-sql',
+    content: [
+      '这段 SQL 的主要风险集中在字段裁剪、分区过滤和口径一致性。',
+      '',
+      '- 性能：避免 `select *`，明确输出字段，确保 `dt` 命中分区。',
+      '- 口径：订单金额需确认是否为实付金额，退款订单是否剔除。',
+      '- 血缘：建议检查 `raw.ods_order`、`dim.dim_product` 到 `dwd.dwd_order_detail` 的字段映射。',
+      '',
+      '```sql',
+      'SELECT dt, order_id, user_id, pay_amount',
+      'FROM dwd_order_detail',
+      "WHERE dt >= current_date - interval '7 day';",
+      '```',
+    ].join('\n'),
+    summary: '已基于脚本开发上下文完成 SQL 风险分析',
+    suggestions: ['给出优化后 SQL', '生成发布检查清单', '补充质量规则'],
+    references: [
+      { label: '脚本开发', type: '页面上下文' },
+      { label: 'MiniMax-M3 Mock', type: '模型兜底' },
+    ],
+    tokenUsage: {
+      id: 'ai_tok_mock_1',
+      messageId: 'ai_msg_mock_assistant_1',
+      model: 'MiniMax-M3',
+      inputTokens: 1180,
+      outputTokens: 420,
+      totalTokens: 1600,
+      latencyMs: 860,
+    },
+    createdAt: '2026-06-09 02:10:00',
+    status: 'succeeded',
+  },
+];
+
+export const mockAiTokenUsage = {
+  model: 'MiniMax-M3',
+  quotaTokens: 1000000,
+  usedInputTokens: 1180,
+  usedOutputTokens: 420,
+  usedTotalTokens: 1600,
+  requestCount: 1,
+  remainingTokens: 998400,
+  windowDescription: '最近 30 天',
+};
+
+export const mockAiTools = [
+  { name: 'metadata.searchAssets', title: '搜索元数据资产', description: '按关键词读取平台资产摘要。', readonly: true, enabled: true },
+  { name: 'development.getScript', title: '读取脚本', description: '读取当前脚本内容与版本摘要。', readonly: true, enabled: true },
+  { name: 'lineage.getImpactSummary', title: '血缘影响摘要', description: '使用平台血缘摘要或 MSW 补齐影响范围。', readonly: true, enabled: true },
+  { name: 'quality.searchRules', title: '搜索质量规则', description: '读取可见质量规则摘要，不执行检查。', readonly: true, enabled: true },
+];

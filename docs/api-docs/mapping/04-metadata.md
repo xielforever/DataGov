@@ -1,6 +1,20 @@
 # 元数据管理 (Metadata) 页面映射
 
-### 4.1 元数据采集
+> 数据源管理页面挂在 `数据资产 -> 数据源管理` 菜单下，但后端接口归属 Metadata/Data Source 模块。
+
+### 4.1 数据源管理（首期真实后端）
+- **所在菜单**: `数据资产 -> 数据源管理`
+- **对应组件**: `src/pages/metadata/DataSource.tsx`
+- **依赖接口**:
+  - `GET /api/v1/metadata/data-sources`: 获取数据源列表，渲染统计卡片、类型分布、列表和详情抽屉。
+  - `POST /api/v1/metadata/data-sources`: 新建数据源，保存连接配置和凭证。
+  - `PUT /api/v1/metadata/data-sources/:id`: 更新数据源配置，后端需记录审计。
+  - `DELETE /api/v1/metadata/data-sources/:id`: 解除数据源接入，首期可软删除。
+  - `POST /api/v1/metadata/data-sources/:id/test`: 测试连接状态，首期优先支持 PostgreSQL。
+  - `POST /api/v1/metadata/data-sources/:id/sync`: 手动触发元数据同步，首期可先生成同步记录。
+  - `POST /api/v1/metadata/data-sources/:id/status`: 启停或标记数据源状态。
+
+### 4.2 元数据采集
 - **所在菜单**: `元数据管理 -> 元数据采集`
 - **对应组件**: `src/pages/metadata/MetadataCollect.tsx`
 - **依赖接口**:
@@ -10,7 +24,7 @@
   - `DELETE /api/v1/metadata/collect-tasks/:id`: 删除采集任务。
   - `POST /api/v1/metadata/collect-tasks/:id/run`: 手动触发一次采集任务。
 
-### 4.2 元数据查询
+### 4.3 元数据查询
 - **所在菜单**: `元数据管理 -> 元数据查询`
 - **对应组件**: `src/pages/metadata/MetadataQuery.tsx`
 - **依赖接口**:
@@ -19,7 +33,7 @@
     2. **查询历史与收藏**: 根据 `savedQueries` 和 `hotKeywords` 渲染左侧的搜索历史等。
     3. **检索结果列表**: 根据 `results` 渲染主搜索结果列表。
 
-### 4.3 元数据维护
+### 4.4 元数据维护
 - **所在菜单**: `元数据管理 -> 元数据维护`
 - **对应组件**: `src/pages/metadata/MetadataManage.tsx`
 - **依赖接口**:
@@ -29,7 +43,7 @@
     3. **维护工单**: 根据 `workOrders` 渲染当前流转中的审批工单。
     4. **版本快照**: 根据 `snapshots` 渲染表结构变更和历史快照。
 
-### 4.4 元数据模型
+### 4.5 元数据模型
 - **所在菜单**: `元数据管理 -> 元数据模型`
 - **对应组件**: `src/pages/metadata/MetadataModel.tsx`
 - **依赖接口**:

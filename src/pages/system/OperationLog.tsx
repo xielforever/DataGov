@@ -130,7 +130,7 @@ export default function OperationLog() {
     'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
   });
 
-  const debouncedkeyword = useDebounce(keyword, 300);
+  const debouncedKeyword = useDebounce(keyword, 300);
   const [riskFilter, setRiskFilter] = useState<"all" | RiskLevel>("all");
   const [resultFilter, setResultFilter] = useState<"all" | EventResult>("all");
   const [selectedEvent, setSelectedEvent] = useState<OperationEvent | null>(null);
@@ -176,6 +176,10 @@ export default function OperationLog() {
       return true;
     });
   }, [events, keyword, resultFilter, riskFilter]);
+
+  const paginatedFilteredEvents = useMemo(() => {
+    return filteredEvents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [currentPage, filteredEvents, pageSize]);
 
   const selectedDiffs = useMemo(
     () => diffs.filter((diff) => diff.eventId === selectedEvent?.id),

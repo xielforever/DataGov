@@ -41,7 +41,7 @@ export default function DataSharing() {
     'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
   });
 
-  const debouncedsearch = useDebounce(search, 300);
+  const debouncedSearch = useDebounce(search, 300);
   const [filterLevel, setFilterLevel] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [selected, setSelected] = useState<any | null>(null);
@@ -61,10 +61,12 @@ export default function DataSharing() {
       ]);
       setOverview(ov);
       setAssets(items);
-    } catch { /* ignore */ }
+      setError(false);
+    } catch {
       setError(true);
+    }
     setLoading(false);
-  }, [search, filterLevel, filterType]);
+  }, [debouncedSearch, filterLevel, filterType]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -82,6 +84,8 @@ export default function DataSharing() {
     const v = (a[sortField] || 0) - (b[sortField] || 0);
     return sortAsc ? v : -v;
   });
+  const filteredAssets = sorted;
+  const paginatedFilteredAssets = filteredAssets.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const renderStars = (rating: number) => {
     const full = Math.floor(rating);
@@ -193,7 +197,7 @@ export default function DataSharing() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sorted.map(a => {
+                  {paginatedFilteredAssets.map(a => {
                     const lc = levelConfig[a.level] || levelConfig.internal;
                     const tc = typeConfig[a.type] || typeConfig.dataset;
                     const sc = statusConfig[a.status] || statusConfig.approved;
@@ -228,7 +232,7 @@ export default function DataSharing() {
                       </tr>
                     );
                   })}
-                  {sorted.length === 0 && (
+                  {filteredAssets.length === 0 && (
                     <tr><td colSpan={9} className="text-center text-slate-500 py-12">暂无符合条件的共享资产</td></tr>
                   )}
                 </tbody>

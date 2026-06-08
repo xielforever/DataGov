@@ -49,11 +49,23 @@ interface MetadataModel {
   description: string;
 }
 
+const EMPTY_MODEL: MetadataModel = {
+  id: "",
+  name: "",
+  version: "v1.0",
+  type: "logical",
+  entities: [],
+  relationships: [],
+  description: "",
+};
+
 
 export default function MetadataModel() {
   const [models, setModels] = useState<MetadataModel[]>([]);
-  const [selectedModel, setSelectedModel] = useState<MetadataModel>({} as MetadataModel);
-  const [selectedEntity, setSelectedEntity] = useState<Entity>({} as Entity);
+  const [selectedModel, setSelectedModel] = useState<MetadataModel>(EMPTY_MODEL);
+  const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [modelType, setModelType] = useState<"all" | "conceptual" | "logical" | "physical">("all");
   const [showGrid, setShowGrid] = useState(true);
   const [zoom, setZoom] = useState(100);
@@ -132,7 +144,7 @@ export default function MetadataModel() {
 
   useEffect(() => {
     fetchMetadataModels().then((data) => {
-      const loaded = data as MetadataModel[];
+      const loaded = Array.isArray(data) ? data as MetadataModel[] : [];
       if (loaded.length > 0) {
         setModels(loaded);
         setSelectedModel(loaded[0]);
@@ -755,6 +767,18 @@ CREATE TABLE \`t_user\` (
       totalRelations: models.reduce((sum, m) => sum + m.relationships.length, 0),
     };
   }, [models]);
+
+  if (error) {
+    return <ErrorFallback onRetry={() => window.location.reload()} />;
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <CardSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

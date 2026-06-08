@@ -40,7 +40,7 @@ export default function DataDict() {
     'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
   });
 
-  const debouncedsearchKeyword = useDebounce(searchKeyword, 300);
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 300);
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [categoryForm, setCategoryForm] = useState<Partial<DictCategory>>({});

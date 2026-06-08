@@ -1,5 +1,28 @@
 // Shared API types for DataGov
 
+export interface AuthUser {
+  id: string;
+  username: string;
+  realName: string;
+  roles: string[];
+  permissions: string[];
+  avatar?: string;
+  department?: string;
+  lastLoginAt?: string;
+}
+
+export interface LoginRequestData {
+  username: string;
+  password: string;
+  rememberMe?: boolean;
+}
+
+export interface LoginResponseData {
+  token: string;
+  expiresAt: string;
+  user: AuthUser;
+}
+
 export interface CreateQualityRuleData {
   name: string;
   category: string;
@@ -217,6 +240,189 @@ export interface UpdateDictItemData {
   sortOrder?: number;
   status?: string;
   remark?: string;
+}
+
+export type AiCapabilityType =
+  | 'write-sql'
+  | 'review-sql'
+  | 'lineage-impact'
+  | 'knowledge-explain'
+  | 'quality-rule'
+  | 'ops-diagnosis';
+
+export interface AiCapability {
+  id: AiCapabilityType;
+  title: string;
+  description: string;
+  prompt: string;
+  icon: string;
+  accent: string;
+}
+
+export interface AiAssistantContext {
+  viewId: string;
+  viewTitle: string;
+  url: string;
+  selection?: string;
+  scriptId?: string;
+  dialect?: string;
+  blocks?: AiContextBlock[];
+}
+
+export interface AiAssistantRequest {
+  capability: AiCapabilityType;
+  question: string;
+  context: AiAssistantContext;
+}
+
+export interface AiAssistantResponse {
+  id: string;
+  conversationId?: string;
+  title: string;
+  summary: string;
+  answer: string;
+  suggestions: string[];
+  references: Array<{
+    label: string;
+    type: string;
+  }>;
+  createdAt: string;
+  confidence: number;
+  tokenUsage?: AiTokenUsage;
+  contextPreview?: AiContextPreview;
+  toolCalls?: AiToolCall[];
+}
+
+export interface AiContextBlock {
+  id: string;
+  type: string;
+  title: string;
+  content: string;
+  priority: number;
+  tokenEstimate?: number;
+  included?: boolean;
+}
+
+export interface AiConversation {
+  id: string;
+  title: string;
+  status: 'active' | 'archived' | string;
+  sourceViewId: string;
+  sourceUrl: string;
+  favorite: boolean;
+  messageCount: number;
+  lastMessageAt: string;
+  archivedAt?: string;
+  context: AiAssistantContext;
+}
+
+export interface AiConversationMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  capability?: AiCapabilityType | string;
+  content: string;
+  summary?: string;
+  suggestions?: string[];
+  references?: AiAssistantResponse['references'];
+  tokenUsage?: AiTokenUsage;
+  createdAt: string;
+  status: string;
+}
+
+export interface AiConversationDetail {
+  conversation: AiConversation;
+  messages: AiConversationMessage[];
+}
+
+export interface CreateAiConversationData {
+  title?: string;
+  context: AiAssistantContext;
+}
+
+export interface UpdateAiConversationData {
+  title?: string;
+  favorite?: boolean;
+  archived?: boolean;
+  status?: string;
+}
+
+export interface AiContextPreview {
+  blocks: AiContextBlock[];
+  totalTokens: number;
+  budgetTokens: number;
+  redactionHits: number;
+  truncated: boolean;
+  strategy: string;
+  conversationId?: string;
+  userMemoryUsed: boolean;
+  capabilityTitle?: string;
+}
+
+export interface PreviewAiContextData {
+  capability: AiCapabilityType;
+  question: string;
+  conversationId?: string;
+  context: AiAssistantContext;
+}
+
+export interface AiPreference {
+  answerStyle: string;
+  sqlDialect: string;
+  language: string;
+  showTokenPreview: boolean;
+  memoryEnabled: boolean;
+  updatedAt?: string;
+}
+
+export interface AiTokenUsage {
+  id?: string;
+  messageId?: string;
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  latencyMs: number;
+}
+
+export interface AiTokenUsageOverview {
+  model: string;
+  quotaTokens: number;
+  usedInputTokens: number;
+  usedOutputTokens: number;
+  usedTotalTokens: number;
+  requestCount: number;
+  remainingTokens: number;
+  windowDescription: string;
+}
+
+export interface AiToolCall {
+  id?: string;
+  toolName: string;
+  args: Record<string, unknown>;
+  resultSummary: string;
+  status: string;
+  latencyMs: number;
+}
+
+export interface AiToolInfo {
+  name: string;
+  title: string;
+  description: string;
+  readonly: boolean;
+  enabled: boolean;
+}
+
+export interface AiFeedbackData {
+  rating: 'up' | 'down' | 'neutral';
+  reason?: string;
+  comment?: string;
+}
+
+export interface AiBehaviorEventData {
+  conversationId?: string;
+  messageId?: string;
+  eventType: string;
+  eventPayload?: Record<string, unknown>;
 }
 
 export interface CreateModelData {

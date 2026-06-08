@@ -151,6 +151,9 @@ export default function SensitiveScan() {
       return true;
     });
   }, [findings, keyword, selectedLevel, selectedStatus]);
+  const paginatedFilteredFindings = useMemo(() => {
+    return filteredFindings.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [filteredFindings, currentPage, pageSize]);
 
   const categorySummary = useMemo(() => {
     const map = new Map<string, number>();

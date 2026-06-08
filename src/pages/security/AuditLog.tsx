@@ -185,6 +185,9 @@ export default function AuditLog() {
       return true;
     });
   }, [events, keyword, selectedResult, selectedRisk]);
+  const paginatedFilteredEvents = useMemo(() => {
+    return filteredEvents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [filteredEvents, currentPage, pageSize]);
 
   const actionSummary = useMemo(() => {
     const map = new Map<string, number>();

@@ -1,33 +1,47 @@
 import { useState } from "react";
+import { login, persistAuthSession } from "../../services/api";
+import type { LoginResponseData } from "../../types/api";
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
   onSwitchToForgotPassword: () => void;
-  onLoginSuccess?: () => void;
+  onLoginSuccess?: (session: LoginResponseData) => void;
 }
 
 export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword, onLoginSuccess }: LoginFormProps) {
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [shake, setShake] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
     if (!account || !password) {
+      setErrorMessage("请输入账号和密码");
       setShake(true);
       setTimeout(() => setShake(false), 600);
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const session = await login({ username: account, password, rememberMe });
+      persistAuthSession(session);
       setLoading(false);
       setSuccess(true);
-      onLoginSuccess?.();
-    }, 1200);
+      window.setTimeout(() => onLoginSuccess?.(session), 250);
+    } catch (error) {
+      setLoading(false);
+      setSuccess(false);
+      setErrorMessage(error instanceof Error ? error.message : "登录失败，请稍后重试");
+      setShake(true);
+      setTimeout(() => setShake(false), 600);
+    }
   };
 
   return (
@@ -147,6 +161,8 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
             <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-400 hover:text-slate-300">
               <input
                 type="checkbox"
+                checked={rememberMe}
+                onChange={(event) => setRememberMe(event.target.checked)}
                 className="rounded border-slate-700 bg-slate-900/40 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-900"
               />
               记住账户
@@ -159,6 +175,12 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
               忘记安全密码？
             </button>
           </div>
+
+          {errorMessage && (
+            <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+              {errorMessage}
+            </div>
+          )}
 
           <button
             type="submit"

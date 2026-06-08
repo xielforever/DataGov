@@ -147,6 +147,9 @@ export default function QualityMonitor() {
       return true;
     });
   }, [alerts, selectedAlertStatus, selectedDomain]);
+  const paginatedFilteredAlerts = useMemo(() => {
+    return filteredAlerts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [filteredAlerts, currentPage, pageSize]);
 
   const filteredRuleHealth = useMemo(() => {
     return ruleHealth.filter((rule) => selectedDomain === "全部" || rule.domain === selectedDomain);

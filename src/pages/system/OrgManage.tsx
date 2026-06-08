@@ -122,7 +122,7 @@ export default function OrgManage() {
     'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
   });
 
-  const debouncedkeyword = useDebounce(keyword, 300);
+  const debouncedKeyword = useDebounce(keyword, 300);
   const [selectedStatus, setSelectedStatus] = useState<"all" | OrgStatus>("all");
   const [selectedOrg, setSelectedOrg] = useState<SystemOrg | null>(null);
   const [loading, setLoading] = useState(true);
@@ -166,6 +166,10 @@ export default function OrgManage() {
       return true;
     });
   }, [keyword, orgs, selectedStatus]);
+
+  const paginatedFilteredOrgs = useMemo(() => {
+    return filteredOrgs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [currentPage, filteredOrgs, pageSize]);
 
   const selectedResponsibilities = useMemo(
     () => responsibilities.filter((item) => item.orgId === selectedOrg?.id),

@@ -39,7 +39,7 @@ export default function DataServiceApi() {
     'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
   });
 
-  const debouncedsearch = useDebounce(search, 300);
+  const debouncedSearch = useDebounce(search, 300);
   const [filterStatus, setFilterStatus] = useState('all');
   const [selected, setSelected] = useState<any | null>(null);
   const [sortField, setSortField] = useState<'qps' | 'callerCount'>('qps');
@@ -57,10 +57,12 @@ export default function DataServiceApi() {
       ]);
       setOverview(ov);
       setApis(items);
-    } catch { /* ignore */ }
+      setError(false);
+    } catch {
       setError(true);
+    }
     setLoading(false);
-  }, [search, filterStatus]);
+  }, [debouncedSearch, filterStatus]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -78,6 +80,9 @@ export default function DataServiceApi() {
     const v = (a[sortField] || 0) - (b[sortField] || 0);
     return sortAsc ? v : -v;
   });
+  const filteredApis = sorted;
+  const paginatedFilteredApis = filteredApis.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const selection = useTableSelection(paginatedFilteredApis);
 
   /* ── Render ───────────────────────────────────────────────────────────── */
 
@@ -163,7 +168,7 @@ export default function DataServiceApi() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sorted.map(api => {
+                  {paginatedFilteredApis.map(api => {
                     const sc = statusConfig[api.status] || statusConfig.offline;
                     return (
                       <tr key={api.id} onClick={() => setSelected(api)}
@@ -204,7 +209,7 @@ export default function DataServiceApi() {
                       </tr>
                     );
                   })}
-                  {sorted.length === 0 && (
+                  {filteredApis.length === 0 && (
                     <tr><td colSpan={9} className="text-center text-slate-500 py-12">暂无符合条件的 API</td></tr>
                   )}
                 </tbody>

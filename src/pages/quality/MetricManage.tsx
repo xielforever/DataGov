@@ -39,7 +39,7 @@ export default function MetricManage() {
     'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
   });
 
-  const debouncedsearch = useDebounce(search, 300);
+  const debouncedSearch = useDebounce(search, 300);
   const [filterType, setFilterType] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -58,10 +58,12 @@ export default function MetricManage() {
       setOverview(ov);
       setMetrics(ms);
       setCategories(cats);
-    } catch { /* ignore */ }
+      setError(false);
+    } catch {
       setError(true);
+    }
     setLoading(false);
-  }, [search, filterType, filterCategory, filterStatus]);
+  }, [debouncedSearch, filterType, filterCategory, filterStatus]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -81,6 +83,8 @@ export default function MetricManage() {
       : a.updatedAt.localeCompare(b.updatedAt);
     return sortAsc ? v : -v;
   });
+  const filteredMetrics = sorted;
+  const paginatedFilteredMetrics = filteredMetrics.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   /* ── Render ───────────────────────────────────────────────────────────── */
 
@@ -206,7 +210,7 @@ export default function MetricManage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sorted.map(m => {
+                  {paginatedFilteredMetrics.map(m => {
                     const tc = typeConfig[m.type] || typeConfig.atomic;
                     const sc = statusConfig[m.status] || statusConfig.draft;
                     return (
@@ -253,7 +257,7 @@ export default function MetricManage() {
                       </tr>
                     );
                   })}
-                  {sorted.length === 0 && (
+                  {filteredMetrics.length === 0 && (
                     <tr><td colSpan={9} className="text-center text-slate-500 py-12">暂无符合条件的指标</td></tr>
                   )}
                 </tbody>

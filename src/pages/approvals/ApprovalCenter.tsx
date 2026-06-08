@@ -44,7 +44,7 @@ export default function ApprovalCenter({ viewType }: ApprovalCenterProps) {
     'f': () => { document.querySelector<HTMLInputElement>('input[type=text]')?.focus() }
   });
 
-  const debouncedsearchQuery = useDebounce(searchQuery, 300);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedModule, setSelectedModule] = useState<string>('all');
   const [selectedApproval, setSelectedApproval] = useState<Approval | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -98,11 +98,13 @@ export default function ApprovalCenter({ viewType }: ApprovalCenterProps) {
     const matchModule = selectedModule === 'all' || a.moduleType === selectedModule;
 
     // 3. Search Filter
-    const matchSearch = a.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        a.applicant.toLowerCase().includes(searchQuery.toLowerCase());
-                        
+    const matchSearch = a.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+                        a.applicant.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+
     return matchView && matchModule && matchSearch;
   });
+
+  const paginatedFilteredApprovals = filteredApprovals.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const getPageTitle = () => {
     if (viewType === 'todos') return '待我审批';

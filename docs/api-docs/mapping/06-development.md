@@ -10,11 +10,14 @@
 - **所在菜单**: `数据开发 -> 脚本开发`
 - **对应组件**: `src/pages/development/ScriptDev.tsx`
 - **依赖接口**:
-  - `GET /api/v1/development/scripts`: 获取 SQL/Python 等脚本文件树。
-  - `POST /api/v1/development/scripts`: 新建并保存脚本。
-  - `PUT /api/v1/development/scripts/:id`: 更新脚本内容。
-  - `DELETE /api/v1/development/scripts/:id`: 删除脚本。
-  - `POST /api/v1/development/execute`: 提交脚本执行并返回运行日志。
+  - `GET /api/v1/development/scripts`: 获取脚本/文件夹树，包含 `parentId`、`scriptType`、`editorLanguage`、`dialect`、`dataSourceId`。
+  - `POST /api/v1/development/scripts`: 在指定 `parentId` 下新建文件夹或脚本。
+  - `PUT /api/v1/development/scripts/:id`: 保存脚本内容、目录归属、数据源绑定和脚本元信息。
+  - `POST /api/v1/development/scripts/:id/run`: 提交脚本运行，首期生成运行记录并返回日志/结果占位。
+  - `POST /api/v1/development/scripts/:id/publish`: 提交脚本发布审批，首期生成审批占位记录。
+  - `GET /api/v1/development/scripts/:id/versions`: 获取脚本历史版本。
+  - `GET /api/v1/metadata/data-sources`: 获取可绑定数据源，按脚本能力过滤。
+  - `DELETE /api/v1/development/scripts/:id`: 删除脚本或文件夹，首期建议软删除。
 
 ### 6.3 实时计算
 - **所在菜单**: `数据开发 -> 实时计算`

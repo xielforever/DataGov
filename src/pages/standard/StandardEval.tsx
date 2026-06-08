@@ -386,9 +386,9 @@ export default function StandardEval() {
           </table>
             <Pagination
               currentPage={currentPage}
-              totalPages={Math.ceil(filtered.length / pageSize)}
+              totalPages={Math.ceil(filteredIssues.length / pageSize)}
               pageSize={pageSize}
-              total={filtered.length}
+              total={filteredIssues.length}
               onPageChange={setCurrentPage}
               onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
             />

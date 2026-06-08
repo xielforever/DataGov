@@ -8,10 +8,11 @@ import ForgotPasswordForm from "./pages/auth/ForgotPasswordForm";
 import DataGovernancePanel from "./pages/dashboard/DataGovernancePanel";
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
+import AiAssistant from "./components/ai/AiAssistant";
 import { routeViews } from "./navigation/registry";
+import { clearAuthSession, fetchCurrentUser, getStoredAuthToken, logout } from "./services/api";
 
 type AuthView = "login" | "register" | "forgot";
-const AUTH_STORAGE_KEY = "datagov.authenticated";
 
 function getInitialMenu() {
   const view = new URLSearchParams(window.location.search).get("view");
@@ -47,7 +48,8 @@ export default function App() {
 function AppContent() {
   const [currentView, setCurrentView] = useState<AuthView>("login");
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem(AUTH_STORAGE_KEY) === "true");
+  const [isLoggedIn, setIsLoggedIn] = useState(() => Boolean(getStoredAuthToken()));
+  const [authChecking, setAuthChecking] = useState(() => Boolean(getStoredAuthToken()));
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState(getInitialMenu);
@@ -63,15 +65,18 @@ function AppContent() {
   };
 
   const handleLoginSuccess = () => {
-    localStorage.setItem(AUTH_STORAGE_KEY, "true");
     setIsLoggedIn(true);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    setIsLoggedIn(false);
-    setCurrentView("login");
-    setMobileSidebarOpen(false);
+    logout()
+      .catch(() => undefined)
+      .finally(() => {
+        clearAuthSession();
+        setIsLoggedIn(false);
+        setCurrentView("login");
+        setMobileSidebarOpen(false);
+      });
   };
 
   const handleMenuSelect = (menuId: string) => {
@@ -89,6 +94,40 @@ function AppContent() {
     window.addEventListener("popstate", syncMenuFromUrl);
     return () => window.removeEventListener("popstate", syncMenuFromUrl);
   }, []);
+
+  useEffect(() => {
+    if (!getStoredAuthToken()) {
+      setAuthChecking(false);
+      return;
+    }
+
+    let canceled = false;
+    fetchCurrentUser()
+      .then(() => {
+        if (!canceled) setIsLoggedIn(true);
+      })
+      .catch(() => {
+        if (!canceled) {
+          clearAuthSession();
+          setIsLoggedIn(false);
+        }
+      })
+      .finally(() => {
+        if (!canceled) setAuthChecking(false);
+      });
+
+    return () => {
+      canceled = true;
+    };
+  }, []);
+
+  if (authChecking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-slate-300">
+        正在校验登录态...
+      </div>
+    );
+  }
 
   if (isLoggedIn) {
     return (
@@ -121,6 +160,7 @@ function AppContent() {
             )}
           </div>
         </main>
+        <AiAssistant activeMenu={activeMenu} sidebarCollapsed={sidebarCollapsed} />
       </div>
     );
   }

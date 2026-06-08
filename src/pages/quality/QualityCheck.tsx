@@ -135,6 +135,9 @@ export default function QualityCheck() {
       return true;
     });
   }, [batches, keyword, selectedScope, selectedStatus]);
+  const paginatedFilteredBatches = useMemo(() => {
+    return filteredBatches.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [filteredBatches, currentPage, pageSize]);
 
   const currentIssues = useMemo(() => {
     return issues.filter((issue) => {
@@ -145,7 +148,7 @@ export default function QualityCheck() {
   }, [issues, selectedBatch?.id, selectedIssueStatus]);
 
   // Reset page when filters change
-  useEffect(() => { setCurrentPage(1); }, [searchQuery, selectedSeverity]);
+  useEffect(() => { setCurrentPage(1); }, [keyword, selectedScope, selectedStatus]);
 
 
   const stats = useMemo(() => {
