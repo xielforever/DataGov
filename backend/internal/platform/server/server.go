@@ -10,6 +10,7 @@ import (
 
 	"datagov/backend/internal/modules/ai"
 	"datagov/backend/internal/modules/approvals"
+	"datagov/backend/internal/modules/assets"
 	"datagov/backend/internal/modules/development"
 	"datagov/backend/internal/modules/iam"
 	"datagov/backend/internal/modules/metadata"
@@ -31,6 +32,7 @@ type Server struct {
 	deps        Dependencies
 	mux         *http.ServeMux
 	iam         *iam.Service
+	assets      *assets.Service
 	metadata    *metadata.Service
 	development *development.Service
 	ai          *ai.Service
@@ -46,6 +48,7 @@ func New(deps Dependencies) *Server {
 		deps:        deps,
 		mux:         http.NewServeMux(),
 		iam:         iam.NewService(deps.DB, deps.Config.Auth, deps.Logger),
+		assets:      assets.NewService(deps.DB),
 		metadata:    metadata.NewService(deps.DB, deps.Config.Sample, deps.Logger),
 		development: development.NewService(deps.DB, deps.Logger),
 		ai:          ai.NewService(deps.DB, deps.Config.AI, deps.Logger, deps.Redis),
@@ -65,6 +68,28 @@ func (server *Server) routes() {
 	server.mux.HandleFunc("POST /api/v1/auth/login", server.handleLogin)
 	server.mux.HandleFunc("GET /api/v1/auth/me", server.handleMe)
 	server.mux.HandleFunc("POST /api/v1/auth/logout", server.handleLogout)
+	server.mux.HandleFunc("GET /api/v1/iam/permissions", server.handleListPermissions)
+	server.mux.HandleFunc("GET /api/v1/iam/roles/{id}/permissions", server.handleGetRolePermissions)
+	server.mux.HandleFunc("PUT /api/v1/iam/roles/{id}/permissions", server.handleUpdateRolePermissions)
+	server.mux.HandleFunc("GET /api/v1/business-domains", server.handleListBusinessDomains)
+	server.mux.HandleFunc("GET /api/v1/business-domains/options", server.handleBusinessDomainOptions)
+	server.mux.HandleFunc("POST /api/v1/business-domains", server.handleCreateBusinessDomain)
+	server.mux.HandleFunc("PUT /api/v1/business-domains/{id}", server.handleUpdateBusinessDomain)
+	server.mux.HandleFunc("POST /api/v1/business-domains/{id}/status", server.handleUpdateBusinessDomainStatus)
+	server.mux.HandleFunc("GET /api/v1/assets/core-metrics", server.handleAssetCoreMetrics)
+	server.mux.HandleFunc("GET /api/v1/assets/layer-distribution", server.handleAssetLayerDistribution)
+	server.mux.HandleFunc("GET /api/v1/assets/business-domains", server.handleAssetBusinessDomains)
+	server.mux.HandleFunc("GET /api/v1/assets/data-sources", server.handleAssetDataSources)
+	server.mux.HandleFunc("GET /api/v1/assets/growth-trend", server.handleAssetGrowthTrend)
+	server.mux.HandleFunc("GET /api/v1/assets/health-metrics", server.handleAssetHealthMetrics)
+	server.mux.HandleFunc("GET /api/v1/assets/hot-assets", server.handleAssetHotAssets)
+	server.mux.HandleFunc("GET /api/v1/assets/pending-items", server.handleAssetPendingItems)
+	server.mux.HandleFunc("GET /api/v1/assets/catalog", server.handleAssetCatalog)
+	server.mux.HandleFunc("GET /api/v1/assets/catalog/{id}/detail", server.handleAssetCatalogDetail)
+	server.mux.HandleFunc("GET /api/v1/assets/register-options", server.handleAssetRegisterOptions)
+	server.mux.HandleFunc("POST /api/v1/assets/register", server.handleRegisterAssets)
+	server.mux.HandleFunc("GET /api/v1/assets/lineage", server.handleAssetLineage)
+	server.mux.HandleFunc("GET /api/v1/assets/map", server.handleAssetMap)
 	server.mux.HandleFunc("GET /api/v1/metadata/data-sources", server.handleListDataSources)
 	server.mux.HandleFunc("POST /api/v1/metadata/data-sources", server.handleCreateDataSource)
 	server.mux.HandleFunc("POST /api/v1/metadata/data-sources/{id}/test", server.handleTestDataSource)
@@ -94,6 +119,28 @@ func (server *Server) routes() {
 	server.mux.HandleFunc("GET /api/v1/ai/observability", server.handleAiObservability)
 	server.mux.HandleFunc("GET /api/v1/approvals", server.handleListApprovals)
 	server.mux.HandleFunc("POST /api/v1/approvals/{id}/process", server.handleProcessApproval)
+	server.mux.HandleFunc("GET /api/v1/system/user-overview", server.handleSystemUserOverview)
+	server.mux.HandleFunc("GET /api/v1/system/users", server.handleListSystemUsers)
+	server.mux.HandleFunc("POST /api/v1/system/users/{id}/status", server.handleUpdateSystemUserStatus)
+	server.mux.HandleFunc("GET /api/v1/system/user-login-policies", server.handleUserLoginPolicies)
+	server.mux.HandleFunc("GET /api/v1/system/user-org-bindings", server.handleUserOrgBindings)
+	server.mux.HandleFunc("GET /api/v1/system/user-risk-accounts", server.handleUserRiskAccounts)
+	server.mux.HandleFunc("POST /api/v1/system/user-risk-accounts/{id}/status", server.handleUpdateUserRiskAccountStatus)
+	server.mux.HandleFunc("GET /api/v1/system/role-overview", server.handleSystemRoleOverview)
+	server.mux.HandleFunc("GET /api/v1/system/roles", server.handleListSystemRoles)
+	server.mux.HandleFunc("POST /api/v1/system/roles/{id}/status", server.handleUpdateSystemRoleStatus)
+	server.mux.HandleFunc("GET /api/v1/system/role-permission-groups", server.handleRolePermissionGroups)
+	server.mux.HandleFunc("GET /api/v1/system/role-data-scopes", server.handleRoleDataScopes)
+	server.mux.HandleFunc("GET /api/v1/system/role-members", server.handleRoleMembers)
+	server.mux.HandleFunc("GET /api/v1/system/role-risks", server.handleRoleRisks)
+	server.mux.HandleFunc("POST /api/v1/system/role-risks/{id}/status", server.handleUpdateRoleRiskStatus)
+	server.mux.HandleFunc("GET /api/v1/system/org-overview", server.handleSystemOrgOverview)
+	server.mux.HandleFunc("GET /api/v1/system/orgs", server.handleListSystemOrgs)
+	server.mux.HandleFunc("POST /api/v1/system/orgs/{id}/status", server.handleUpdateSystemOrgStatus)
+	server.mux.HandleFunc("GET /api/v1/system/org-responsibilities", server.handleOrgResponsibilities)
+	server.mux.HandleFunc("GET /api/v1/system/org-stewards", server.handleOrgStewards)
+	server.mux.HandleFunc("GET /api/v1/system/org-changes", server.handleOrgChanges)
+	server.mux.HandleFunc("POST /api/v1/system/org-changes/{id}/status", server.handleUpdateOrgChangeStatus)
 	server.mux.HandleFunc("/", server.handleNotFound)
 }
 

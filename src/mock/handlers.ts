@@ -101,6 +101,8 @@ import {
   mockUserOrgBindings,
   mockUserRiskAccounts,
   mockRoleManageOverview,
+  mockIamPermissions,
+  mockIamRolePermissions,
   mockSystemRoles,
   mockRolePermissionGroups,
   mockRoleDataScopes,
@@ -1204,13 +1206,34 @@ export const handlers = [
       data: mockTaskOpsQueues
     });
   }),
+  http.get('/api/v1/iam/permissions', () => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
+    return HttpResponse.json({ code: 0, data: mockIamPermissions });
+  }),
+  http.get('/api/v1/iam/roles/:id/permissions', ({ params }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    return HttpResponse.json({ code: 0, data: mockIamRolePermissions[id] ?? [] });
+  }),
+  http.put('/api/v1/iam/roles/:id/permissions', async ({ request, params }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const body = await request.json() as { permissions?: string[] };
+    const nextPermissions = [...new Set(body.permissions ?? [])].sort();
+    mockIamRolePermissions[id] = id === 'role-001' && !nextPermissions.includes('platform:*')
+      ? ['platform:*', ...nextPermissions].sort()
+      : nextPermissions;
+    return HttpResponse.json({ code: 0, data: mockIamRolePermissions[id] });
+  }),
   http.get('/api/v1/system/user-overview', () => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockUserManageOverview
     });
   }),
   http.get('/api/v1/system/users', ({ request }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const url = new URL(request.url);
     const keyword = url.searchParams.get('keyword')?.toLowerCase() ?? '';
     const status = url.searchParams.get('status') ?? 'all';
@@ -1228,6 +1251,7 @@ export const handlers = [
     });
   }),
   http.post('/api/v1/system/users/:id/status', async ({ request, params }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const { status } = await request.json() as any;
     const index = mockSystemUsers.findIndex(user => user.id === id);
@@ -1241,24 +1265,28 @@ export const handlers = [
     return HttpResponse.json({ code: 404, message: 'User not found' }, { status: 404 });
   }),
   http.get('/api/v1/system/user-login-policies', () => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockUserLoginPolicies
     });
   }),
   http.get('/api/v1/system/user-org-bindings', () => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockUserOrgBindings
     });
   }),
   http.get('/api/v1/system/user-risk-accounts', () => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockUserRiskAccounts
     });
   }),
   http.post('/api/v1/system/user-risk-accounts/:id/status', async ({ request, params }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const { status } = await request.json() as any;
     const index = mockUserRiskAccounts.findIndex(risk => risk.id === id);
@@ -1272,12 +1300,14 @@ export const handlers = [
     return HttpResponse.json({ code: 404, message: 'Risk account not found' }, { status: 404 });
   }),
   http.get('/api/v1/system/role-overview', () => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockRoleManageOverview
     });
   }),
   http.get('/api/v1/system/roles', ({ request }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const url = new URL(request.url);
     const keyword = url.searchParams.get('keyword')?.toLowerCase() ?? '';
     const status = url.searchParams.get('status') ?? 'all';
@@ -1295,6 +1325,7 @@ export const handlers = [
     });
   }),
   http.post('/api/v1/system/roles/:id/status', async ({ request, params }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const { status } = await request.json() as any;
     const index = mockSystemRoles.findIndex(role => role.id === id);
@@ -1308,6 +1339,7 @@ export const handlers = [
     return HttpResponse.json({ code: 404, message: 'Role not found' }, { status: 404 });
   }),
   http.get('/api/v1/system/role-permission-groups', ({ request }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const roleId = new URL(request.url).searchParams.get('roleId');
     return HttpResponse.json({
       code: 0,
@@ -1315,6 +1347,7 @@ export const handlers = [
     });
   }),
   http.get('/api/v1/system/role-data-scopes', ({ request }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const roleId = new URL(request.url).searchParams.get('roleId');
     return HttpResponse.json({
       code: 0,
@@ -1322,6 +1355,7 @@ export const handlers = [
     });
   }),
   http.get('/api/v1/system/role-members', ({ request }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const roleId = new URL(request.url).searchParams.get('roleId');
     return HttpResponse.json({
       code: 0,
@@ -1329,6 +1363,7 @@ export const handlers = [
     });
   }),
   http.get('/api/v1/system/role-risks', ({ request }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const roleId = new URL(request.url).searchParams.get('roleId');
     return HttpResponse.json({
       code: 0,
@@ -1336,6 +1371,7 @@ export const handlers = [
     });
   }),
   http.post('/api/v1/system/role-risks/:id/status', async ({ request, params }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const { status } = await request.json() as any;
     const index = mockRoleRiskItems.findIndex(risk => risk.id === id);
@@ -1349,12 +1385,14 @@ export const handlers = [
     return HttpResponse.json({ code: 404, message: 'Role risk not found' }, { status: 404 });
   }),
   http.get('/api/v1/system/org-overview', () => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockOrgManageOverview
     });
   }),
   http.get('/api/v1/system/orgs', ({ request }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const url = new URL(request.url);
     const keyword = url.searchParams.get('keyword')?.toLowerCase() ?? '';
     const status = url.searchParams.get('status') ?? 'all';
@@ -1372,6 +1410,7 @@ export const handlers = [
     });
   }),
   http.post('/api/v1/system/orgs/:id/status', async ({ request, params }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const { status } = await request.json() as any;
     const index = mockSystemOrgs.findIndex(org => org.id === id);
@@ -1385,6 +1424,7 @@ export const handlers = [
     return HttpResponse.json({ code: 404, message: 'Organization not found' }, { status: 404 });
   }),
   http.get('/api/v1/system/org-responsibilities', ({ request }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const orgId = new URL(request.url).searchParams.get('orgId');
     return HttpResponse.json({
       code: 0,
@@ -1392,6 +1432,7 @@ export const handlers = [
     });
   }),
   http.get('/api/v1/system/org-stewards', ({ request }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const orgId = new URL(request.url).searchParams.get('orgId');
     return HttpResponse.json({
       code: 0,
@@ -1399,6 +1440,7 @@ export const handlers = [
     });
   }),
   http.get('/api/v1/system/org-changes', ({ request }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const orgId = new URL(request.url).searchParams.get('orgId');
     return HttpResponse.json({
       code: 0,
@@ -1406,6 +1448,7 @@ export const handlers = [
     });
   }),
   http.post('/api/v1/system/org-changes/:id/status', async ({ request, params }) => {
+    if (import.meta.env.VITE_REAL_SYSTEM_MANAGEMENT !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const { status } = await request.json() as any;
     const index = mockOrgChangeRecords.findIndex(change => change.id === id);
@@ -1648,6 +1691,7 @@ export const handlers = [
 
   // Business domain master data endpoints
   http.get('/api/v1/business-domains', ({ request }) => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     const url = new URL(request.url);
     const status = url.searchParams.get('status') || 'all';
     const keyword = (url.searchParams.get('keyword') || '').trim().toLowerCase();
@@ -1667,6 +1711,7 @@ export const handlers = [
   }),
 
   http.get('/api/v1/business-domains/options', () => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockBusinessDomains
@@ -1683,6 +1728,7 @@ export const handlers = [
   }),
 
   http.post('/api/v1/business-domains', async ({ request }) => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     const data = await request.json() as any;
     const domainStore = mockBusinessDomains as any[];
     const parent = data.parentId ? domainStore.find((domain) => domain.id === data.parentId) : null;
@@ -1727,6 +1773,7 @@ export const handlers = [
   }),
 
   http.put('/api/v1/business-domains/:id', async ({ request, params }) => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const data = await request.json() as any;
     const domainStore = mockBusinessDomains as any[];
@@ -1765,6 +1812,7 @@ export const handlers = [
   }),
 
   http.post('/api/v1/business-domains/:id/status', async ({ request, params }) => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const { status } = await request.json() as any;
     const domainStore = mockBusinessDomains as any[];
@@ -1782,6 +1830,7 @@ export const handlers = [
 
   // Asset Overview endpoints
   http.get('/api/v1/assets/core-metrics', () => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockAssetCoreMetrics
@@ -1789,6 +1838,7 @@ export const handlers = [
   }),
 
   http.get('/api/v1/assets/layer-distribution', () => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockAssetLayerDistribution
@@ -1796,6 +1846,7 @@ export const handlers = [
   }),
 
   http.get('/api/v1/assets/business-domains', () => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: getAssetBusinessDomainSummary()
@@ -1803,6 +1854,7 @@ export const handlers = [
   }),
 
   http.get('/api/v1/assets/data-sources', () => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockAssetDataSources
@@ -1810,6 +1862,7 @@ export const handlers = [
   }),
 
   http.get('/api/v1/assets/growth-trend', () => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockAssetGrowthTrend
@@ -1817,6 +1870,7 @@ export const handlers = [
   }),
 
   http.get('/api/v1/assets/health-metrics', () => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockAssetHealthMetrics
@@ -1824,6 +1878,7 @@ export const handlers = [
   }),
 
   http.get('/api/v1/assets/hot-assets', () => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockAssetHotAssets
@@ -1831,6 +1886,7 @@ export const handlers = [
   }),
 
   http.get('/api/v1/assets/pending-items', () => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockAssetPendingItems
@@ -1838,6 +1894,7 @@ export const handlers = [
   }),
 
   http.get('/api/v1/assets/catalog', () => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockAssetCatalog
@@ -1845,6 +1902,7 @@ export const handlers = [
   }),
 
   http.get('/api/v1/assets/catalog/:id/detail', ({ params }) => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const detail = mockAssetCatalogDetails.find((item) => item.assetId === id);
     if (!detail) {
@@ -1857,6 +1915,7 @@ export const handlers = [
   }),
 
   http.get('/api/v1/assets/register-options', () => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockAssetRegisterOptions
@@ -1864,6 +1923,7 @@ export const handlers = [
   }),
 
   http.post('/api/v1/assets/register', async ({ request }) => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     const data = await request.json() as any;
     const tableIds = Array.isArray(data.tableIds) ? data.tableIds : [];
     const tables = mockAssetRegisterOptions.tables.filter((table) => tableIds.includes(table.id));
@@ -1926,6 +1986,7 @@ export const handlers = [
   }),
 
   http.get('/api/v1/assets/lineage', ({ request }) => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     const url = new URL(request.url);
     const center = url.searchParams.get('center') || 'dwd_order_detail';
 
@@ -1953,6 +2014,7 @@ export const handlers = [
 
   // Map endpoints
   http.get('/api/v1/assets/map', () => {
+    if (import.meta.env.VITE_REAL_ASSETS !== 'false') return passthrough();
     return HttpResponse.json({
       code: 0,
       data: mockMapData

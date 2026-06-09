@@ -17,15 +17,19 @@ import {
 } from "lucide-react";
 import Breadcrumb from "../../components/common/Breadcrumb";
 import {
+  fetchIamPermissions,
+  fetchIamRolePermissions,
   fetchRoleDataScopes,
   fetchRoleManageOverview,
   fetchRoleMembers,
   fetchRolePermissionGroups,
   fetchRoleRisks,
   fetchSystemRoles,
+  updateIamRolePermissions,
   updateRoleRiskStatus,
   updateSystemRoleStatus,
 } from "../../services/api";
+import type { IamPermission } from "../../types/api";
 import ErrorFallback from '../../components/common/ErrorFallback';
 import { TableSkeleton } from '../../components/common/Skeleton';
 import Pagination from '../../components/common/Pagination';
@@ -128,6 +132,11 @@ export default function RoleManage() {
   const [overview, setOverview] = useState<RoleOverview | null>(null);
   const [roles, setRoles] = useState<SystemRole[]>([]);
   const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>([]);
+  const [allPermissions, setAllPermissions] = useState<IamPermission[]>([]);
+  const [selectedRolePermissions, setSelectedRolePermissions] = useState<string[]>([]);
+  const [permissionDraft, setPermissionDraft] = useState<string[]>([]);
+  const [permissionSaving, setPermissionSaving] = useState(false);
+  const [permissionMessage, setPermissionMessage] = useState("");
   const [dataScopes, setDataScopes] = useState<DataScope[]>([]);
   const [members, setMembers] = useState<RoleMember[]>([]);
   const [risks, setRisks] = useState<RoleRisk[]>([]);
@@ -149,17 +158,19 @@ export default function RoleManage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [overviewData, roleData, permissionData, scopeData, memberData, riskData] = await Promise.all([
+      const [overviewData, roleData, permissionData, scopeData, memberData, riskData, permissionCatalog] = await Promise.all([
         fetchRoleManageOverview(),
         fetchSystemRoles({ keyword, status: selectedStatus }),
         fetchRolePermissionGroups(),
         fetchRoleDataScopes(),
         fetchRoleMembers(),
         fetchRoleRisks(),
+        fetchIamPermissions(),
       ]);
       setOverview(overviewData);
       setRoles(roleData);
       setPermissionGroups(permissionData);
+      setAllPermissions(permissionCatalog);
       setDataScopes(scopeData);
       setMembers(memberData);
       setRisks(riskData);
@@ -173,6 +184,29 @@ export default function RoleManage() {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!selectedRole) {
+      setSelectedRolePermissions([]);
+      setPermissionDraft([]);
+      return;
+    }
+    let cancelled = false;
+    setPermissionMessage("");
+    fetchIamRolePermissions(selectedRole.id)
+      .then((permissions) => {
+        if (cancelled) return;
+        setSelectedRolePermissions(permissions);
+        setPermissionDraft(permissions);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setPermissionMessage(error instanceof Error ? error.message : "角色权限加载失败");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRole]);
 
   const filteredRoles = useMemo(() => {
     return roles.filter((role) => {
@@ -205,6 +239,12 @@ export default function RoleManage() {
     () => risks.filter((risk) => risk.roleId === selectedRole?.id),
     [risks, selectedRole],
   );
+  const permissionModules = useMemo(() => groupPermissionsByModule(allPermissions), [allPermissions]);
+  const permissionDraftSet = useMemo(() => new Set(permissionDraft), [permissionDraft]);
+  const permissionsDirty = useMemo(
+    () => !sameStringSet(selectedRolePermissions, permissionDraft),
+    [permissionDraft, selectedRolePermissions],
+  );
 
   const roleLevelSummary = useMemo(() => {
     const map = new Map<RoleLevel, number>();
@@ -222,14 +262,60 @@ export default function RoleManage() {
 
   const toggleRole = async (role: SystemRole) => {
     const nextStatus: RoleStatus = role.status === "enabled" ? "disabled" : "enabled";
-    const updated = await updateSystemRoleStatus(role.id, nextStatus);
-    setRoles((prev) => prev.map((item) => (item.id === role.id ? updated : item)));
-    setSelectedRole((current) => (current?.id === role.id ? updated : current));
+    try {
+      const updated = await updateSystemRoleStatus(role.id, nextStatus);
+      setRoles((prev) => prev.map((item) => (item.id === role.id ? updated : item)));
+      setSelectedRole((current) => (current?.id === role.id ? updated : current));
+      setPermissionMessage("");
+    } catch (error) {
+      setPermissionMessage(error instanceof Error ? error.message : "角色状态更新失败");
+    }
   };
 
   const changeRiskStatus = async (risk: RoleRisk, status: RiskStatus) => {
     const updated = await updateRoleRiskStatus(risk.id, status);
     setRisks((prev) => prev.map((item) => (item.id === risk.id ? updated : item)));
+  };
+
+  const togglePermission = (permission: string) => {
+    if (!selectedRole) return;
+    if (selectedRole.id === "role-admin" && permission === "platform:*") return;
+    setPermissionMessage("");
+    setPermissionDraft((current) => (
+      current.includes(permission)
+        ? current.filter((item) => item !== permission)
+        : [...current, permission].sort()
+    ));
+  };
+
+  const saveRolePermissions = async () => {
+    if (!selectedRole) return;
+    setPermissionSaving(true);
+    setPermissionMessage("");
+    try {
+      const saved = await updateIamRolePermissions(selectedRole.id, permissionDraft);
+      const [permissionData, roleData, overviewData] = await Promise.all([
+        fetchRolePermissionGroups(),
+        fetchSystemRoles({ keyword, status: selectedStatus }),
+        fetchRoleManageOverview(),
+      ]);
+      setSelectedRolePermissions(saved);
+      setPermissionDraft(saved);
+      setPermissionGroups(permissionData);
+      setRoles(roleData);
+      setOverview(overviewData);
+      setSelectedRole(roleData.find((item) => item.id === selectedRole.id) ?? selectedRole);
+      setPermissionMessage("权限已保存并立即生效");
+    } catch (error) {
+      setPermissionMessage(error instanceof Error ? error.message : "权限保存失败");
+    } finally {
+      setPermissionSaving(false);
+    }
+  };
+
+  const resetRolePermissions = () => {
+    setPermissionDraft(selectedRolePermissions);
+    setPermissionMessage("");
   };
 
   if (loading || !overview) {
@@ -407,36 +493,99 @@ export default function RoleManage() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="rounded-lg border border-slate-800 bg-slate-900/60">
-          <div className="border-b border-slate-800 p-4">
-            <h2 className="flex items-center gap-2 text-sm font-medium text-white">
-              <KeyRound className="h-4 w-4 text-cyan-300" />
-              功能权限
-            </h2>
-            <p className="mt-1 text-xs text-slate-500">按业务模块展示角色已授权的功能点和关键权限。</p>
+          <div className="flex flex-col gap-3 border-b border-slate-800 p-4 xl:flex-row xl:items-start xl:justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 text-sm font-medium text-white">
+                <KeyRound className="h-4 w-4 text-cyan-300" />
+                功能权限矩阵
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">按真实 IAM 权限点编辑角色授权，保存后后端鉴权立即生效。</p>
+              {permissionMessage && (
+                <div className={`mt-2 rounded-md border px-3 py-2 text-xs ${permissionMessage.includes("失败") || permissionMessage.includes("不能") ? "border-red-500/30 bg-red-500/10 text-red-200" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"}`}>
+                  {permissionMessage}
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={resetRolePermissions}
+                disabled={!permissionsDirty || permissionSaving}
+                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                撤销修改
+              </button>
+              <button
+                type="button"
+                onClick={saveRolePermissions}
+                disabled={!selectedRole || !permissionsDirty || permissionSaving}
+                className="rounded-lg border border-cyan-500/40 bg-cyan-500/15 px-3 py-2 text-xs font-medium text-cyan-100 transition hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {permissionSaving ? "保存中..." : "保存权限"}
+              </button>
+            </div>
           </div>
-          <div className="grid gap-3 p-4 xl:grid-cols-2">
-            {selectedPermissionGroups.map((group) => {
-              const percent = Math.round((group.granted / group.total) * 100);
-              return (
-                <article key={group.id} className={`rounded-lg border bg-slate-950/60 p-4 ${group.critical ? "border-red-500/30" : "border-slate-800"}`}>
+          <div className="space-y-4 p-4">
+            {selectedRole && selectedPermissionGroups.length > 0 && (
+              <div className="grid gap-3 xl:grid-cols-2">
+                {selectedPermissionGroups.map((group) => {
+                  const percent = Math.round((group.granted / group.total) * 100);
+                  return (
+                    <article key={group.id} className={`rounded-lg border bg-slate-950/60 p-3 ${group.critical ? "border-red-500/30" : "border-slate-800"}`}>
+                      <div className="flex items-center justify-between gap-3 text-xs">
+                        <span className="font-medium text-white">{group.module}</span>
+                        <span className={group.critical ? "text-red-300" : "text-slate-400"}>{group.granted}/{group.total}</span>
+                      </div>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-800">
+                        <div className="h-full rounded-full bg-cyan-400" style={{ width: `${percent}%` }} />
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="grid gap-3 xl:grid-cols-2">
+              {permissionModules.map((module) => (
+                <article key={module.module} className="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-sm font-medium text-white">{group.module}</h3>
-                      <div className="mt-1 text-xs text-slate-500">已授权 {group.granted}/{group.total} 个功能点</div>
+                      <h3 className="text-sm font-medium text-white">{module.label}</h3>
+                      <div className="mt-1 text-xs text-slate-500">
+                        已选 {module.permissions.filter((permission) => permissionDraftSet.has(permission.code)).length}/{module.permissions.length}
+                      </div>
                     </div>
-                    {group.critical && <span className="rounded bg-red-500/15 px-2 py-1 text-xs text-red-300">关键权限</span>}
+                    {module.critical && <span className="rounded bg-red-500/15 px-2 py-1 text-xs text-red-300">关键模块</span>}
                   </div>
-                  <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-800">
-                    <div className="h-full rounded-full bg-cyan-400" style={{ width: `${percent}%` }} />
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {group.actions.map((action) => (
-                      <span key={action} className="rounded border border-slate-800 bg-slate-900 px-2 py-1 text-xs text-slate-300">{action}</span>
-                    ))}
+                  <div className="mt-4 space-y-2">
+                    {module.permissions.map((permission) => {
+                      const checked = permissionDraftSet.has(permission.code);
+                      const locked = selectedRole?.id === "role-admin" && permission.code === "platform:*";
+                      return (
+                        <label
+                          key={permission.code}
+                          className={`flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 transition ${
+                            checked ? "border-cyan-500/30 bg-cyan-500/10" : "border-slate-800 bg-slate-900/50 hover:border-slate-700"
+                          } ${locked ? "cursor-not-allowed opacity-80" : ""}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={!selectedRole || locked}
+                            onChange={() => togglePermission(permission.code)}
+                            className="mt-1 rounded border-slate-600 bg-slate-950 text-cyan-500 focus:ring-cyan-500"
+                          />
+                          <span className="min-w-0">
+                            <span className="block font-mono text-xs text-cyan-100">{permission.code}</span>
+                            <span className="mt-1 block text-xs text-slate-400">{permission.name} · {permission.description}</span>
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </article>
-              );
-            })}
+              ))}
+            </div>
           </div>
         </section>
 
@@ -573,4 +722,38 @@ function Metric({ label, value }: { label: string; value: string | number }) {
       <div className="mt-1 break-words font-semibold text-slate-200">{value}</div>
     </div>
   );
+}
+
+function groupPermissionsByModule(permissions: IamPermission[]) {
+  const labelMap: Record<string, string> = {
+    platform: "平台全部权限",
+    auth: "认证与会话",
+    metadata: "元数据管理",
+    development: "数据开发",
+    ai: "AI 助手",
+    standards: "数据标准",
+    quality: "数据质量",
+    approvals: "审批中心",
+    system: "系统管理",
+  };
+  const criticalModules = new Set(["platform", "system", "ai"]);
+  const groups = new Map<string, IamPermission[]>();
+  permissions.forEach((permission) => {
+    const moduleName = permission.module || permission.code.split(":")[0] || "platform";
+    groups.set(moduleName, [...(groups.get(moduleName) ?? []), permission]);
+  });
+  return Array.from(groups.entries())
+    .map(([module, items]) => ({
+      module,
+      label: labelMap[module] || module,
+      critical: criticalModules.has(module),
+      permissions: items.sort((left, right) => left.code.localeCompare(right.code)),
+    }))
+    .sort((left, right) => Number(right.critical) - Number(left.critical) || left.label.localeCompare(right.label));
+}
+
+function sameStringSet(left: string[], right: string[]) {
+  if (left.length !== right.length) return false;
+  const leftSet = new Set(left);
+  return right.every((item) => leftSet.has(item));
 }

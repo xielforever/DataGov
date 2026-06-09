@@ -1176,9 +1176,52 @@ func (service *Service) buildToolCalls(ctx context.Context, userID string, capab
 			service.logger.Info("ai tool skipped by permission", "tool", candidate.ToolName, "permission", item.RequiredPermission)
 			continue
 		}
+		if candidate.ToolName == "lineage.getImpactSummary" {
+			candidate.ResultSummary = service.lineageImpactSummary(ctx, question)
+		}
 		allowed = append(allowed, candidate)
 	}
 	return allowed
+}
+
+func (service *Service) lineageImpactSummary(ctx context.Context, question string) string {
+	keyword := strings.ToLower(strings.TrimSpace(question))
+	if keyword == "" {
+		keyword = "dwd_order_detail"
+	}
+	var assetID, assetName, cnName string
+	err := service.db.QueryRow(ctx, `
+		SELECT id, name, cn_name
+		FROM asset_tables
+		WHERE lower($1) LIKE '%' || lower(name) || '%'
+			OR lower(name) LIKE '%' || lower($1) || '%'
+			OR lower(cn_name) LIKE '%' || lower($1) || '%'
+		ORDER BY length(name) DESC
+		LIMIT 1
+	`, keyword).Scan(&assetID, &assetName, &cnName)
+	if errors.Is(err, pgx.ErrNoRows) {
+		err = service.db.QueryRow(ctx, `
+			SELECT id, name, cn_name
+			FROM asset_tables
+			WHERE name = 'dwd_order_detail'
+			LIMIT 1
+		`).Scan(&assetID, &assetName, &cnName)
+	}
+	if err != nil {
+		service.logger.Warn("load lineage impact summary failed; fallback static summary", "error", err)
+		return "当前 DataGov 内不直连外部源数据，已使用平台血缘摘要或 MSW 补齐影响范围。"
+	}
+	var upstream, downstream, fields int
+	if err := service.db.QueryRow(ctx, `
+		SELECT
+			(SELECT count(*)::int FROM lineage_edges WHERE target_asset_id = $1),
+			(SELECT count(*)::int FROM lineage_edges WHERE source_asset_id = $1),
+			(SELECT COALESCE(sum(field_count), 0)::int FROM lineage_edges WHERE source_asset_id = $1 OR target_asset_id = $1)
+	`, assetID).Scan(&upstream, &downstream, &fields); err != nil {
+		service.logger.Warn("count lineage impact summary failed; fallback static summary", "error", err)
+		return "当前 DataGov 内不直连外部源数据，已使用平台血缘摘要或 MSW 补齐影响范围。"
+	}
+	return fmt.Sprintf("已读取 DataGov 平台库血缘摘要：%s（%s）上游 %d 个、下游 %d 个、字段映射约 %d 条；该摘要来自已落库快照，不直连外部源数据。", assetName, firstNonEmpty(cnName, "未登记中文名"), upstream, downstream, fields)
 }
 
 func (service *Service) userHasPermission(ctx context.Context, userID string, requiredPermission string) (bool, error) {
@@ -1191,7 +1234,9 @@ func (service *Service) userHasPermission(ctx context.Context, userID string, re
 		FROM iam_permissions p
 		JOIN iam_role_permissions rp ON rp.permission_id = p.id
 		JOIN iam_user_roles ur ON ur.role_id = rp.role_id
+		JOIN iam_roles r ON r.id = ur.role_id
 		WHERE ur.user_id = $1
+			AND r.status = 'enabled'
 		ORDER BY p.code
 	`, userID)
 	if err != nil {

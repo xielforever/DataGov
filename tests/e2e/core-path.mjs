@@ -21,6 +21,29 @@ try {
   await page.getByRole('button', { name: /登录|进入|提交/ }).click();
 
   await page.getByText('DataGov', { exact: true }).waitFor({ timeout: 15000 });
+  await page.getByRole('button', { name: '系统管理', exact: true }).click();
+  await page.getByRole('button', { name: '用户管理', exact: true }).click();
+  await page.getByRole('heading', { name: '用户管理' }).waitFor({ timeout: 15000 });
+  await page.getByRole('button', { name: '角色管理', exact: true }).click();
+  await page.getByRole('heading', { name: '角色管理' }).waitFor({ timeout: 15000 });
+  await page.getByText('功能权限矩阵').waitFor({ timeout: 15000 });
+  await page.getByRole('button', { name: '组织管理', exact: true }).click();
+  await page.getByRole('heading', { name: '组织管理' }).waitFor({ timeout: 15000 });
+
+  await page.getByRole('button', { name: '数据资产' }).click();
+  await page.getByRole('button', { name: '资产总览', exact: true }).click();
+  await page.getByRole('heading', { name: '资产总览' }).waitFor({ timeout: 15000 });
+  await page.getByRole('button', { name: '数据目录', exact: true }).click();
+  await page.getByRole('heading', { name: '数据目录' }).waitFor({ timeout: 15000 });
+  await page.getByText('dwd_order_detail').first().waitFor({ timeout: 15000 });
+  await page.getByText('dwd_order_detail').first().click();
+  await page.getByText('详情来源').waitFor({ timeout: 15000 });
+  await page.getByRole('button', { name: '字段信息' }).click();
+  await page.getByRole('cell', { name: 'order_id', exact: true }).waitFor({ timeout: 15000 });
+  await page.getByLabel('关闭详情').click();
+  await page.getByRole('button', { name: '数据血缘', exact: true }).click();
+  await page.getByText('数据血缘分析').waitFor({ timeout: 15000 });
+
   await page.getByRole('button', { name: '数据开发' }).click();
   await page.getByRole('button', { name: '脚本开发', exact: true }).click();
   await page.getByText('脚本开发').first().waitFor({ timeout: 15000 });

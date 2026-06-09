@@ -4227,6 +4227,35 @@ export const mockRolePermissionGroups = [
   },
 ];
 
+export const mockIamPermissions = [
+  { id: 'perm-platform-all', code: 'platform:*', name: '平台全部权限', description: '首期管理员通配权限', module: 'platform' },
+  { id: 'perm-auth-me', code: 'auth:me', name: '查看当前用户', description: '读取当前登录用户信息', module: 'auth' },
+  { id: 'perm-metadata-ds-read', code: 'metadata:data_sources:read', name: '查看数据源', description: '查看数据源列表和详情', module: 'metadata' },
+  { id: 'perm-metadata-ds-create', code: 'metadata:data_sources:create', name: '创建数据源', description: '新增数据源注册信息', module: 'metadata' },
+  { id: 'perm-metadata-ds-test', code: 'metadata:data_sources:test', name: '测试数据源', description: '执行数据源连通性测试', module: 'metadata' },
+  { id: 'perm-metadata-lineage-read', code: 'metadata:lineage:read', name: '查看数据血缘', description: '读取血缘影响摘要', module: 'metadata' },
+  { id: 'perm-dev-scripts-read', code: 'development:scripts:read', name: '查看脚本', description: '查看脚本树、脚本内容和版本', module: 'development' },
+  { id: 'perm-dev-scripts-write', code: 'development:scripts:write', name: '编辑脚本', description: '创建和保存脚本', module: 'development' },
+  { id: 'perm-dev-scripts-run', code: 'development:scripts:run', name: '运行脚本', description: '创建脚本运行记录', module: 'development' },
+  { id: 'perm-dev-scripts-publish', code: 'development:scripts:publish', name: '发布脚本', description: '提交脚本发布申请或占位流程', module: 'development' },
+  { id: 'perm-ai-use', code: 'ai:assistant:use', name: 'AI 助手', description: '使用全局 AI 助手', module: 'ai' },
+  { id: 'perm-ai-tools-read', code: 'ai:tools:read', name: '查看 AI 工具', description: '查看 AI 可用工具和权限状态', module: 'ai' },
+  { id: 'perm-ai-observability-read', code: 'ai:observability:read', name: '查看 AI 观测', description: '查看 AI 模型调用、Token、限流和工具调用概览', module: 'ai' },
+  { id: 'perm-standards-read', code: 'standards:read', name: '查看数据标准', description: '读取数据标准定义和映射摘要', module: 'standards' },
+  { id: 'perm-quality-rules-read', code: 'quality:rules:read', name: '查看质量规则', description: '读取质量规则和检查结果摘要', module: 'quality' },
+  { id: 'perm-approvals-read', code: 'approvals:requests:read', name: '查看审批', description: '查看审批中心列表', module: 'approvals' },
+  { id: 'perm-approvals-process', code: 'approvals:requests:process', name: '处理审批', description: '通过、驳回或处理审批实例', module: 'approvals' },
+  { id: 'perm-system-manage', code: 'system:manage', name: '系统管理', description: '管理用户、角色、组织和系统配置', module: 'system' },
+];
+
+export const mockIamRolePermissions: Record<string, string[]> = {
+  'role-001': ['platform:*'],
+  'role-002': ['auth:me', 'development:scripts:read', 'development:scripts:write', 'development:scripts:run', 'development:scripts:publish', 'metadata:data_sources:read', 'ai:assistant:use', 'ai:tools:read', 'approvals:requests:read'],
+  'role-003': ['auth:me', 'quality:rules:read', 'metadata:data_sources:read', 'ai:assistant:use', 'ai:tools:read'],
+  'role-004': ['auth:me', 'metadata:data_sources:read', 'metadata:lineage:read', 'ai:observability:read', 'system:manage'],
+  'role-005': ['auth:me', 'metadata:data_sources:read', 'standards:read'],
+};
+
 export const mockRoleDataScopes = [
   {
     id: "rds-001",

@@ -1,9 +1,9 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { BarChart3, Building2, CircleDot, Copy, Database, Eye, HardDrive, Lock, MessageSquare, Plug, Search, Server, Table2, Tag, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Breadcrumb from '../../components/common/Breadcrumb';
-import { fetchAssetCatalog, fetchBusinessDomainOptions, fetchDataLayers, fetchSensitivities, fetchTagOptions, fetchAssetDataSources } from '../../services/api';
+import { fetchAssetCatalog, fetchAssetCatalogDetail, fetchBusinessDomainOptions, fetchDataLayers, fetchSensitivities, fetchTagOptions, fetchAssetDataSources } from '../../services/api';
 import { navigateTo } from '../../utils/navigation';
 import ErrorFallback from '../../components/common/ErrorFallback';
 import { TableSkeleton } from '../../components/common/Skeleton';
@@ -36,6 +36,53 @@ interface Asset {
   favorite: boolean;
 }
 
+interface AssetCatalogPage {
+  items: Asset[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+interface AssetField {
+  name: string;
+  type: string;
+  comment: string;
+  isPrimary?: boolean;
+  isSensitive?: boolean;
+  standard?: string;
+  quality?: number;
+}
+
+interface LineageSummaryItem {
+  name: string;
+  cnName?: string;
+  type?: string;
+  fields?: number;
+}
+
+interface AssetQualityCheck {
+  name: string;
+  score: number;
+  status?: string;
+}
+
+interface AssetDetail {
+  assetId: string;
+  fields: AssetField[];
+  lineage?: {
+    upstream?: LineageSummaryItem[];
+    downstream?: LineageSummaryItem[];
+  };
+  quality?: {
+    status?: string;
+    lastCheckTime?: string;
+    ruleCount?: number;
+    issueCount?: number;
+    checks?: AssetQualityCheck[];
+  };
+}
+
 export default function DataCatalog() {
   const [viewMode, setViewMode] = useState<ViewMode>('card');
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,6 +99,8 @@ export default function DataCatalog() {
   const pageSize = 8;
 
   const [allAssets, setAllAssets] = useState<Asset[]>([]);
+  const [totalAssets, setTotalAssets] = useState(0);
+  const [serverTotalPages, setServerTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -62,24 +111,56 @@ export default function DataCatalog() {
       fetchDataLayers().then((res) => setLayers(res as string[])),
       fetchSensitivities().then((res) => setSensitivities(res as string[])),
       fetchTagOptions().then((res) => setTagOptions(res as string[])),
-      fetchAssetDataSources().then((res) => setSources((res as Array<{name: string}>).map(d => d.name))),
+      fetchAssetDataSources().then((res) => {
+        const nextSources = Array.from(new Set((res as Array<{ name: string; type?: string }>).map(d => d.type || d.name).filter(Boolean)));
+        setSources(nextSources);
+      }),
     ]).catch(() => {});
   }, []);
+
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    fetchAssetCatalog()
+    fetchAssetCatalog({
+      keyword: searchQuery.trim() || undefined,
+      domains: selectedDomains,
+      layers: selectedLayers,
+      sensitivities: selectedSensitivities,
+      sources: selectedSources,
+      tags: selectedTags,
+      certified: showCertifiedOnly,
+      sortField,
+      sortOrder,
+      page: currentPage,
+      pageSize,
+    })
       .then((data) => {
-        if (mounted) setAllAssets(data as Asset[]);
+        if (!mounted) return;
+        if (Array.isArray(data)) {
+          setAllAssets(data as Asset[]);
+          setTotalAssets(data.length);
+          setServerTotalPages(Math.max(1, Math.ceil(data.length / pageSize)));
+          return;
+        }
+        const page = data as AssetCatalogPage;
+        setAllAssets(page.items || []);
+        setTotalAssets(page.total || 0);
+        setServerTotalPages(page.totalPages || 1);
+        if (page.page && page.page !== currentPage) {
+          setCurrentPage(page.page);
+        }
       })
       .catch(() => {
-        if (mounted) toast.error('资产目录加载失败');
+        if (mounted) {
+          setError(true);
+          toast.error('资产目录加载失败');
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);
       });
     return () => { mounted = false; };
-  }, []);
+  }, [searchQuery, selectedDomains, selectedLayers, selectedSensitivities, selectedSources, selectedTags, showCertifiedOnly, sortField, sortOrder, currentPage]);
 
 const [domains, setDomains] = useState<string[]>([]);
 const [layers, setLayers] = useState<string[]>([]);
@@ -135,40 +216,9 @@ const [tagOptions, setTagOptions] = useState<string[]>([]);
     setCurrentPage(1);
   };
 
-  const filteredAssets = useMemo(() => {
-    let result = allAssets.filter((asset) => {
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        if (
-          !asset.name.toLowerCase().includes(q) &&
-          !asset.cnName.toLowerCase().includes(q) &&
-          !asset.description.toLowerCase().includes(q) &&
-          !asset.owner.toLowerCase().includes(q)
-        ) return false;
-      }
-      if (selectedDomains.length && !selectedDomains.includes(asset.domain)) return false;
-      if (selectedLayers.length && !selectedLayers.includes(asset.layer)) return false;
-      if (selectedSensitivities.length && !selectedSensitivities.includes(asset.sensitivity)) return false;
-      if (selectedSources.length && !selectedSources.some((s) => asset.sourceType === s.toLowerCase())) return false;
-      if (selectedTags.length && !selectedTags.some((t) => asset.tags.includes(t))) return false;
-      if (showCertifiedOnly && !asset.certified) return false;
-      return true;
-    });
-
-    result.sort((a, b) => {
-      let cmp = 0;
-      if (sortField === 'name') cmp = a.name.localeCompare(b.name);
-      else if (sortField === 'updateTime') cmp = a.updateTime.localeCompare(b.updateTime);
-      else if (sortField === 'visitCount') cmp = a.visitCount - b.visitCount;
-      else if (sortField === 'qualityScore') cmp = a.qualityScore - b.qualityScore;
-      return sortOrder === 'asc' ? cmp : -cmp;
-    });
-
-    return result;
-  }, [allAssets, searchQuery, selectedDomains, selectedLayers, selectedSensitivities, selectedSources, selectedTags, showCertifiedOnly, sortField, sortOrder]);
-
-  const paginatedAssets = filteredAssets.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const totalPages = Math.ceil(filteredAssets.length / pageSize);
+  const filteredAssets = allAssets;
+  const paginatedAssets = allAssets;
+  const totalPages = serverTotalPages;
 
   const activeFilterCount = selectedDomains.length + selectedLayers.length + selectedSensitivities.length + selectedSources.length + selectedTags.length + (showCertifiedOnly ? 1 : 0);
 
@@ -181,7 +231,7 @@ const [tagOptions, setTagOptions] = useState<string[]>([]);
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-white">数据目录</h1>
             <span className="px-2.5 py-1 text-xs rounded-md bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-              {allAssets.length} 个资产
+              {totalAssets} 个资产
             </span>
           </div>
           <p className="text-sm text-slate-400 mt-1">浏览、搜索和发现平台所有数据资产</p>
@@ -355,7 +405,7 @@ const [tagOptions, setTagOptions] = useState<string[]>([]);
           {/* 工具'*/}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-slate-400">
-              共找到 <span className="text-white font-semibold">{filteredAssets.length}</span> 个资产
+              共找到 <span className="text-white font-semibold">{totalAssets}</span> 个资产
               {activeFilterCount > 0 && (
                 <span className="ml-2 text-xs text-cyan-400">（已应用 {activeFilterCount} 个筛选条件）</span>
               )}
@@ -580,7 +630,7 @@ const [tagOptions, setTagOptions] = useState<string[]>([]);
           )}
 
           {/* 空状态'*/}
-          {filteredAssets.length === 0 && (
+          {!loading && filteredAssets.length === 0 && (
             <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-900/40 border border-white/10 backdrop-blur-xl p-16 text-center">
               <Search className="mx-auto mb-4 h-12 w-12 text-slate-600" />
               <h3 className="text-lg text-white font-semibold mb-2">未找到匹配的资产</h3>
@@ -595,10 +645,10 @@ const [tagOptions, setTagOptions] = useState<string[]>([]);
           )}
 
           {/* 分页 */}
-          {filteredAssets.length > 0 && totalPages > 1 && (
+          {totalAssets > 0 && totalPages > 1 && (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
               <div className="text-xs text-slate-400">
-                {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredAssets.length)} 条，共 {filteredAssets.length} 条
+                {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalAssets)} 条，共 {totalAssets} 条
               </div>
               <div className="flex flex-wrap items-center gap-1">
                 <button
@@ -691,17 +741,30 @@ function AssetDetailDrawer({
   sourceIcons: Record<string, LucideIcon>;
 }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'schema' | 'lineage' | 'quality'>('overview');
+  const [detail, setDetail] = useState<AssetDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(true);
 
-  const fields = [
-    { name: 'order_id', type: 'BIGINT', comment: '订单ID', isPrimary: true, isSensitive: false },
-    { name: 'user_id', type: 'BIGINT', comment: '用户ID', isPrimary: false, isSensitive: true },
-    { name: 'product_id', type: 'BIGINT', comment: '商品ID', isPrimary: false, isSensitive: false },
-    { name: 'order_amount', type: 'DECIMAL(10,2)', comment: '订单金额', isPrimary: false, isSensitive: false },
-    { name: 'pay_status', type: 'VARCHAR(20)', comment: '支付状态', isPrimary: false, isSensitive: false },
-    { name: 'phone', type: 'VARCHAR(20)', comment: '手机', isPrimary: false, isSensitive: true },
-    { name: 'address', type: 'VARCHAR(500)', comment: '收货地址', isPrimary: false, isSensitive: true },
-    { name: 'create_time', type: 'TIMESTAMP', comment: '创建时间', isPrimary: false, isSensitive: false },
-  ];
+  useEffect(() => {
+    let mounted = true;
+    setDetailLoading(true);
+    setDetail(null);
+    fetchAssetCatalogDetail(asset.id)
+      .then((data) => {
+        if (mounted) setDetail(data as AssetDetail);
+      })
+      .catch(() => {
+        if (mounted) toast.error('资产详情加载失败');
+      })
+      .finally(() => {
+        if (mounted) setDetailLoading(false);
+      });
+    return () => { mounted = false; };
+  }, [asset.id]);
+
+  const fields = detail?.fields || [];
+  const upstreamLineage = detail?.lineage?.upstream || [];
+  const downstreamLineage = detail?.lineage?.downstream || [];
+  const qualityChecks = detail?.quality?.checks || [];
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -785,6 +848,12 @@ function AssetDetailDrawer({
 
         {/* 内容'*/}
         <div className="p-6">
+          {detailLoading && (
+            <div className="mb-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-4 py-3 text-xs text-cyan-200">
+              正在读取真实资产详情...
+            </div>
+          )}
+
           {activeTab === 'overview' && (
             <div className="space-y-5">
               {/* 描述 */}
@@ -821,6 +890,7 @@ function AssetDetailDrawer({
                   <InfoRow label="所属部门" value={asset.department} />
                   <InfoRow label="访问次数" value={asset.visitCount.toLocaleString()} />
                   <InfoRow label="更新时间" value={asset.updateTime} />
+                  <InfoRow label="详情来源" value={detail ? 'Go 后端资产快照' : '等待详情接口返回'} />
                 </div>
               </div>
 
@@ -844,6 +914,11 @@ function AssetDetailDrawer({
                 <h4 className="text-xs font-semibold text-slate-300">字段信息（共 {fields.length} 个）</h4>
                 <button className="text-xs text-cyan-400 hover:text-cyan-300">导出 DDL</button>
               </div>
+              {fields.length === 0 && !detailLoading ? (
+                <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5 text-center text-xs text-slate-500">
+                  当前资产暂无字段快照，请通过元数据采集刷新。
+                </div>
+              ) : (
               <div className="rounded-xl bg-white/[0.02] border border-white/5 overflow-hidden">
                 <table className="w-full text-xs">
                   <thead>
@@ -852,6 +927,7 @@ function AssetDetailDrawer({
                       <th className="text-left text-slate-400 font-medium px-3 py-2.5">类型</th>
                       <th className="text-left text-slate-400 font-medium px-3 py-2.5">注释</th>
                       <th className="text-left text-slate-400 font-medium px-3 py-2.5">标识</th>
+                      <th className="text-right text-slate-400 font-medium px-3 py-2.5">质量</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -864,13 +940,16 @@ function AssetDetailDrawer({
                           <div className="flex items-center gap-1">
                             {f.isPrimary && <span className="px-1.5 py-0.5 text-[9px] rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">主键</span>}
                             {f.isSensitive && <span className="px-1.5 py-0.5 text-[9px] rounded bg-red-500/15 text-red-300 border border-red-500/30">敏感</span>}
+                            {f.standard && <span className="px-1.5 py-0.5 text-[9px] rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">{f.standard}</span>}
                           </div>
                         </td>
+                        <td className="px-3 py-2.5 text-right text-slate-300">{typeof f.quality === 'number' ? f.quality.toFixed(1) : '-'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+              )}
             </div>
           )}
 
@@ -882,12 +961,14 @@ function AssetDetailDrawer({
                 <div className="grid grid-cols-3 gap-4 items-center">
                   {/* 上游 */}
                   <div className="space-y-2">
-                    <div className="text-[10px] text-slate-500 uppercase mb-2">上游 (3)</div>
-                    {['ods_user_info', 'ods_order_raw', 'dim_product'].map((u) => (
-                      <div key={u} className="px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300 font-mono">
-                        {u}
+                    <div className="text-[10px] text-slate-500 uppercase mb-2">上游 ({upstreamLineage.length})</div>
+                    {(upstreamLineage.length ? upstreamLineage : []).map((u) => (
+                      <div key={u.name} className="px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300 font-mono">
+                        {u.name}
+                        {typeof u.fields === 'number' && <span className="ml-1 text-[10px] text-blue-200/60">{u.fields} 字段</span>}
                       </div>
                     ))}
+                    {!detailLoading && upstreamLineage.length === 0 && <div className="text-xs text-slate-500">暂无上游快照</div>}
                   </div>
 
                   {/* 当前 */}
@@ -900,12 +981,14 @@ function AssetDetailDrawer({
 
                   {/* 下游 */}
                   <div className="space-y-2">
-                    <div className="text-[10px] text-slate-500 uppercase mb-2">下游 (2)</div>
-                    {['dws_user_daily', 'ads_sales_report'].map((d) => (
-                      <div key={d} className="px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs text-purple-300 font-mono">
-                        {d}
+                    <div className="text-[10px] text-slate-500 uppercase mb-2">下游 ({downstreamLineage.length})</div>
+                    {(downstreamLineage.length ? downstreamLineage : []).map((d) => (
+                      <div key={d.name} className="px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs text-purple-300 font-mono">
+                        {d.name}
+                        {typeof d.fields === 'number' && <span className="ml-1 text-[10px] text-purple-200/60">{d.fields} 字段</span>}
                       </div>
                     ))}
+                    {!detailLoading && downstreamLineage.length === 0 && <div className="text-xs text-slate-500">暂无下游快照</div>}
                   </div>
                 </div>
                 <button className="w-full mt-6 px-4 py-2 text-xs rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/25 transition">
@@ -919,32 +1002,32 @@ function AssetDetailDrawer({
             <div className="space-y-4">
               <h4 className="text-xs font-semibold text-slate-300">质量监控</h4>
               <div className="grid grid-cols-2 gap-3">
-                {[
-                  { name: '完整', score: 98, color: 'emerald' },
-                  { name: '准确', score: 96, color: 'cyan' },
-                  { name: '一致', score: 94, color: 'blue' },
-                  { name: '及时', score: 99, color: 'purple' },
-                  { name: '唯一', score: 100, color: 'pink' },
-                  { name: '有效', score: 92, color: 'amber' },
-                ].map((q) => (
+                {(qualityChecks.length ? qualityChecks : [
+                  { name: '综合质量', score: asset.qualityScore, status: detail?.quality?.status || '快照' },
+                  { name: '字段完整', score: Math.min(100, asset.qualityScore + 1), status: detail?.quality?.status || '快照' },
+                ]).map((q) => (
                   <div key={q.name} className="rounded-xl bg-white/[0.02] border border-white/5 p-3">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-slate-400">{q.name}</span>
-                      <span className={`text-sm font-bold text-${q.color}-400`}>{q.score}</span>
+                      <span className={qualityScoreClass(q.score)}>{q.score}</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
-                      <div className={`h-full bg-gradient-to-r from-${q.color}-500 to-${q.color}-400`} style={{ width: `${q.score}%` }} />
+                      <div className={qualityBarClass(q.score)} style={{ width: `${Math.max(0, Math.min(100, q.score))}%` }} />
                     </div>
+                    {q.status && <div className="mt-2 text-[10px] text-slate-500">{q.status}</div>}
                   </div>
                 ))}
               </div>
               <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/20 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-emerald-400">✓</span>
-                  <span className="text-sm font-semibold text-white">最近质量检查通过</span>
+                  <span className="text-sm font-semibold text-white">最近质量检查{detail?.quality?.status || '快照'}</span>
                 </div>
-                <div className="text-xs text-slate-400">最后检查时间：2024-01-15 06:30:00</div>
-                <div className="text-xs text-slate-400 mt-1">已配置 12 条质量规则，运行正常</div>
+                <div className="text-xs text-slate-400">最后检查时间：{detail?.quality?.lastCheckTime || asset.updateTime}</div>
+                <div className="text-xs text-slate-400 mt-1">
+                  已配置 {detail?.quality?.ruleCount ?? Math.max(4, Math.round(asset.fieldCount / 4))} 条质量规则，
+                  当前问题 {detail?.quality?.issueCount ?? 0} 个
+                </div>
               </div>
             </div>
           )}
@@ -970,6 +1053,20 @@ function MetricCard({ label, value, sub, color }: { label: string; value: string
       </div>
     </div>
   );
+}
+
+function qualityScoreClass(score: number) {
+  if (score >= 95) return 'text-sm font-bold text-emerald-400';
+  if (score >= 90) return 'text-sm font-bold text-cyan-400';
+  if (score >= 85) return 'text-sm font-bold text-amber-400';
+  return 'text-sm font-bold text-red-400';
+}
+
+function qualityBarClass(score: number) {
+  if (score >= 95) return 'h-full bg-gradient-to-r from-emerald-500 to-emerald-400';
+  if (score >= 90) return 'h-full bg-gradient-to-r from-cyan-500 to-cyan-400';
+  if (score >= 85) return 'h-full bg-gradient-to-r from-amber-500 to-amber-400';
+  return 'h-full bg-gradient-to-r from-red-500 to-red-400';
 }
 
 function InfoRow({ label, value, children }: { label: string; value?: string; children?: React.ReactNode }) {

@@ -15,6 +15,7 @@ import type {
   AiFeedbackData, AiPreference, AiContextPreview, AiTokenUsageOverview,
   AiObservabilityOverview, AiToolInfo, CreateAiConversationData, PreviewAiContextData, UpdateAiConversationData,
   AiAssistantResponse,
+  IamPermission,
 } from '../types/api';
 
 // Use relative path so MSW can correctly intercept regardless of the preview environment or port
@@ -308,7 +309,34 @@ export const fetchAssetGrowthTrend = () => fetchJson('/assets/growth-trend');
 export const fetchAssetHealthMetrics = () => fetchJson('/assets/health-metrics');
 export const fetchAssetHotAssets = () => fetchJson('/assets/hot-assets');
 export const fetchAssetPendingItems = () => fetchJson('/assets/pending-items');
-export const fetchAssetCatalog = () => fetchJson('/assets/catalog');
+export const fetchAssetCatalog = (params?: {
+  keyword?: string;
+  domains?: string[];
+  layers?: string[];
+  sensitivities?: string[];
+  sources?: string[];
+  tags?: string[];
+  certified?: boolean;
+  sortField?: string;
+  sortOrder?: string;
+  page?: number;
+  pageSize?: number;
+}) => {
+  const search = new URLSearchParams();
+  if (params?.keyword) search.set('keyword', params.keyword);
+  params?.domains?.forEach((value) => search.append('domain', value));
+  params?.layers?.forEach((value) => search.append('layer', value));
+  params?.sensitivities?.forEach((value) => search.append('sensitivity', value));
+  params?.sources?.forEach((value) => search.append('source', value));
+  params?.tags?.forEach((value) => search.append('tag', value));
+  if (params?.certified) search.set('certified', 'true');
+  if (params?.sortField) search.set('sortField', params.sortField);
+  if (params?.sortOrder) search.set('sortOrder', params.sortOrder);
+  if (params?.page) search.set('page', String(params.page));
+  if (params?.pageSize) search.set('pageSize', String(params.pageSize));
+  const query = search.toString();
+  return fetchJson(query ? `/assets/catalog?${query}` : '/assets/catalog');
+};
 export const fetchAssetCatalogDetail = (id: string) => fetchJson(`/assets/catalog/${id}/detail`);
 export const fetchAssetRegisterOptions = () => fetchJson('/assets/register-options');
 export const registerAssetTables = (data: RegisterAssetTablesData) => fetchJson('/assets/register', {
@@ -583,6 +611,13 @@ export const updateTaskOpsAlertStatus = (id: string, status: string) => fetchJso
 export const fetchTaskOpsQueues = () => fetchJson('/development/task-ops-queues');
 
 // System Management
+export const fetchIamPermissions = () => fetchJson('/iam/permissions') as Promise<IamPermission[]>;
+export const fetchIamRolePermissions = (roleId: string) => fetchJson(`/iam/roles/${roleId}/permissions`) as Promise<string[]>;
+export const updateIamRolePermissions = (roleId: string, permissions: string[]) => fetchJson(`/iam/roles/${roleId}/permissions`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ permissions })
+}) as Promise<string[]>;
 export const fetchUserManageOverview = () => fetchJson('/system/user-overview');
 export const fetchSystemUsers = (params?: { keyword?: string; status?: string }) => {
   const search = new URLSearchParams();

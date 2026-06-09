@@ -38,6 +38,15 @@ AI 生产加固相关变量可按本地成本预算调整：
 - `DATAGOV_AI_GLOBAL_RATE_LIMIT_PER_MINUTE`：全局与模型维度每分钟请求上限。
 - `DATAGOV_AI_REDIS_KEY_PREFIX`：AI 限流 Redis key 前缀，建议与平台 Redis 前缀隔离。
 
+前端真实接口开关默认走 Go 后端；如需临时回退 mock，可在 `.env.local` 将对应项设为 `false`：
+
+- `VITE_REAL_ASSETS`：资产总览、业务域、目录、注册、地图和血缘摘要。
+- `VITE_REAL_METADATA_DATA_SOURCES`：数据源管理。
+- `VITE_REAL_DEVELOPMENT_SCRIPTS`：脚本开发。
+- `VITE_REAL_AI_ASSISTANT`：AI 助手。
+- `VITE_REAL_APPROVALS`：审批中心。
+- `VITE_REAL_SYSTEM_MANAGEMENT`：系统管理。
+
 不要把真实 token、数据库密码、SSH 密码或完整连接串写入文档、截图、测试报告或提交记录。
 
 ## 3. 启动后端
@@ -93,9 +102,13 @@ Vite 会把以下真实后端接口代理到 `VITE_BACKEND_TARGET`：
 - `/api/v1/auth`
 - `/api/v1/health`
 - `/api/v1/metadata/data-sources`
+- `/api/v1/assets`
+- `/api/v1/business-domains`
 - `/api/v1/development/scripts`
 - `/api/v1/ai`
 - `/api/v1/approvals`
+- `/api/v1/iam`
+- `/api/v1/system`
 
 其他尚未退出 mock 的页面继续由 MSW 兜底。
 
@@ -119,6 +132,9 @@ Vite 会把以下真实后端接口代理到 `VITE_BACKEND_TARGET`：
 - `POST /auth/login`
 - `GET /auth/me`
 - `GET /metadata/data-sources`
+- `GET /business-domains`
+- `GET /assets/catalog`
+- `GET /assets/lineage`
 - `GET /development/scripts`
 - `GET /ai/capabilities`
 - `GET /ai/token-usage`

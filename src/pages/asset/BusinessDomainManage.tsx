@@ -351,7 +351,7 @@ export default function BusinessDomainManage() {
   // navigateTo imported from utils/navigation
 
   if (error) {
-    return <ErrorFallback onRetry={loadData} />;
+    return <ErrorFallback onRetry={loadDomains} />;
   }
   if (loading) {
     return (

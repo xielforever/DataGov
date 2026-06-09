@@ -33,11 +33,23 @@
 | `/api/v1/ai/*` | `Passthrough` | `VITE_REAL_AI_ASSISTANT` | AI 助手主链路，包含能力、会话、消息、偏好、Token、工具和观测接口 |
 | `GET /api/v1/approvals` | `Passthrough` | `VITE_REAL_APPROVALS` | 审批列表，默认真实后端 |
 | `POST /api/v1/approvals/{id}/process` | `Passthrough` | `VITE_REAL_APPROVALS` | 审批处理，默认真实后端 |
+| `GET /api/v1/iam/permissions` | `Real` | 无 | 系统管理权限点列表 |
+| `GET /api/v1/iam/roles/{id}/permissions` | `Real` | 无 | 角色权限读取 |
+| `PUT /api/v1/iam/roles/{id}/permissions` | `Real` | 无 | 角色权限更新 |
+| `/api/v1/system/users*` | `Passthrough` | `VITE_REAL_SYSTEM_MANAGEMENT` | 用户管理真实后端主链路 |
+| `/api/v1/system/roles*` | `Passthrough` | `VITE_REAL_SYSTEM_MANAGEMENT` | 角色管理真实后端主链路 |
+| `/api/v1/system/org*` | `Passthrough` | `VITE_REAL_SYSTEM_MANAGEMENT` | 组织管理真实后端主链路 |
+| `/api/v1/business-domains*` | `Passthrough` | `VITE_REAL_ASSETS` | 业务域管理真实后端主链路 |
+| `/api/v1/assets/core-metrics` | `Passthrough` | `VITE_REAL_ASSETS` | 资产总览指标 |
+| `/api/v1/assets/catalog*` | `Passthrough` | `VITE_REAL_ASSETS` | 资产目录与资产详情，目录支持后端筛选、排序和分页 |
+| `/api/v1/assets/register*` | `Passthrough` | `VITE_REAL_ASSETS` | 资产注册选项与目录快照更新 |
+| `/api/v1/assets/lineage` | `Passthrough` | `VITE_REAL_ASSETS` | 平台库血缘摘要，不直连外部源 |
+| `/api/v1/assets/map` | `Passthrough` | `VITE_REAL_ASSETS` | 数据地图资产快照 |
+| `/api/v1/assets/*` | `Passthrough` | `VITE_REAL_ASSETS` | 资产分布、健康度、热门资产、待办项等读接口 |
 
 ## 仍为 Mock-only 的大类
 
 - Dashboard 非关键统计
-- 数据资产目录、地图、血缘展示
 - 元数据采集、元数据模型、元数据查询
 - 数据标准、质量、安全、服务、系统管理多数页面
 - 数据同步、实时计算、任务编排、任务调度、任务运维

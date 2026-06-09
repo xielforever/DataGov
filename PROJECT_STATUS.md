@@ -114,6 +114,13 @@ DataGov 是一个商业化数据治理与数据开发平台的纯前端原型，
 - 完成 Sprint 3 核心 Mock 退出推进：新增 endpoint 状态矩阵，审批中心接入真实 Go 后端、`approval_requests` migration、审批列表/处理接口和 MSW passthrough；核心 smoke 已覆盖审批列表。
 - 完成 Sprint 4 AI 生产加固：新增 AI Prompt 模板版本表、配额策略、限流事件、Redis 用户/全局/模型分钟级限流、日 Token 配额、工具权限过滤、AI 观测接口和 MiniMax E2E 脚本；真实 MiniMax E2E 已通过且不打印模型正文。
 - 完成 Sprint 5 交付门禁基础：新增 Playwright 核心路径 `npm run e2e:core`、GitHub Actions CI（前端构建 + Go test）、扩展 API smoke 覆盖 AI Token/工具/观测与审批；本地已通过 Go test、Vite build、API smoke、MiniMax E2E 和 Playwright 核心路径。
+- 启动下一阶段真实后端扩展：新增 `docs/next-stage-real-backend-expansion-plan.md`，明确数据代理层本阶段非必做，仅保留 Connector Gateway 契约和 TODO；优先推进 IAM 管理运营闭环。
+- 完成 IAM 管理闭环首批编码：新增 `000006_iam_system_management` 迁移、权限/角色权限 API、用户/角色/组织管理真实后端接口，系统管理三页默认 passthrough 到 Go 后端；扩展 smoke 和 Playwright 核心路径覆盖用户、角色、组织页。
+- 补齐角色权限运营体验：角色管理页接入真实 `GET/PUT /api/v1/iam/roles/{id}/permissions`，按模块展示可编辑权限矩阵；后端保护内置管理员角色，避免停用或移除 `platform:*` 导致锁定。
+- 完成资产与元数据真实后端首批编码：新增 `000007_asset_foundation` 迁移、`assets` Go 模块、业务域/资产总览/资产目录/注册选项/数据地图/血缘摘要接口，前端 `/api/v1/assets*` 与 `/api/v1/business-domains*` 默认 passthrough 到 Go 后端。
+- 收口资产目录运营体验：`/api/v1/assets/catalog` 支持后端关键词、业务域、分层、敏感级别、来源、标签、认证状态、排序与分页；数据目录页改为后端分页渲染，资产详情抽屉真实读取字段、血缘和质量快照。
+- 明确 Connector Gateway 边界：新增 `docs/connector-gateway-contract.md`，DataGov 只保存注册、采集任务、资产/字段/血缘快照和审计结果，外部源连接测试、采集和解析由独立数据代理项目承载。
+- 扩展验收门禁：API smoke 覆盖业务域、资产目录、资产详情和血缘摘要；Playwright 核心路径覆盖资产总览、数据目录和数据血缘；本轮已通过 Go test、Vite build、migration check、API smoke 和 Playwright core。
 - 新增生产级 AI Copilot Goal 文档：明确会话管理、Token 优化、用户偏好/行为学习、页面上下文、只读工具、安全审计、配额限流与 MSW fallback 的分阶段开发目标，详见 `docs/ai-assistant-production-goal.md`。
 - 补充 AI Copilot 最终验收策略：优先使用真实 MiniMax Anthropic-compatible `MiniMax-M3` 完成功能 E2E，真实 token 仅允许作为本地 secret 使用；供应商、网络或额度异常时记录原因并降级 MSW 兜底测试。
 - 完成 AI Copilot 生产级主链路编码：新增会话历史、搜索、收藏/归档、上下文预览、Token 用量、用户偏好、反馈、行为事件、只读工具审计和 MSW fallback；后端扩展 AI 持久化表与 `/api/v1/ai/conversations/*` 等接口。

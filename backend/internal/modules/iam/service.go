@@ -22,6 +22,7 @@ var (
 	ErrInvalidCredentials = errors.New("invalid username or password")
 	ErrUnauthorized       = errors.New("unauthorized")
 	ErrInactiveUser       = errors.New("inactive user")
+	ErrProtectedRole      = errors.New("protected role cannot be modified")
 )
 
 const PermissionPlatformAll = "platform:*"
@@ -96,6 +97,10 @@ func (service *Service) Bootstrap(ctx context.Context) error {
 		{"perm-metadata-ds-test", "metadata:data_sources:test", "测试数据源", "执行数据源连通性测试"},
 		{"perm-metadata-ds-sync", "metadata:data_sources:sync", "同步数据源", "触发数据源元数据同步"},
 		{"perm-metadata-ds-status", "metadata:data_sources:status", "变更数据源状态", "启停或标记数据源状态"},
+		{"perm-assets-catalog-read", "assets:catalog:read", "查看资产目录", "读取资产总览、数据目录、地图和血缘摘要"},
+		{"perm-assets-catalog-write", "assets:catalog:write", "维护资产目录", "注册资产、维护资产目录和字段快照"},
+		{"perm-assets-domains-read", "assets:domains:read", "查看业务域", "读取业务域树和业务域选项"},
+		{"perm-assets-domains-write", "assets:domains:write", "维护业务域", "创建、编辑和启停业务域"},
 		{"perm-dev-scripts", "development:scripts:*", "脚本开发", "管理脚本目录、版本和运行"},
 		{"perm-dev-scripts-read", "development:scripts:read", "查看脚本", "查看脚本树、脚本内容和版本"},
 		{"perm-dev-scripts-write", "development:scripts:write", "编辑脚本", "创建和保存脚本"},
@@ -130,6 +135,50 @@ func (service *Service) Bootstrap(ctx context.Context) error {
 			ON CONFLICT DO NOTHING
 		`, permission.ID); err != nil {
 			return err
+		}
+	}
+
+	defaultRolePermissions := map[string][]string{
+		"role-data-developer": {
+			"auth:me",
+			"development:scripts:read",
+			"development:scripts:write",
+			"development:scripts:run",
+			"development:scripts:publish",
+			"metadata:data_sources:read",
+			"assets:catalog:read",
+			"assets:domains:read",
+			"ai:assistant:use",
+			"ai:tools:read",
+			"approvals:requests:read",
+		},
+		"role-data-steward": {
+			"auth:me",
+			"metadata:data_sources:read",
+			"metadata:data_sources:test",
+			"metadata:data_sources:sync",
+			"metadata:lineage:read",
+			"assets:catalog:read",
+			"assets:catalog:write",
+			"assets:domains:read",
+			"assets:domains:write",
+			"standards:read",
+			"quality:rules:read",
+			"ai:assistant:use",
+			"ai:tools:read",
+			"approvals:requests:read",
+			"approvals:requests:process",
+		},
+	}
+	for roleID, permissionCodes := range defaultRolePermissions {
+		for _, permissionCode := range permissionCodes {
+			if _, err := service.db.Exec(ctx, `
+				INSERT INTO iam_role_permissions (role_id, permission_id)
+				SELECT $1, id FROM iam_permissions WHERE code = $2
+				ON CONFLICT DO NOTHING
+			`, roleID, permissionCode); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -318,6 +367,7 @@ func (service *Service) profileByUserID(ctx context.Context, userID string) (Use
 		FROM iam_roles r
 		JOIN iam_user_roles ur ON ur.role_id = r.id
 		WHERE ur.user_id = $1
+			AND r.status = 'enabled'
 		ORDER BY r.code
 	`, userID)
 	if err != nil {
@@ -330,7 +380,9 @@ func (service *Service) profileByUserID(ctx context.Context, userID string) (Use
 		FROM iam_permissions p
 		JOIN iam_role_permissions rp ON rp.permission_id = p.id
 		JOIN iam_user_roles ur ON ur.role_id = rp.role_id
+		JOIN iam_roles r ON r.id = ur.role_id
 		WHERE ur.user_id = $1
+			AND r.status = 'enabled'
 		ORDER BY p.code
 	`, userID)
 	if err != nil {

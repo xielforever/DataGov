@@ -34,6 +34,14 @@ export default defineConfig(({ mode }) => {
           target: backendTarget,
           changeOrigin: true,
         },
+        "/api/v1/assets": {
+          target: backendTarget,
+          changeOrigin: true,
+        },
+        "/api/v1/business-domains": {
+          target: backendTarget,
+          changeOrigin: true,
+        },
         "/api/v1/development/scripts": {
           target: backendTarget,
           changeOrigin: true,
@@ -43,6 +51,14 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
         },
         "/api/v1/approvals": {
+          target: backendTarget,
+          changeOrigin: true,
+        },
+        "/api/v1/iam": {
+          target: backendTarget,
+          changeOrigin: true,
+        },
+        "/api/v1/system": {
           target: backendTarget,
           changeOrigin: true,
         },

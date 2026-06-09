@@ -88,6 +88,27 @@ Assert-Success -Name "auth me" -Response $me
 $dataSources = Invoke-Api -Method "GET" -Path "/metadata/data-sources" -Token $token
 Assert-Success -Name "metadata data sources" -Response $dataSources
 
+$businessDomains = Invoke-Api -Method "GET" -Path "/business-domains" -Token $token
+Assert-Success -Name "business domains" -Response $businessDomains
+
+$assetCatalog = Invoke-Api -Method "GET" -Path "/assets/catalog" -Token $token
+Assert-Success -Name "asset catalog" -Response $assetCatalog
+
+$assetCatalogPage = Invoke-Api -Method "GET" -Path "/assets/catalog?page=1&pageSize=5&keyword=order&sortField=visitCount&sortOrder=desc" -Token $token
+Assert-Success -Name "asset catalog pagination" -Response $assetCatalogPage
+if ($assetCatalogPage.data.items.Count -eq 0) {
+  throw "asset catalog pagination did not return any items"
+}
+
+if ($assetCatalog.data.Count -gt 0) {
+  $assetId = $assetCatalog.data[0].id
+  $assetDetail = Invoke-Api -Method "GET" -Path "/assets/catalog/$assetId/detail" -Token $token
+  Assert-Success -Name "asset catalog detail" -Response $assetDetail
+}
+
+$assetLineage = Invoke-Api -Method "GET" -Path "/assets/lineage?center=dwd_order_detail" -Token $token
+Assert-Success -Name "asset lineage" -Response $assetLineage
+
 $scripts = Invoke-Api -Method "GET" -Path "/development/scripts" -Token $token
 Assert-Success -Name "development scripts" -Response $scripts
 
@@ -105,5 +126,27 @@ Assert-Success -Name "ai observability" -Response $aiObservability
 
 $approvals = Invoke-Api -Method "GET" -Path "/approvals" -Token $token
 Assert-Success -Name "approvals" -Response $approvals
+
+$permissions = Invoke-Api -Method "GET" -Path "/iam/permissions" -Token $token
+Assert-Success -Name "iam permissions" -Response $permissions
+
+$roles = Invoke-Api -Method "GET" -Path "/system/roles" -Token $token
+Assert-Success -Name "system roles" -Response $roles
+
+if ($roles.data.Count -gt 0) {
+  $roleId = $roles.data[0].id
+  $rolePermissions = Invoke-Api -Method "GET" -Path "/iam/roles/$roleId/permissions" -Token $token
+  Assert-Success -Name "iam role permissions" -Response $rolePermissions
+  $rolePermissionUpdate = Invoke-Api -Method "PUT" -Path "/iam/roles/$roleId/permissions" -Token $token -Body @{
+    permissions = @($rolePermissions.data)
+  }
+  Assert-Success -Name "iam role permissions update" -Response $rolePermissionUpdate
+}
+
+$users = Invoke-Api -Method "GET" -Path "/system/users" -Token $token
+Assert-Success -Name "system users" -Response $users
+
+$orgs = Invoke-Api -Method "GET" -Path "/system/orgs" -Token $token
+Assert-Success -Name "system orgs" -Response $orgs
 
 Write-Output "DataGov API smoke passed."

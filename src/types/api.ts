@@ -79,8 +79,18 @@ export interface UpdateBusinessDomainData {
 
 export interface RegisterAssetTablesData {
   dataSourceId: string;
-  tables: Array<{ name: string; database: string; schema?: string }>;
+  databaseId?: string | null;
+  tableIds?: string[];
+  tables?: Array<{ id?: string; name: string; database: string; schema?: string }>;
+  assetName?: string;
+  businessDomain?: string;
   domain?: string;
+  dataLayer?: string;
+  owner?: string;
+  department?: string;
+  description?: string;
+  sensitivity?: string;
+  tags?: string[];
 }
 
 export interface CreateMetadataDataSourceData {
@@ -191,6 +201,14 @@ export interface UpdateRoleData {
   description?: string;
   permissionIds?: string[];
   status?: string;
+}
+
+export interface IamPermission {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  module: string;
 }
 
 export interface CreateOrgData {
