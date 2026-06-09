@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"datagov/backend/internal/platform/database"
 	"datagov/backend/internal/platform/httpx"
 )
 
@@ -12,6 +13,7 @@ type healthDependency struct {
 	Status    string `json:"status"`
 	LatencyMs int64  `json:"latencyMs"`
 	Message   string `json:"message,omitempty"`
+	Details   any    `json:"details,omitempty"`
 }
 
 type healthResponse struct {
@@ -40,9 +42,10 @@ func (server *Server) health(r *http.Request) healthResponse {
 	redisStatus, redisLatency, redisMessage := checkWithTimeout(r.Context(), 3*time.Second, func(ctx context.Context) error {
 		return server.deps.Redis.Ping(ctx).Err()
 	})
+	migrationStatus, migrationLatency, migrationMessage, migrationDetails := server.checkMigrations(r.Context())
 
 	status := "ok"
-	if pgStatus != "ok" || redisStatus != "ok" {
+	if pgStatus != "ok" || redisStatus != "ok" || migrationStatus != "ok" {
 		status = "degraded"
 	}
 
@@ -62,6 +65,28 @@ func (server *Server) health(r *http.Request) healthResponse {
 				LatencyMs: redisLatency,
 				Message:   redisMessage,
 			},
+			"migrations": {
+				Status:    migrationStatus,
+				LatencyMs: migrationLatency,
+				Message:   migrationMessage,
+				Details:   migrationDetails,
+			},
 		},
 	}
+}
+
+func (server *Server) checkMigrations(ctx context.Context) (string, int64, string, any) {
+	checkCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	startedAt := time.Now()
+	status, err := database.CheckMigrationStatus(checkCtx, server.deps.DB, server.deps.Config.Postgres.MigrationsDir)
+	latencyMs := time.Since(startedAt).Milliseconds()
+	if err != nil {
+		return "error", latencyMs, err.Error(), status
+	}
+	if status.Status == "pending" {
+		return "pending", latencyMs, status.Message, status
+	}
+	return status.Status, latencyMs, status.Message, status
 }

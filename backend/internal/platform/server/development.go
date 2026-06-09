@@ -9,7 +9,7 @@ import (
 )
 
 func (server *Server) handleListScripts(w http.ResponseWriter, r *http.Request) {
-	if !server.requireAuth(w, r) {
+	if _, ok := server.requirePermission(w, r, "development:scripts:read"); !ok {
 		return
 	}
 	items, err := server.development.ListScripts(r.Context())
@@ -21,7 +21,7 @@ func (server *Server) handleListScripts(w http.ResponseWriter, r *http.Request) 
 }
 
 func (server *Server) handleCreateScript(w http.ResponseWriter, r *http.Request) {
-	if !server.requireAuth(w, r) {
+	if _, ok := server.requirePermission(w, r, "development:scripts:write"); !ok {
 		return
 	}
 
@@ -40,7 +40,7 @@ func (server *Server) handleCreateScript(w http.ResponseWriter, r *http.Request)
 }
 
 func (server *Server) handleUpdateScript(w http.ResponseWriter, r *http.Request) {
-	if !server.requireAuth(w, r) {
+	if _, ok := server.requirePermission(w, r, "development:scripts:write"); !ok {
 		return
 	}
 
@@ -59,7 +59,7 @@ func (server *Server) handleUpdateScript(w http.ResponseWriter, r *http.Request)
 }
 
 func (server *Server) handleRunScript(w http.ResponseWriter, r *http.Request) {
-	if !server.requireAuth(w, r) {
+	if _, ok := server.requirePermission(w, r, "development:scripts:run"); !ok {
 		return
 	}
 
@@ -72,7 +72,7 @@ func (server *Server) handleRunScript(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) handlePublishScript(w http.ResponseWriter, r *http.Request) {
-	if !server.requireAuth(w, r) {
+	if _, ok := server.requirePermission(w, r, "development:scripts:publish"); !ok {
 		return
 	}
 
@@ -85,7 +85,7 @@ func (server *Server) handlePublishScript(w http.ResponseWriter, r *http.Request
 }
 
 func (server *Server) handleListScriptVersions(w http.ResponseWriter, r *http.Request) {
-	if !server.requireAuth(w, r) {
+	if _, ok := server.requirePermission(w, r, "development:scripts:read"); !ok {
 		return
 	}
 

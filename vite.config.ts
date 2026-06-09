@@ -42,6 +42,10 @@ export default defineConfig(({ mode }) => {
           target: backendTarget,
           changeOrigin: true,
         },
+        "/api/v1/approvals": {
+          target: backendTarget,
+          changeOrigin: true,
+        },
       },
     },
   };

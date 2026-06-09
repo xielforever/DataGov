@@ -48,6 +48,27 @@ func (server *Server) requireAuth(w http.ResponseWriter, r *http.Request) bool {
 	return ok
 }
 
+func (server *Server) requirePermission(w http.ResponseWriter, r *http.Request, permission string) (iam.UserProfile, bool) {
+	profile, ok := server.currentUser(w, r)
+	if !ok {
+		return iam.UserProfile{}, false
+	}
+	if iam.HasPermission(profile, permission) {
+		return profile, true
+	}
+
+	meta := iam.RequestMeta{
+		IPAddress: httpx.ClientIP(r),
+		UserAgent: r.UserAgent(),
+	}
+	if err := server.iam.RecordAccessDenied(r.Context(), profile, permission, meta, "api", r.URL.Path); err != nil {
+		server.deps.Logger.Warn("record access denied event failed", "error", err, "permission", permission)
+	}
+
+	httpx.Error(w, http.StatusForbidden, 403, "无权访问当前能力")
+	return iam.UserProfile{}, false
+}
+
 func (server *Server) currentUser(w http.ResponseWriter, r *http.Request) (iam.UserProfile, bool) {
 	profile, err := server.iam.CurrentUser(r.Context(), httpx.BearerToken(r))
 	if err != nil {

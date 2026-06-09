@@ -9,7 +9,7 @@ import (
 )
 
 func (server *Server) handleListDataSources(w http.ResponseWriter, r *http.Request) {
-	if !server.requireAuth(w, r) {
+	if _, ok := server.requirePermission(w, r, "metadata:data_sources:read"); !ok {
 		return
 	}
 	items, err := server.metadata.ListDataSources(r.Context())
@@ -21,7 +21,7 @@ func (server *Server) handleListDataSources(w http.ResponseWriter, r *http.Reque
 }
 
 func (server *Server) handleCreateDataSource(w http.ResponseWriter, r *http.Request) {
-	if !server.requireAuth(w, r) {
+	if _, ok := server.requirePermission(w, r, "metadata:data_sources:create"); !ok {
 		return
 	}
 
@@ -40,7 +40,7 @@ func (server *Server) handleCreateDataSource(w http.ResponseWriter, r *http.Requ
 }
 
 func (server *Server) handleTestDataSource(w http.ResponseWriter, r *http.Request) {
-	if !server.requireAuth(w, r) {
+	if _, ok := server.requirePermission(w, r, "metadata:data_sources:test"); !ok {
 		return
 	}
 
@@ -53,7 +53,7 @@ func (server *Server) handleTestDataSource(w http.ResponseWriter, r *http.Reques
 }
 
 func (server *Server) handleSyncDataSource(w http.ResponseWriter, r *http.Request) {
-	if !server.requireAuth(w, r) {
+	if _, ok := server.requirePermission(w, r, "metadata:data_sources:sync"); !ok {
 		return
 	}
 
@@ -66,7 +66,7 @@ func (server *Server) handleSyncDataSource(w http.ResponseWriter, r *http.Reques
 }
 
 func (server *Server) handleUpdateDataSourceStatus(w http.ResponseWriter, r *http.Request) {
-	if !server.requireAuth(w, r) {
+	if _, ok := server.requirePermission(w, r, "metadata:data_sources:status"); !ok {
 		return
 	}
 

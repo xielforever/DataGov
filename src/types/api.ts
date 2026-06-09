@@ -395,6 +395,19 @@ export interface AiTokenUsageOverview {
   windowDescription: string;
 }
 
+export interface AiObservabilityOverview {
+  model: string;
+  windowDescription: string;
+  requestCount: number;
+  successCount: number;
+  failureCount: number;
+  rateLimitedCount: number;
+  averageLatencyMs: number;
+  totalTokens: number;
+  toolCallCount: number;
+  redactionHits: number;
+}
+
 export interface AiToolCall {
   id?: string;
   toolName: string;

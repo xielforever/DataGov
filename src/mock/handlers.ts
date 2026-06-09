@@ -160,6 +160,7 @@ import {
   mockAiConversations,
   mockAiMessages,
   mockAiPreference,
+  mockAiObservability,
   mockAiTokenUsage,
   mockAiTools,
 } from './data';
@@ -524,6 +525,10 @@ export const handlers = [
   http.get('/api/v1/ai/tools', () => {
     if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
     return HttpResponse.json({ code: 0, data: mockAiTools });
+  }),
+  http.get('/api/v1/ai/observability', () => {
+    if (import.meta.env.VITE_REAL_AI_ASSISTANT !== 'false') return passthrough();
+    return HttpResponse.json({ code: 0, data: mockAiObservability });
   }),
 
   // Home endpoints
@@ -2322,9 +2327,11 @@ export const handlers = [
   
   // Approvals endpoints
   http.get('/api/v1/approvals', () => {
+    if (import.meta.env.VITE_REAL_APPROVALS !== 'false') return passthrough();
     return HttpResponse.json({ code: 0, data: mockApprovals });
   }),
   http.post('/api/v1/approvals/:id/process', async ({ request, params }) => {
+    if (import.meta.env.VITE_REAL_APPROVALS !== 'false') return passthrough();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const { action } = await request.json() as any; // 'approve' | 'reject'
     const index = mockApprovals.findIndex(a => a.id === id);

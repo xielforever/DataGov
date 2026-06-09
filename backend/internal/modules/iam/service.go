@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"strings"
@@ -22,6 +23,8 @@ var (
 	ErrUnauthorized       = errors.New("unauthorized")
 	ErrInactiveUser       = errors.New("inactive user")
 )
+
+const PermissionPlatformAll = "platform:*"
 
 type Service struct {
 	db     *pgxpool.Pool
@@ -85,11 +88,28 @@ func (service *Service) Bootstrap(ctx context.Context) error {
 		Name        string
 		Description string
 	}{
-		{"perm-platform-all", "platform:*", "平台全部权限", "首期管理员通配权限"},
+		{"perm-platform-all", PermissionPlatformAll, "平台全部权限", "首期管理员通配权限"},
 		{"perm-auth-me", "auth:me", "查看当前用户", "读取当前登录用户信息"},
 		{"perm-metadata-ds", "metadata:data_sources:*", "数据源管理", "管理数据源接入和同步"},
+		{"perm-metadata-ds-read", "metadata:data_sources:read", "查看数据源", "查看数据源列表和详情"},
+		{"perm-metadata-ds-create", "metadata:data_sources:create", "创建数据源", "新增数据源注册信息"},
+		{"perm-metadata-ds-test", "metadata:data_sources:test", "测试数据源", "执行数据源连通性测试"},
+		{"perm-metadata-ds-sync", "metadata:data_sources:sync", "同步数据源", "触发数据源元数据同步"},
+		{"perm-metadata-ds-status", "metadata:data_sources:status", "变更数据源状态", "启停或标记数据源状态"},
 		{"perm-dev-scripts", "development:scripts:*", "脚本开发", "管理脚本目录、版本和运行"},
+		{"perm-dev-scripts-read", "development:scripts:read", "查看脚本", "查看脚本树、脚本内容和版本"},
+		{"perm-dev-scripts-write", "development:scripts:write", "编辑脚本", "创建和保存脚本"},
+		{"perm-dev-scripts-run", "development:scripts:run", "运行脚本", "创建脚本运行记录"},
+		{"perm-dev-scripts-publish", "development:scripts:publish", "发布脚本", "提交脚本发布申请或占位流程"},
 		{"perm-ai-use", "ai:assistant:use", "AI 助手", "使用全局 AI 助手"},
+		{"perm-ai-tools-read", "ai:tools:read", "查看 AI 工具", "查看 AI 可用工具和权限状态"},
+		{"perm-ai-observability-read", "ai:observability:read", "查看 AI 观测", "查看 AI 模型调用、Token、限流和工具调用概览"},
+		{"perm-standards-read", "standards:read", "查看数据标准", "读取数据标准定义和映射摘要"},
+		{"perm-quality-rules-read", "quality:rules:read", "查看质量规则", "读取质量规则和检查结果摘要"},
+		{"perm-metadata-lineage-read", "metadata:lineage:read", "查看数据血缘", "读取血缘影响摘要"},
+		{"perm-approvals-read", "approvals:requests:read", "查看审批", "查看审批中心列表"},
+		{"perm-approvals-process", "approvals:requests:process", "处理审批", "通过、驳回或处理审批实例"},
+		{"perm-system-manage", "system:manage", "系统管理", "管理用户、角色、组织和系统配置"},
 	}
 
 	for _, permission := range permissions {
@@ -345,6 +365,50 @@ func (service *Service) recordLoginEvent(ctx context.Context, username string, u
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`, idutil.New("login"), username, userID, status, meta.IPAddress, meta.UserAgent, message)
 	return err
+}
+
+func HasPermission(profile UserProfile, required string) bool {
+	required = strings.TrimSpace(required)
+	if required == "" {
+		return true
+	}
+	for _, granted := range profile.Permissions {
+		if permissionMatches(granted, required) {
+			return true
+		}
+	}
+	return false
+}
+
+func (service *Service) RecordAccessDenied(ctx context.Context, profile UserProfile, requiredPermission string, meta RequestMeta, resourceType string, resourceID string) error {
+	details, err := json.Marshal(map[string]string{
+		"requiredPermission": requiredPermission,
+		"path":               resourceID,
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = service.db.Exec(ctx, `
+		INSERT INTO audit_events (id, actor_id, actor_name, action, resource_type, resource_id, details, ip_address)
+		VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8)
+	`, idutil.New("audit"), profile.ID, profile.Username, "permission.denied", resourceType, resourceID, string(details), meta.IPAddress)
+	return err
+}
+
+func permissionMatches(granted string, required string) bool {
+	granted = strings.TrimSpace(granted)
+	if granted == "" {
+		return false
+	}
+	if granted == required || granted == PermissionPlatformAll {
+		return true
+	}
+	if strings.HasSuffix(granted, ":*") {
+		prefix := strings.TrimSuffix(granted, "*")
+		return strings.HasPrefix(required, prefix)
+	}
+	return false
 }
 
 func hashToken(token string) string {

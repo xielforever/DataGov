@@ -108,6 +108,12 @@ DataGov 是一个商业化数据治理与数据开发平台的纯前端原型，
 
 ## 2026-06-09
 
+- 新增生产化加固与核心模块 Mock 退出 Goal 文档：明确运行发布基线、权限体系、核心真实后端闭环、AI 生产加固、测试与 CI 的下一阶段目标，详见 `docs/production-hardening-mock-exit-goal.md`。
+- 启动生产化加固 Goal 编码并完成 Sprint 1 运行基线：新增本地开发文档、后端 `.env.example`、migration 状态健康检查、`--migrate-only`/`--check-migrations` 启动参数和 `scripts/smoke-api.ps1` 核心 API smoke；已验证 Go 测试、migration 校验、前端构建和后端 smoke。
+- 完成 Sprint 2 权限闭环地基：新增权限矩阵文档、后端通配权限匹配与 403 审计，数据源/脚本/AI 核心接口接入权限点；前端基于当前用户权限过滤菜单、限制 AI 入口，并为直达无权限路由展示 403 状态。
+- 完成 Sprint 3 核心 Mock 退出推进：新增 endpoint 状态矩阵，审批中心接入真实 Go 后端、`approval_requests` migration、审批列表/处理接口和 MSW passthrough；核心 smoke 已覆盖审批列表。
+- 完成 Sprint 4 AI 生产加固：新增 AI Prompt 模板版本表、配额策略、限流事件、Redis 用户/全局/模型分钟级限流、日 Token 配额、工具权限过滤、AI 观测接口和 MiniMax E2E 脚本；真实 MiniMax E2E 已通过且不打印模型正文。
+- 完成 Sprint 5 交付门禁基础：新增 Playwright 核心路径 `npm run e2e:core`、GitHub Actions CI（前端构建 + Go test）、扩展 API smoke 覆盖 AI Token/工具/观测与审批；本地已通过 Go test、Vite build、API smoke、MiniMax E2E 和 Playwright 核心路径。
 - 新增生产级 AI Copilot Goal 文档：明确会话管理、Token 优化、用户偏好/行为学习、页面上下文、只读工具、安全审计、配额限流与 MSW fallback 的分阶段开发目标，详见 `docs/ai-assistant-production-goal.md`。
 - 补充 AI Copilot 最终验收策略：优先使用真实 MiniMax Anthropic-compatible `MiniMax-M3` 完成功能 E2E，真实 token 仅允许作为本地 secret 使用；供应商、网络或额度异常时记录原因并降级 MSW 兜底测试。
 - 完成 AI Copilot 生产级主链路编码：新增会话历史、搜索、收藏/归档、上下文预览、Token 用量、用户偏好、反馈、行为事件、只读工具审计和 MSW fallback；后端扩展 AI 持久化表与 `/api/v1/ai/conversations/*` 等接口。

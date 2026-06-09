@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import ParticleBackground from "./components/common/ParticleBackground";
 import CapabilityPlaceholder from "./components/common/CapabilityPlaceholder";
+import ForbiddenState from "./components/common/ForbiddenState";
 import LoginForm from "./pages/auth/LoginForm";
 import RegisterForm from "./pages/auth/RegisterForm";
 import ForgotPasswordForm from "./pages/auth/ForgotPasswordForm";
@@ -9,8 +10,10 @@ import DataGovernancePanel from "./pages/dashboard/DataGovernancePanel";
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 import AiAssistant from "./components/ai/AiAssistant";
-import { routeViews } from "./navigation/registry";
-import { clearAuthSession, fetchCurrentUser, getStoredAuthToken, logout } from "./services/api";
+import { menuItems, routeViews, type MenuItem } from "./navigation/registry";
+import { clearAuthSession, fetchCurrentUser, getStoredAuthToken, getStoredAuthUser, logout } from "./services/api";
+import type { AuthUser, LoginResponseData } from "./types/api";
+import { hasPermission } from "./utils/permissions";
 
 type AuthView = "login" | "register" | "forgot";
 
@@ -49,6 +52,7 @@ function AppContent() {
   const [currentView, setCurrentView] = useState<AuthView>("login");
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(() => Boolean(getStoredAuthToken()));
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => getStoredAuthUser());
   const [authChecking, setAuthChecking] = useState(() => Boolean(getStoredAuthToken()));
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -64,7 +68,8 @@ function AppContent() {
     }, 300);
   };
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (session: LoginResponseData) => {
+    setCurrentUser(session.user);
     setIsLoggedIn(true);
   };
 
@@ -73,6 +78,7 @@ function AppContent() {
       .catch(() => undefined)
       .finally(() => {
         clearAuthSession();
+        setCurrentUser(null);
         setIsLoggedIn(false);
         setCurrentView("login");
         setMobileSidebarOpen(false);
@@ -103,12 +109,16 @@ function AppContent() {
 
     let canceled = false;
     fetchCurrentUser()
-      .then(() => {
-        if (!canceled) setIsLoggedIn(true);
+      .then((user) => {
+        if (!canceled) {
+          setCurrentUser(user);
+          setIsLoggedIn(true);
+        }
       })
       .catch(() => {
         if (!canceled) {
           clearAuthSession();
+          setCurrentUser(null);
           setIsLoggedIn(false);
         }
       })
@@ -130,6 +140,12 @@ function AppContent() {
   }
 
   if (isLoggedIn) {
+    const currentPermissions = currentUser?.permissions ?? [];
+    const activeMenuItem = findMenuItem(menuItems, activeMenu);
+    const activeRequiredPermissions = activeMenuItem?.requiredPermissions ?? [];
+    const canAccessActiveMenu = hasPermission(currentPermissions, activeRequiredPermissions);
+    const canUseAiAssistant = hasPermission(currentPermissions, "ai:assistant:use");
+
     return (
       <div className="min-h-screen bg-slate-950">
         <Sidebar
@@ -139,6 +155,7 @@ function AppContent() {
           onMobileClose={() => setMobileSidebarOpen(false)}
           activeMenu={activeMenu}
           onMenuSelect={handleMenuSelect}
+          permissions={currentPermissions}
         />
         <Header
           sidebarCollapsed={sidebarCollapsed}
@@ -151,7 +168,9 @@ function AppContent() {
           }`}
         >
           <div className="p-4 sm:p-6">
-            {routeViews[activeMenu] ?? (
+            {!canAccessActiveMenu ? (
+              <ForbiddenState requiredPermissions={activeRequiredPermissions} />
+            ) : routeViews[activeMenu] ?? (
               <CapabilityPlaceholder
                 module="平台能力"
                 title="能力未配置"
@@ -160,7 +179,7 @@ function AppContent() {
             )}
           </div>
         </main>
-        <AiAssistant activeMenu={activeMenu} sidebarCollapsed={sidebarCollapsed} />
+        {canUseAiAssistant && <AiAssistant activeMenu={activeMenu} sidebarCollapsed={sidebarCollapsed} />}
       </div>
     );
   }
@@ -241,4 +260,13 @@ function AppContent() {
       </div>
     </div>
   );
+}
+
+function findMenuItem(items: MenuItem[], id: string): MenuItem | undefined {
+  for (const item of items) {
+    if (item.id === id) return item;
+    const child = item.children ? findMenuItem(item.children, id) : undefined;
+    if (child) return child;
+  }
+  return undefined;
 }

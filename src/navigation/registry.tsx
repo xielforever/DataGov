@@ -62,6 +62,7 @@ export interface MenuItem {
   label: string;
   icon?: ReactNode;
   badge?: number;
+  requiredPermissions?: string[];
   children?: MenuItem[];
 }
 
@@ -87,7 +88,7 @@ export const menuItems: MenuItem[] = [
       { id: "data-catalog", label: "数据目录" },
       { id: "data-map", label: "数据地图" },
       { id: "data-lineage", label: "数据血缘" },
-      { id: "data-source", label: "数据源管理" },
+      { id: "data-source", label: "数据源管理", requiredPermissions: ["metadata:data_sources:read"] },
     ],
   },
   {
@@ -143,7 +144,7 @@ export const menuItems: MenuItem[] = [
     icon: <Code2 className="h-5 w-5" />,
     children: [
       { id: "data-modeling", label: "数据建模" },
-      { id: "script-dev", label: "脚本开发" },
+      { id: "script-dev", label: "脚本开发", requiredPermissions: ["development:scripts:read"] },
       { id: "task-orchestration", label: "任务编排" },
       { id: "task-schedule", label: "任务调度" },
       { id: "realtime-compute", label: "实时计算" },
@@ -165,24 +166,26 @@ export const menuItems: MenuItem[] = [
     id: "approvals",
     label: "审批中心",
     icon: <CheckCircle2 className="h-5 w-5" />,
+    requiredPermissions: ["approvals:requests:read"],
     children: [
-      { id: "approvals-todos", label: "待我审批" },
-      { id: "approvals-applies", label: "我发起的" },
-      { id: "approvals-processed", label: "已处理" },
+      { id: "approvals-todos", label: "待我审批", requiredPermissions: ["approvals:requests:read"] },
+      { id: "approvals-applies", label: "我发起的", requiredPermissions: ["approvals:requests:read"] },
+      { id: "approvals-processed", label: "已处理", requiredPermissions: ["approvals:requests:read"] },
     ],
   },
   {
     id: "system-manage",
     label: "系统管理",
     icon: <Settings className="h-5 w-5" />,
+    requiredPermissions: ["system:manage"],
     children: [
-      { id: "user-manage", label: "用户管理" },
-      { id: "role-manage", label: "角色管理" },
-      { id: "org-manage", label: "组织管理" },
-      { id: "notification", label: "消息通知" },
-      { id: "operation-log", label: "操作日志" },
-      { id: "ops-monitor", label: "运维监控" },
-      { id: "system-config", label: "系统配置" },
+      { id: "user-manage", label: "用户管理", requiredPermissions: ["system:manage"] },
+      { id: "role-manage", label: "角色管理", requiredPermissions: ["system:manage"] },
+      { id: "org-manage", label: "组织管理", requiredPermissions: ["system:manage"] },
+      { id: "notification", label: "消息通知", requiredPermissions: ["system:manage"] },
+      { id: "operation-log", label: "操作日志", requiredPermissions: ["system:manage"] },
+      { id: "ops-monitor", label: "运维监控", requiredPermissions: ["system:manage"] },
+      { id: "system-config", label: "系统配置", requiredPermissions: ["system:manage"] },
     ],
   },
 ];

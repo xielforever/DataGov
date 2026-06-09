@@ -5942,13 +5942,26 @@ export const mockAiMessages = [
 
 export const mockAiTokenUsage = {
   model: 'MiniMax-M3',
-  quotaTokens: 1000000,
+  quotaTokens: 200000,
   usedInputTokens: 1180,
   usedOutputTokens: 420,
   usedTotalTokens: 1600,
   requestCount: 1,
-  remainingTokens: 998400,
-  windowDescription: '最近 30 天',
+  remainingTokens: 198400,
+  windowDescription: '今日',
+};
+
+export const mockAiObservability = {
+  model: 'MiniMax-M3',
+  windowDescription: '最近 24 小时',
+  requestCount: 6,
+  successCount: 5,
+  failureCount: 1,
+  rateLimitedCount: 0,
+  averageLatencyMs: 920,
+  totalTokens: 8460,
+  toolCallCount: 4,
+  redactionHits: 2,
 };
 
 export const mockAiTools = [

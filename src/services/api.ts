@@ -13,7 +13,7 @@ import type {
   CreateModelData, UpdateModelData,
   AiAssistantRequest, AiBehaviorEventData, AiConversation, AiConversationDetail,
   AiFeedbackData, AiPreference, AiContextPreview, AiTokenUsageOverview,
-  AiToolInfo, CreateAiConversationData, PreviewAiContextData, UpdateAiConversationData,
+  AiObservabilityOverview, AiToolInfo, CreateAiConversationData, PreviewAiContextData, UpdateAiConversationData,
   AiAssistantResponse,
 } from '../types/api';
 
@@ -24,6 +24,17 @@ export const AUTH_USER_STORAGE_KEY = 'datagov.auth.user';
 
 export function getStoredAuthToken() {
   return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) || '';
+}
+
+export function getStoredAuthUser(): AuthUser | null {
+  const raw = localStorage.getItem(AUTH_USER_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as AuthUser;
+  } catch {
+    clearAuthSession();
+    return null;
+  }
 }
 
 export function persistAuthSession(session: LoginResponseData) {
@@ -136,6 +147,7 @@ export const previewAiContext = (data: PreviewAiContextData) => fetchJson('/ai/c
 }) as Promise<AiContextPreview>;
 export const fetchAiTokenUsage = () => fetchJson('/ai/token-usage') as Promise<AiTokenUsageOverview>;
 export const fetchAiTools = () => fetchJson('/ai/tools') as Promise<AiToolInfo[]>;
+export const fetchAiObservability = () => fetchJson('/ai/observability') as Promise<AiObservabilityOverview>;
 
 // Dashboard
 export const fetchDashboardStats = () => fetchJson('/dashboard/stats').catch(() => []);

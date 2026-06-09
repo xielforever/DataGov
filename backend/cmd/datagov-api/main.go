@@ -3,10 +3,13 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -21,13 +24,23 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
+	if err := run(os.Args[1:]); err != nil {
 		slog.Error("datagov api stopped", "error", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
+type runtimeOptions struct {
+	CheckMigrations bool
+	MigrateOnly     bool
+}
+
+func run(args []string) error {
+	options, err := parseRuntimeOptions(args)
+	if err != nil {
+		return err
+	}
+
 	cfg, err := config.Load()
 	if err != nil {
 		return err
@@ -46,6 +59,30 @@ func run() error {
 		return err
 	}
 	defer dbPool.Close()
+
+	if options.MigrateOnly {
+		if err := database.RunMigrations(ctx, dbPool, cfg.Postgres.MigrationsDir); err != nil {
+			return err
+		}
+		status, err := database.CheckMigrationStatus(ctx, dbPool, cfg.Postgres.MigrationsDir)
+		if err != nil {
+			return err
+		}
+		logger.Info("database migrations applied", "total", status.Total, "applied", status.Applied, "pending", status.Pending)
+		return nil
+	}
+
+	if options.CheckMigrations {
+		status, err := database.CheckMigrationStatus(ctx, dbPool, cfg.Postgres.MigrationsDir)
+		if err != nil {
+			return err
+		}
+		if status.Pending > 0 {
+			return fmt.Errorf("%d pending database migration(s): %s", status.Pending, strings.Join(status.PendingVersions, ", "))
+		}
+		logger.Info("database migrations are up to date", "total", status.Total, "applied", status.Applied)
+		return nil
+	}
 
 	if cfg.Postgres.AutoMigrate {
 		if err := database.RunMigrations(ctx, dbPool, cfg.Postgres.MigrationsDir); err != nil {
@@ -107,4 +144,21 @@ func run() error {
 		}
 		return err
 	}
+}
+
+func parseRuntimeOptions(args []string) (runtimeOptions, error) {
+	flags := flag.NewFlagSet("datagov-api", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+
+	var options runtimeOptions
+	flags.BoolVar(&options.CheckMigrations, "check-migrations", false, "check whether all database migrations have been applied and exit")
+	flags.BoolVar(&options.MigrateOnly, "migrate-only", false, "run pending database migrations and exit")
+
+	if err := flags.Parse(args); err != nil {
+		return options, err
+	}
+	if options.CheckMigrations && options.MigrateOnly {
+		return options, errors.New("--check-migrations and --migrate-only cannot be used together")
+	}
+	return options, nil
 }

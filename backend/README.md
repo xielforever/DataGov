@@ -12,6 +12,8 @@ go run ./backend/cmd/datagov-api
 
 默认读取仓库根目录 `.env.local`，连接远程 PostgreSQL 和 Redis。`.env.local` 不允许提交，示例配置见 `.env.example`。
 
+如果从 `backend` 目录内执行命令，可以复制 `backend/.env.example` 为 `backend/.env.local`。
+
 ## 健康检查
 
 ```powershell
@@ -25,7 +27,12 @@ curl http://127.0.0.1:8080/api/v1/health
   "code": 0,
   "message": "success",
   "data": {
-    "status": "ok"
+    "status": "ok",
+    "checks": {
+      "postgres": { "status": "ok" },
+      "redis": { "status": "ok" },
+      "migrations": { "status": "ok" }
+    }
   }
 }
 ```
@@ -58,3 +65,17 @@ curl http://127.0.0.1:8080/api/v1/health
 ```text
 DATAGOV_AUTO_MIGRATE=false
 ```
+
+只执行迁移：
+
+```powershell
+go run ./backend/cmd/datagov-api --migrate-only
+```
+
+只校验迁移状态：
+
+```powershell
+go run ./backend/cmd/datagov-api --check-migrations
+```
+
+如果存在 pending migration，`--check-migrations` 会返回非零退出码，适合后续 CI 或发布前检查。

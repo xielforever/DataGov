@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
   Zap,
 } from "lucide-react";
-import { menuItems } from "../../navigation/registry";
+import { menuItems, type MenuItem } from "../../navigation/registry";
+import { hasPermission } from "../../utils/permissions";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -14,6 +15,7 @@ interface SidebarProps {
   onMobileClose?: () => void;
   activeMenu: string;
   onMenuSelect: (menuId: string) => void;
+  permissions?: string[];
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -23,8 +25,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   onMobileClose,
   activeMenu,
   onMenuSelect,
+  permissions = [],
 }) => {
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+  const visibleMenuItems = useMemo(() => filterMenuItemsByPermissions(menuItems, permissions), [permissions]);
 
   const toggleExpand = (menuId: string) => {
     setExpandedMenus((prev) =>
@@ -33,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   useEffect(() => {
-    const parentMenu = menuItems.find(
+    const parentMenu = visibleMenuItems.find(
       (item) => item.children?.some((child) => child.id === activeMenu) || item.id === activeMenu,
     );
     if (!parentMenu || !parentMenu.children) {
@@ -43,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     setExpandedMenus((prev) =>
       prev.includes(parentMenu.id) ? prev : [...prev, parentMenu.id],
     );
-  }, [activeMenu]);
+  }, [activeMenu, visibleMenuItems]);
 
   return (
     <>
@@ -79,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         <nav className="flex-1 overflow-y-auto py-4">
           <ul className="space-y-1 px-2">
-            {menuItems.map((item) => (
+            {visibleMenuItems.map((item) => (
               <li key={item.id}>
                 <button
                   type="button"
@@ -145,3 +149,16 @@ const Sidebar: React.FC<SidebarProps> = ({
 };
 
 export default Sidebar;
+
+function filterMenuItemsByPermissions(items: MenuItem[], permissions: string[]): MenuItem[] {
+  return items
+    .map((item) => {
+      const children = item.children ? filterMenuItemsByPermissions(item.children, permissions) : undefined;
+      return { ...item, children };
+    })
+    .filter((item) => {
+      const selfAllowed = hasPermission(permissions, item.requiredPermissions);
+      const hasVisibleChildren = Boolean(item.children?.length);
+      return selfAllowed || hasVisibleChildren;
+    });
+}

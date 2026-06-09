@@ -10,7 +10,7 @@ import (
 )
 
 func (server *Server) handleListAiCapabilities(w http.ResponseWriter, r *http.Request) {
-	if !server.requireAuth(w, r) {
+	if _, ok := server.requirePermission(w, r, "ai:assistant:use"); !ok {
 		return
 	}
 
@@ -23,7 +23,7 @@ func (server *Server) handleListAiCapabilities(w http.ResponseWriter, r *http.Re
 }
 
 func (server *Server) handleAskAiAssistant(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -43,7 +43,7 @@ func (server *Server) handleAskAiAssistant(w http.ResponseWriter, r *http.Reques
 }
 
 func (server *Server) handleListAiConversations(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -62,7 +62,7 @@ func (server *Server) handleListAiConversations(w http.ResponseWriter, r *http.R
 }
 
 func (server *Server) handleCreateAiConversation(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -81,7 +81,7 @@ func (server *Server) handleCreateAiConversation(w http.ResponseWriter, r *http.
 }
 
 func (server *Server) handleGetAiConversation(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -95,7 +95,7 @@ func (server *Server) handleGetAiConversation(w http.ResponseWriter, r *http.Req
 }
 
 func (server *Server) handleUpdateAiConversation(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -114,7 +114,7 @@ func (server *Server) handleUpdateAiConversation(w http.ResponseWriter, r *http.
 }
 
 func (server *Server) handleSendAiConversationMessage(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -133,7 +133,7 @@ func (server *Server) handleSendAiConversationMessage(w http.ResponseWriter, r *
 }
 
 func (server *Server) handleRegenerateAiMessage(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -147,7 +147,7 @@ func (server *Server) handleRegenerateAiMessage(w http.ResponseWriter, r *http.R
 }
 
 func (server *Server) handleFeedbackAiMessage(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -165,7 +165,7 @@ func (server *Server) handleFeedbackAiMessage(w http.ResponseWriter, r *http.Req
 }
 
 func (server *Server) handleRecordAiBehaviorEvent(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -183,7 +183,7 @@ func (server *Server) handleRecordAiBehaviorEvent(w http.ResponseWriter, r *http
 }
 
 func (server *Server) handleGetAiPreferences(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -197,7 +197,7 @@ func (server *Server) handleGetAiPreferences(w http.ResponseWriter, r *http.Requ
 }
 
 func (server *Server) handleUpdateAiPreferences(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -216,7 +216,7 @@ func (server *Server) handleUpdateAiPreferences(w http.ResponseWriter, r *http.R
 }
 
 func (server *Server) handlePreviewAiContext(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -235,7 +235,7 @@ func (server *Server) handlePreviewAiContext(w http.ResponseWriter, r *http.Requ
 }
 
 func (server *Server) handleAiTokenUsage(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:assistant:use")
 	if !ok {
 		return
 	}
@@ -249,7 +249,7 @@ func (server *Server) handleAiTokenUsage(w http.ResponseWriter, r *http.Request)
 }
 
 func (server *Server) handleListAiTools(w http.ResponseWriter, r *http.Request) {
-	profile, ok := server.currentUser(w, r)
+	profile, ok := server.requirePermission(w, r, "ai:tools:read")
 	if !ok {
 		return
 	}
@@ -260,6 +260,19 @@ func (server *Server) handleListAiTools(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	httpx.Success(w, tools)
+}
+
+func (server *Server) handleAiObservability(w http.ResponseWriter, r *http.Request) {
+	if _, ok := server.requirePermission(w, r, "ai:observability:read"); !ok {
+		return
+	}
+
+	overview, err := server.ai.ObservabilityOverview(r.Context())
+	if err != nil {
+		server.writeAiError(w, err)
+		return
+	}
+	httpx.Success(w, overview)
 }
 
 func (server *Server) writeAiError(w http.ResponseWriter, err error) {
@@ -275,6 +288,10 @@ func (server *Server) writeAiError(w http.ResponseWriter, err error) {
 	case errors.Is(err, ai.ErrProviderUnavailable):
 		server.deps.Logger.Warn("ai provider unavailable", "error", err)
 		httpx.Error(w, http.StatusBadGateway, 502, "AI 模型服务暂不可用")
+	case errors.Is(err, ai.ErrRateLimited):
+		httpx.Error(w, http.StatusTooManyRequests, 429, "AI 请求过于频繁，请稍后再试")
+	case errors.Is(err, ai.ErrQuotaExceeded):
+		httpx.Error(w, http.StatusTooManyRequests, 429, "今日 AI Token 配额已用尽，请明天再试或联系管理员")
 	default:
 		server.deps.Logger.Error("ai request failed", "error", err)
 		httpx.Error(w, http.StatusInternalServerError, 500, "AI 服务异常")

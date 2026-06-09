@@ -59,9 +59,13 @@ type SampleDataSourceConfig struct {
 }
 
 type AIConfig struct {
-	BaseURL string
-	APIKey  string
-	Model   string
+	BaseURL                  string
+	APIKey                   string
+	Model                    string
+	DailyQuotaTokens         int
+	UserRateLimitPerMinute   int
+	GlobalRateLimitPerMinute int
+	CacheKeyPrefix           string
 }
 
 func Load() (Config, error) {
@@ -98,9 +102,13 @@ func Load() (Config, error) {
 			DatabaseURL: envString("DATAGOV_SAMPLE_DATABASE_URL", ""),
 		},
 		AI: AIConfig{
-			BaseURL: firstNonEmpty(envString("ANTHROPIC_BASE_URL", ""), envString("MINIMAX_BASE_URL", "")),
-			APIKey:  firstNonEmpty(envString("ANTHROPIC_API_KEY", ""), envString("MINIMAX_API_KEY", "")),
-			Model:   firstNonEmpty(envString("ANTHROPIC_MODEL", ""), envString("MINIMAX_MODEL", ""), "MiniMax-M3"),
+			BaseURL:                  firstNonEmpty(envString("ANTHROPIC_BASE_URL", ""), envString("MINIMAX_BASE_URL", "")),
+			APIKey:                   firstNonEmpty(envString("ANTHROPIC_API_KEY", ""), envString("MINIMAX_API_KEY", "")),
+			Model:                    firstNonEmpty(envString("ANTHROPIC_MODEL", ""), envString("MINIMAX_MODEL", ""), "MiniMax-M3"),
+			DailyQuotaTokens:         envInt("DATAGOV_AI_DAILY_QUOTA_TOKENS", 200000),
+			UserRateLimitPerMinute:   envInt("DATAGOV_AI_USER_RATE_LIMIT_PER_MINUTE", 20),
+			GlobalRateLimitPerMinute: envInt("DATAGOV_AI_GLOBAL_RATE_LIMIT_PER_MINUTE", 120),
+			CacheKeyPrefix:           envString("DATAGOV_AI_REDIS_KEY_PREFIX", envString("DATAGOV_REDIS_KEY_PREFIX", "datagov:dev:")+"ai:"),
 		},
 	}
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"datagov/backend/internal/modules/ai"
+	"datagov/backend/internal/modules/approvals"
 	"datagov/backend/internal/modules/development"
 	"datagov/backend/internal/modules/iam"
 	"datagov/backend/internal/modules/metadata"
@@ -33,6 +34,7 @@ type Server struct {
 	metadata    *metadata.Service
 	development *development.Service
 	ai          *ai.Service
+	approvals   *approvals.Service
 }
 
 func New(deps Dependencies) *Server {
@@ -46,7 +48,8 @@ func New(deps Dependencies) *Server {
 		iam:         iam.NewService(deps.DB, deps.Config.Auth, deps.Logger),
 		metadata:    metadata.NewService(deps.DB, deps.Config.Sample, deps.Logger),
 		development: development.NewService(deps.DB, deps.Logger),
-		ai:          ai.NewService(deps.DB, deps.Config.AI, deps.Logger),
+		ai:          ai.NewService(deps.DB, deps.Config.AI, deps.Logger, deps.Redis),
+		approvals:   approvals.NewService(deps.DB),
 	}
 	server.routes()
 	return server
@@ -88,6 +91,9 @@ func (server *Server) routes() {
 	server.mux.HandleFunc("POST /api/v1/ai/context/preview", server.handlePreviewAiContext)
 	server.mux.HandleFunc("GET /api/v1/ai/token-usage", server.handleAiTokenUsage)
 	server.mux.HandleFunc("GET /api/v1/ai/tools", server.handleListAiTools)
+	server.mux.HandleFunc("GET /api/v1/ai/observability", server.handleAiObservability)
+	server.mux.HandleFunc("GET /api/v1/approvals", server.handleListApprovals)
+	server.mux.HandleFunc("POST /api/v1/approvals/{id}/process", server.handleProcessApproval)
 	server.mux.HandleFunc("/", server.handleNotFound)
 }
 
